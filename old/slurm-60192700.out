@@ -1,0 +1,116 @@
+The following modules were not unloaded:
+  (Use "module --force purge" to unload all):
+
+  1) devel   2) math
+cmdline: /share/software/user/restricted/sentieon/202112.01/libexec/driver -t 16 -r /oak/stanford/groups/cgawad/Reference_Files/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38.fasta -i /oak/stanford/groups/cgawad/Nonmalignant_Tissue/Seizure_EEG_Probes/220628_EEG_Probe_Deep_Exome/2022-06-30_EEG_project_Results/ANEU01_Bulk_EndovascularLegion_WES_Capt09_S25.realigned_deduped_sorted.bam -q /oak/stanford/groups/cgawad/Nonmalignant_Tissue/Seizure_EEG_Probes/220628_EEG_Probe_Deep_Exome/2022-06-30_EEG_project_Results/ANEU01_Bulk_EndovascularLegion_WES_Capt09_S25_recal_data.table -i /oak/stanford/groups/cgawad/Nonmalignant_Tissue/Seizure_EEG_Probes/220628_EEG_Probe_Deep_Exome/2022-06-30_EEG_project_Results/ANEU01_Bulk_WB_WES_Capt09_S26.realigned_deduped_sorted.bam -q /oak/stanford/groups/cgawad/Nonmalignant_Tissue/Seizure_EEG_Probes/220628_EEG_Probe_Deep_Exome/2022-06-30_EEG_project_Results/ANEU01_Bulk_WB_WES_Capt09_S26_recal_data.table --algo TNscope --tumor_sample ANEU01_Bulk_EndovascularLegion_WES_Capt09_S25 --normal_sample ANEU01_Bulk_WB_WES_Capt09_S26 --dbsnp /oak/stanford/groups/cgawad/Reference_Files/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38.dbsnp138.vcf.gz --pon /oak/stanford/groups/cgawad/Reference_Files/GATK_Resource_Bundle_hg38/1000g_pon.hg38.vcf.gz --min_base_qual 60 /oak/stanford/groups/cgawad/Nonmalignant_Tissue/Seizure_EEG_Probes/220628_EEG_Probe_Deep_Exome/2022-06-30_EEG_project_Results/ANEU01_Bulk_EndovascularLegion_WES_Capt09_S25_mmq60_variant.vcf
+This software is licensed to bettingr@stanford.edu by Sentieon Inc.
+progress 5% @chr1:153000001, elapsed 15.4s, est remaining 293.3s, peak mem 287MB, user 40.3s, sys 1.8s, output queue size 8
+progress 10% @chr2:55000001, elapsed 24.5s, est remaining 220.2s, peak mem 287MB, user 74.1s, sys 3.3s, output queue size 46
+progress 15% @chr3:6000001, elapsed 34.4s, est remaining 195.2s, peak mem 470MB, user 107.4s, sys 4.9s, output queue size 57
+progress 20% @chr3:150000001, elapsed 43.6s, est remaining 174.3s, peak mem 470MB, user 142.5s, sys 6.4s, output queue size 15
+progress 25% @chr4:105000001, elapsed 51.0s, est remaining 152.9s, peak mem 470MB, user 167.1s, sys 7.5s, output queue size 106
+progress 30% @chr5:69000001, elapsed 62.8s, est remaining 146.6s, peak mem 470MB, user 191.7s, sys 8.7s, output queue size 17
+progress 35% @chr6:30000001, elapsed 76.5s, est remaining 142.1s, peak mem 470MB, user 223.9s, sys 10.1s, output queue size 35
+progress 40% @chr7:57000001, elapsed 83.5s, est remaining 125.2s, peak mem 470MB, user 251.8s, sys 11.3s, output queue size 25
+progress 45% @chr8:54000001, elapsed 92.4s, est remaining 113.0s, peak mem 470MB, user 283.7s, sys 12.7s, output queue size 50
+progress 50% @chr9:70000001, elapsed 98.8s, est remaining 98.8s, peak mem 470MB, user 307.3s, sys 13.9s, output queue size 39
+progress 55% @chr10:108000001, elapsed 108.2s, est remaining 88.5s, peak mem 470MB, user 340.4s, sys 15.2s, output queue size 22
+progress 60% @chr11:121000001, elapsed 120.9s, est remaining 80.6s, peak mem 470MB, user 379.2s, sys 16.6s, output queue size 15
+progress 65% @chr12:109000001, elapsed 130.3s, est remaining 70.2s, peak mem 470MB, user 413.2s, sys 18.0s, output queue size 39
+progress 70% @chr14:58000001, elapsed 139.9s, est remaining 60.0s, peak mem 470MB, user 434.3s, sys 19.1s, output queue size 40
+progress 75% @chr16:2000001, elapsed 150.1s, est remaining 50.0s, peak mem 470MB, user 469.2s, sys 20.5s, output queue size 13
+progress 80% @chr18:6000001, elapsed 170.7s, est remaining 42.7s, peak mem 470MB, user 522.5s, sys 22.2s, output queue size 10
+progress 85% @chr20:18000001, elapsed 182.3s, est remaining 32.2s, peak mem 470MB, user 562.4s, sys 23.6s, output queue size 27
+progress 90% @chrX:21000001, elapsed 199.5s, est remaining 22.2s, peak mem 470MB, user 596.5s, sys 25.0s, output queue size 31
+progress 95% @chrY:34000001, elapsed 211.5s, est remaining 11.1s, peak mem 470MB, user 613.7s, sys 26.1s, output queue size 30
+progress 100% @HLA-DRB1*16:02:01:1, elapsed 222.1s, est remaining 0.0s, peak mem 470MB, user 624.6s, sys 28.6s, output queue size 2932
+SV detections with FUS 
+TNsv 2nd stage: progress 5%, elapsed 0.1s, est remaining 1.9s, cur mem 253MB, peak mem 470MB
+TNsv 2nd stage: progress 10%, elapsed 0.2s, est remaining 1.6s, cur mem 256MB, peak mem 470MB
+TNsv 2nd stage: progress 15%, elapsed 0.2s, est remaining 1.3s, cur mem 256MB, peak mem 470MB
+TNsv 2nd stage: progress 20%, elapsed 0.3s, est remaining 1.2s, cur mem 256MB, peak mem 470MB
+TNsv 2nd stage: progress 25%, elapsed 0.4s, est remaining 1.1s, cur mem 256MB, peak mem 470MB
+TNsv 2nd stage: progress 30%, elapsed 0.4s, est remaining 1.0s, cur mem 256MB, peak mem 470MB
+TNsv 2nd stage: progress 35%, elapsed 0.5s, est remaining 0.9s, cur mem 256MB, peak mem 470MB
+TNsv 2nd stage: progress 40%, elapsed 0.5s, est remaining 0.8s, cur mem 256MB, peak mem 470MB
+TNsv 2nd stage: progress 45%, elapsed 0.6s, est remaining 0.7s, cur mem 256MB, peak mem 470MB
+TNsv 2nd stage: progress 50%, elapsed 0.7s, est remaining 0.7s, cur mem 256MB, peak mem 470MB
+TNsv 2nd stage: progress 55%, elapsed 0.7s, est remaining 0.6s, cur mem 256MB, peak mem 470MB
+TNsv 2nd stage: progress 60%, elapsed 0.8s, est remaining 0.5s, cur mem 256MB, peak mem 470MB
+TNsv 2nd stage: progress 65%, elapsed 0.8s, est remaining 0.5s, cur mem 256MB, peak mem 470MB
+TNsv 2nd stage: progress 70%, elapsed 0.9s, est remaining 0.4s, cur mem 256MB, peak mem 470MB
+TNsv 2nd stage: progress 75%, elapsed 1.0s, est remaining 0.3s, cur mem 256MB, peak mem 470MB
+TNsv 2nd stage: progress 80%, elapsed 1.0s, est remaining 0.3s, cur mem 256MB, peak mem 470MB
+TNsv 2nd stage: progress 85%, elapsed 1.1s, est remaining 0.2s, cur mem 256MB, peak mem 470MB
+TNsv 2nd stage: progress 90%, elapsed 1.1s, est remaining 0.1s, cur mem 256MB, peak mem 470MB
+TNsv 2nd stage: progress 95%, elapsed 1.2s, est remaining 0.1s, cur mem 256MB, peak mem 470MB
+TNsv 2nd stage: progress 100%, elapsed 1.3s, est remaining 0.0s, cur mem 256MB, peak mem 470MB
+TNsv 3rd stage: progress 5%, elapsed 7.1s, est remaining 135.5s, cur mem 343MB, peak mem 470MB
+TNsv 3rd stage: progress 10%, elapsed 12.3s, est remaining 110.3s, cur mem 359MB, peak mem 470MB
+TNsv 3rd stage: progress 15%, elapsed 18.6s, est remaining 105.2s, cur mem 361MB, peak mem 470MB
+TNsv 3rd stage: progress 20%, elapsed 24.5s, est remaining 97.8s, cur mem 364MB, peak mem 470MB
+TNsv 3rd stage: progress 25%, elapsed 27.4s, est remaining 82.1s, cur mem 366MB, peak mem 470MB
+TNsv 3rd stage: progress 30%, elapsed 32.3s, est remaining 75.4s, cur mem 366MB, peak mem 470MB
+TNsv 3rd stage: progress 35%, elapsed 39.4s, est remaining 73.2s, cur mem 370MB, peak mem 470MB
+TNsv 3rd stage: progress 40%, elapsed 46.0s, est remaining 69.0s, cur mem 371MB, peak mem 470MB
+TNsv 3rd stage: progress 45%, elapsed 52.6s, est remaining 64.3s, cur mem 430MB, peak mem 470MB
+TNsv 3rd stage: progress 50%, elapsed 58.0s, est remaining 58.0s, cur mem 553MB, peak mem 553MB
+TNsv 3rd stage: progress 55%, elapsed 63.3s, est remaining 51.8s, cur mem 560MB, peak mem 560MB
+TNsv 3rd stage: progress 60%, elapsed 68.2s, est remaining 45.5s, cur mem 565MB, peak mem 565MB
+TNsv 3rd stage: progress 65%, elapsed 72.2s, est remaining 38.9s, cur mem 568MB, peak mem 599MB
+TNsv 3rd stage: progress 70%, elapsed 75.5s, est remaining 32.3s, cur mem 565MB, peak mem 599MB
+TNsv 3rd stage: progress 75%, elapsed 80.8s, est remaining 26.9s, cur mem 576MB, peak mem 599MB
+TNsv 3rd stage: progress 80%, elapsed 84.4s, est remaining 21.1s, cur mem 570MB, peak mem 599MB
+TNsv 3rd stage: progress 85%, elapsed 89.4s, est remaining 15.8s, cur mem 574MB, peak mem 602MB
+TNsv 3rd stage: progress 90%, elapsed 92.7s, est remaining 10.3s, cur mem 577MB, peak mem 602MB
+TNsv 3rd stage: progress 95%, elapsed 97.3s, est remaining 5.1s, cur mem 635MB, peak mem 635MB
+TNsv 3rd stage: progress 100%, elapsed 99.2s, est remaining 0.0s, cur mem 635MB, peak mem 635MB
+sw version: sentieon-genomics-202112.01
+os version: Linux 3.10.0-1160.71.1.el7.x86_64
+cpu vendor: GenuineIntel
+ signature: 00050654
+  features: bfebfbff 7ffefbff
+  extended: d39ffffb 00000018
+  amd bits: 2c100800 00000121
+     brand: Intel(R) Xeon(R) Gold 5118 CPU @ 2.30GHz
+threads: 16 max 24
+algo: TNscope
+input file size: 2328695742 2307134431
+output file size: 369101
+reads: 91289175
+contig: 3367 intervals 3217346917 bases
+BAMTrav: 1 calls 0.001 user 0.004 sys 99.189 real
+BRNResol1: 1 calls 0.000 user 0.000 sys 0.000 real
+BRNResolve: 1 calls 0.000 user 0.001 sys 0.001 real
+BRNResolve2ndRnd: 1 calls 0.009 user 0.005 sys 0.014 real
+BRNTrav: 1 calls 0.005 user 0.005 sys 0.141 real
+DCBNDTrav: 1 calls 0.000 user 0.000 sys 0.000 real
+DCINSTrav: 1 calls 0.000 user 0.000 sys 0.000 real
+DCResolve: 1 calls 0.149 user 0.037 sys 99.371 real
+HAPCMP: 344730 calls 68.177 user 0.301 sys 157.760 real
+INSResolve: 1 calls 0.000 user 0.000 sys 0.000 real
+INSResolve2ndRnd: 1 calls 0.000 user 0.000 sys 0.000 real
+INSTrav: 1 calls 0.007 user 0.000 sys 0.007 real
+RPProcess: 255433 calls 21.385 user 0.077 sys 84.423 real
+ReadQualCal::clearEPSVecOne: 2 calls 0.005 user 0.001 sys 0.007 real
+ReadQualCal::delayed_init: 2 calls 0.000 user 0.000 sys 0.008 real
+ReadQualCal::init: 2 calls 0.006 user 0.001 sys 0.055 real
+SCDet: 824636 calls 99.366 user 3.801 sys 420.825 real
+SVTrav: 3219322 calls 123.087 user 6.330 sys 483.610 real
+TranCount: 824636 calls 2.384 user 0.152 sys 6.084 real
+TranCount1: 824636 calls 8.171 user 0.209 sys 19.013 real
+VARFINALFILTERING: 344730 calls 0.845 user 0.074 sys 1.894 real
+advance: 3219322 calls 381.245 user 8.414 sys 2419.281 real
+advance2nd: 3167693 calls 344.169 user 2.202 sys 1390.217 real
+calc: 713072 calls 14.148 user 0.207 sys 31.593 real
+done: 1 calls 25.738 user 5.470 sys 149.958 real
+execute: 1 calls 0.001 user 0.001 sys 235.327 real
+fetch: 6445138 calls 27.914 user 1.157 sys 64.576 real
+fetch2nd: 3167693 calls 15.379 user 0.482 sys 61.927 real
+fetch_ref: 4050452 calls 50.091 user 5.875 sys 180.479 real
+idle: 1542 calls 0.093 user 0.013 sys 995.189 real
+init: 1 calls 0.122 user 0.022 sys 0.218 real
+region: 3225816 calls 0.265 user 0.544 sys 1.866 real
+tracker: 3225816 calls 11.055 user 0.743 sys 31.023 real
+vcfmerge: 3 calls 22.469 user 5.363 sys 46.119 real
+overall: 666406912 mem 1057.661 user 47.714 sys 387.286 real
