@@ -62,27 +62,27 @@ make_unique_col_names(){
 
 #i was lazy here and only implemented fixing the header having AF appear twice, in future can make this extensible by making a function which takes an input string for the column and iteratively changes all instances of that input string with a unique one with a number appended
 
-snp_header=$( (head -n 1 *_svc_merged_extract_snp.hg38_multianno.tsv ) )
+snp_header=$( (head -n 1 ${PROJECT}_svc_merged_extract_snp.hg38_multianno.tsv ) )
 updated_snp_header=$( (echo $snp_header | sed 's/AF/AF_first/' | sed "s/#CHROM/CHROM/" | sed 's/ /\t/g') )
-sed -i "1s/.*/$updated_snp_header/" *_svc_merged_extract_snp.hg38_multianno.tsv 
+sed -i "1s/.*/$updated_snp_header/" ${PROJECT}_svc_merged_extract_snp.hg38_multianno.tsv 
 
 #try removing problematic lines using grep
 
-grep -v ":${NORMAL_SAMPLE_NAME}" *_svc_merged_extract_snp.hg38_multianno.tsv > ${PROJECT}_svc_merged_extract_snp.hg38_multianno.no_germline.tsv
+grep -v ":${NORMAL_SAMPLE_NAME}" ${PROJECT}_svc_merged_extract_snp.hg38_multianno.tsv > ${PROJECT}_svc_merged_extract_snp.hg38_multianno.no_germline.tsv
 
 
 ### Pull out sites from somatic file with 10 reads and AF>0.4
 VAF_COL_NUM=$( ($PIPELINE_DIR/colnum.sh ${PROJECT}_svc_merged_extract_snp.hg38_multianno.no_germline.tsv AF) )
 DP_COL_NUM=$( ($PIPELINE_DIR/colnum.sh ${PROJECT}_svc_merged_extract_snp.hg38_multianno.no_germline.tsv AFDP) )
 
-head -n 1 *_svc_merged_extract_snp.hg38_multianno.tsv > fixed_header.txt
+head -n 1 ${PROJECT}_svc_merged_extract_snp.hg38_multianno.tsv > fixed_header.txt
  
 
 echo VAF col number is ${VAF_COL_NUM}
 
 #awk '$126>0.4 && $127>9' *_svc_merged_extract_snp.hg38_multianno.tsv | cut -f1-5  | sort > candidates
 
-awk -v VAF="$VAF_COL_NUM" -v DP="$DP_COL_NUM" '$VAF>0.4 && $DP>9' *_svc_merged_extract_snp.hg38_multianno.no_germline.tsv | cut -f1-5  | sort > candidates
+awk -v VAF="$VAF_COL_NUM" -v DP="$DP_COL_NUM" '$VAF>0.4 && $DP>9' ${PROJECT}_svc_merged_extract_snp.hg38_multianno.no_germline.tsv | cut -f1-5  | sort > candidates
 
 
 #this only pulls snp's is that okay?
@@ -105,12 +105,12 @@ ulimit -a
 
 uniq candidates > unique_candidates
 
-fgrep -f unique_candidates *_joint_germline_merged_extract_snp.hg38_multianno.tsv > 01_all_snv_variants.tsv 
+fgrep -f unique_candidates ${PROJECT}_joint_germline_merged_extract_snp.hg38_multianno.tsv > 01_all_snv_variants.tsv 
 
 ##old way of greping from previous pipeline
 #grep -f candidates *_joint_germline_merged_extract_snp.hg38_multianno.tsv > 01_all_snv_variants.tsv
 
-head -n 1 *_joint_germline_merged_extract_snp.hg38_multianno.tsv > 01_all_somatic_snvs_head.tsv
+head -n 1 ${PROJECT}_joint_germline_merged_extract_snp.hg38_multianno.tsv > 01_all_somatic_snvs_head.tsv
 cat 01_all_somatic_snvs_head.tsv 01_all_snv_variants.tsv > 01_all_somatic_snvs.tsv
 
 ## find sites with >1 sample called
@@ -151,11 +151,11 @@ mv tmp_snvs.txt 01_black_listed_final_clonal_somatic_snvs.tsv
 ##### filter for final indel somatic calls
 ### Pull out sites from somatic file with 10 reads and AF>0.4
 
-indel_header=$( (head -n 1 *_svc_merged_extract_indel.hg38_multianno.tsv ) )
+indel_header=$( (head -n 1 ${PROJECT}_svc_merged_extract_indel.hg38_multianno.tsv ) )
 updated_indel_header=$( (echo $indel_header | sed 's/AF/AF_first/' | sed "s/#CHROM/CHROM/" | sed 's/ /\t/g') )
 sed -i "1s/.*/$updated_indel_header/" ${PROJECT}_svc_merged_extract_indel.hg38_multianno.tsv 
 
-grep -v ":${NORMAL_SAMPLE_NAME}" *_svc_merged_extract_indel.hg38_multianno.tsv > ${PROJECT}_svc_merged_extract_indel.hg38_multianno.no_germline.tsv
+grep -v ":${NORMAL_SAMPLE_NAME}" ${PROJECT}_svc_merged_extract_indel.hg38_multianno.tsv > ${PROJECT}_svc_merged_extract_indel.hg38_multianno.no_germline.tsv
 
 INDEL_VAF_COL_NUM=$( ($PIPELINE_DIR/colnum.sh ${PROJECT}_svc_merged_extract_indel.hg38_multianno.no_germline.tsv AF) ) 
 INDEL_DP_COL_NUM=$( ($PIPELINE_DIR/colnum.sh ${PROJECT}_svc_merged_extract_indel.hg38_multianno.no_germline.tsv AFDP) ) 
@@ -165,9 +165,10 @@ awk -v DP="$INDEL_DP_COL_NUM" -v VAF="$INDEL_VAF_COL_NUM" '$VAF>0.4 && $DP>9' ${
 ## pull Mutect calls out of GATK file
 
 uniq indel_candidates > unique_indel_candidates
-fgrep -f unique_indel_candidates *_joint_germline_merged_extract_indel.hg38_multianno.tsv > all_indel_variants.tsv 
+fgrep -f unique_indel_candidates ${PROJECT}_joint_germline_merged_extract_indel.hg38_multianno.tsv > all_indel_variants.tsv 
 
-head -n 1 *_joint_germline_merged_extract_indel.hg38_multianno.tsv > 01_all_somatic_indels.tsv
+>01_all_somatic_indels.tsv
+head -n 1 ${PROJECT}_joint_germline_merged_extract_indel.hg38_multianno.tsv > 01_all_somatic_indels.tsv
 cat all_indel_variants.tsv >> 01_all_somatic_indels.tsv
 
 ## find sites with >1 sample called
@@ -188,9 +189,9 @@ awk '$2 > 0.4' clonal_indel_calls_pre.tsv | cut -f1 | sed 's/_/\t/g' > final_ind
 ## pull out those sites and keep GATK pass
 ## There's no PASS in the file? did VQSR not get performed on it?
 #grep -f final_indel_sites *_joint_germline_merged_extract_indel.hg38_multianno.tsv | grep PASS > final_clonal_indel_calls_pre.tsv
-grep -f final_indel_sites *_joint_germline_merged_extract_indel.hg38_multianno.tsv > final_clonal_indel_calls_pre.tsv
+grep -f final_indel_sites ${PROJECT}_joint_germline_merged_extract_indel.hg38_multianno.tsv > final_clonal_indel_calls_pre.tsv
 ## add back header
-head -n1 *_joint_germline_merged_extract_indel.hg38_multianno.tsv > indel_header
+head -n1 ${PROJECT}_joint_germline_merged_extract_indel.hg38_multianno.tsv > indel_header
 cat indel_header final_clonal_indel_calls_pre.tsv >  01_final_clonal_indel_calls.tsv
 
 cp 01_final_clonal_indel_calls.tsv no_black_list_clonal_indels.tsv
@@ -212,10 +213,15 @@ C_TSV_NAME="All_somatic_calls"
 
 sbatch -c 2 --mem=32G -p cgawad --time=24:00:00 -e $STD_ERR_OUT_DIR/%A_${TSV_NAME}_sigprofile_%x.err -o $STD_ERR_OUT_DIR/%A_${TSV_NAME}_sigprofile_%x.out ${SCRIPT_DIR}/Scan2_SigProfiler.sh --tsv 01_final_clonal_somatic_snvs.tsv --script_dir ${SCRIPT_DIR} --results_dir ${RESULTS_DIR} --project ${C_TSV_NAME}
 
-awk '$126>0.4 && $127>9' *_svc_merged_extract_snp.hg38_multianno.tsv | cut -f1-5  | sort > nc_candidates
 
-#wait why do we need this step?
-grep -f nc_candidates *_joint_germline_merged_extract_snp.hg38_multianno.tsv > all_nc_variants.tsv
+VAF_COL_NUM=$( ($PIPELINE_DIR/colnum.sh ${PROJECT}_svc_merged_extract_snp.hg38_multianno.no_germline.tsv AF) )
+DP_COL_NUM=$( ($PIPELINE_DIR/colnum.sh ${PROJECT}_svc_merged_extract_snp.hg38_multianno.no_germline.tsv AFDP) )
+
+awk -v VAF="$VAF_COL_NUM" -v DP="$DP_COL_NUM" '$VAF>0.4 && $DP>9' ${PROJECT}_svc_merged_extract_snp.hg38_multianno.no_germline.tsv | cut -f1-5  | sort > nc_candidates
+
+uniq nc_candidates > unique_nc_candidates
+
+fgrep -f unique_nc_candidates *_joint_germline_merged_extract_snp.hg38_multianno.tsv > all_nc_variants.tsv
 
 ## generate a non clonal calls file
 awk '$119 == "0/1" || $119 == "1/1"' all_nc_variants.tsv | cut -f1-5 | sort | uniq -c | awk '$1==1' | cut -c9- | sort > one_cell
@@ -232,7 +238,7 @@ awk '$120 == "0/1" || $120 == "1/1"' nc_all_variants_AF.tsv | sed 's/ /\t/g' | a
 awk '$2 > 0.4' non_clonal_calls_pre.tsv | cut -f1 | sed 's/_/\t/g' > nc_final_sites
 
 ## pull out those sites and keep GATK pass
-grep -f nc_final_sites *_joint_germline_merged_extract_snp.hg38_multianno.tsv | grep PASS > final_non_clonal_somatic_calls_pre.tsv
+grep -f nc_final_sites ${PROJECT}_joint_germline_merged_extract_snp.hg38_multianno.tsv | grep PASS > final_non_clonal_somatic_calls_pre.tsv
 
 ## add back header
 head -n1 *_joint_germline_merged_extract_snp.hg38_multianno.tsv > header
@@ -255,38 +261,6 @@ sbatch -c 2 --mem=32G -p cgawad --time=24:00:00 -e $STD_ERR_OUT_DIR/%A_${TSV_NAM
 
 cat indel_header > 01_all_germline_snp_indel.tsv 
 cat *_joint_germline_merged_extract_*.hg38_multianno.tsv >> 01_all_germline_snp_indel.tsv
-
-
-####### filter for clonal indels
-
-### Pull out sites from somatic file with 10 reads and AF>0.4
-#awk '$126>0.4 && $127>9' *_svc_merged_extract_indel.hg38_multianno.tsv | cut -f1-5  | sort > candidates
-
-## pull Mutect calls out of GATK file
-#grep -f candidates *_joint_germline_merged_extract_indel.hg38_multianno.tsv > all_variants.tsv
-
-## find sites with >1 sample called
-#awk '$119 == "0/1" || $119 == "1/1"' all_variants.tsv | cut -f1-5 | sort | uniq -c | awk '$1>1' | cut -c9- | sort > multiple_cells
-
-## pull out calls with >1 sample called
-#grep -f multiple_cells all_variants.tsv > candidates.tsv
-
-## calculate allele frequency for each call
-#awk '{gsub(",","\t",$116)}1' candidates.tsv | sed 's/ /\t/g' | awk '{gsub("0","0.000001",$117)}1' | sed 's/ /\t/g' | awk '$118=$117/($116+$117)' | sed 's/ /\t/g' | awk '$123 = $1"_"$2"_"$3"_"$4"_"$5' | sed 's/ /\t/g'  > all_variants_AF.tsv
-
-## calculate average allele frequency by location and base change
-#awk '$120 == "0/1" || $120 == "1/1"' all_variants_AF.tsv | sed 's/ /\t/g' | awk '{seen[$123]+=$118; count[$123]++} END{for (x in seen)print x, seen[x]/count[x]}' | sed 's/ /\t/g' > clonal_calls_pre.tsv
-
-## keep calls with average AF > 0.4 in called cells
-#awk '$2 > 0.4' clonal_calls_pre.tsv | cut -f1 | sed 's/_/\t/g' > final_sites
-
-## pull out those sites and keep GATK pass
-#grep -f final_sites *_joint_germline_merged_extract_indel.hg38_multianno.tsv | grep PASS > final_clonal_indel_calls_pre.tsv
-
-## add back header
-#head -n1 *_joint_germline_merged_extract_snp.hg38_multianno.tsv > header
-#cat header final_clonal_somatic_calls_pre.tsv >  01_final_clonal_indel_calls.tsv
-
 
 I_TSV_NAME="All_indel_calls"
 

@@ -985,7 +985,7 @@ if [ $STEP -eq 6 ]; then
 fi
 
 if [ $STEP -eq 7 ]; then
-    sbatch -e $STD_ERROUT_DIR/%A_final_move_%x.err -o ${STD_ERR_OUT_DIR}/%A_final_move_%x.out ${PIPELINE_DIR}/7_final_move.sh $RESULTS_DIR $FINAL_DIR
+    sbatch -e ${STD_ERR_OUT_DIR}/%A_final_move_%x.err -o ${STD_ERR_OUT_DIR}/%A_final_move_%x.out ${PIPELINE_DIR}/7_final_move.sh $RESULTS_DIR $FINAL_DIR
 
 fi
 

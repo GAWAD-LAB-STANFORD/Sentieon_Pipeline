@@ -119,12 +119,12 @@ find ${RESULTS_DIR}/ginkgo_outputs -name '*CN.pdf' -exec mv {} ${RESULTS_DIR}/Gi
 
 ml system poppler/0.47.0
 
-file="01_Combined_Ginko_CNV.pdf"
+file="01_Combined_Ginkgo_CNV.pdf"
 if [ -f "$file" ] ; then
     rm "$file"
 fi
 
-pdfunite ${RESULTS_DIR}/Ginkgo_CN_Plots/*CN.pdf ${RESULTS_DIR}/01_Combined_Ginko_CNV.pdf
+pdfunite ${RESULTS_DIR}/Ginkgo_CN_Plots/*CN.pdf ${RESULTS_DIR}/01_Combined_Ginkgo_CNV.pdf
 
 
 rsync -a ${RESULTS_DIR}/ginkgo_outputs $FINAL_DIR/

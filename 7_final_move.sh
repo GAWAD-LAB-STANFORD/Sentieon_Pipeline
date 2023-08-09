@@ -7,6 +7,8 @@
 #SBATCH --partition=cgawad
 #SBATCH --mem=120G
 
+set -x
+
 RESULTS_DIR=$1
 FINAL_DIR=$2
 

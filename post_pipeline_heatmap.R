@@ -160,6 +160,9 @@ test_merged <- as.matrix(apply(test_merged, 1:2, as.numeric))
 test_merged <- test_merged[rowSums(test_merged[])>0,]
 print(test_merged)
 
+write.table(test_merged,file=paste0(directory,"/vaf_heatmap_matrix.csv",sep=",")
+
+
 library(vegan)
 data.dist <- vegdist(test_merged, method = "jaccard")
 row.clus <- hclust(data.dist, "ward.D")
