@@ -55,6 +55,7 @@ EMAIL=0
 SKIP_PANEL=1
 VERSION=1
 SKIP_MANTA=0
+ELEMENT=0
 while [ "$1" != "" ]; do
     case $1 in
         -h | --help )           echo -e $HELP
@@ -193,6 +194,9 @@ while [ "$1" != "" ]; do
 				;;
 	--skip_manta )      shift
 				SKIP_MANTA=1
+				;;
+	--element )		shift
+				ELEMENT=1
 				;;
     esac
     shift
@@ -367,6 +371,9 @@ fi
 if [ $SKIP_MANTA -eq 1 ]; then
 	OPTIONS+=( "--skip_manta 1" )
 fi
+if [ $ELEMENT -eq 1 ]; then
+	OPTIONS+=( "--element 1" ) 
+fi
 
 #change targets_bed and interval_list for exome sequencing if --exome flag is used
 if [ $TARGETED -eq 1 ]; then
@@ -446,18 +453,32 @@ fi
 if [ $STEP -le 1 ]; then
 		#Assign suffix and use to get sample names
 		if [ $STEP -ne 0 ] && [ $ONLY_VARIANT_CALL -eq 0 ]; then
+			if [ $ELEMENT -eq 1 ]; then
+			#if element tag manually assigned, use element suffixes
+			R1_SUFFIX="_R1.fastq.gz"
+			R2_SUFFIX="_R2.fastq.gz"
+			fi
 		    if [ -z $R1_SUFFIX ] || [ -z $R2_SUFFIX ]; then
+			#if no element tag, default to illumina suffixes
 			R1_SUFFIX="_L001_R1_001.fastq.gz"
 			R2_SUFFIX="_L001_R2_001.fastq.gz"
-			if [ $(find ${FASTQ_DIR} -maxdepth 1 -name "*${R1_SUFFIX}" | wc -l) -eq 0 ]; then
+			if [ $(find ${FASTQ_DIR} -maxdepth 1 -name "*${R1_SUFFIX}" | wc -l) -eq 0 ] && [ $(find ${FASTQ_DIR} -maxdepth 1 -name "*_R1.fastq.gz" | wc -l) -ne 0 ]; then
+			# regardless of element tag, check if no illumina suffixes and presence of element suffixes and use element suffixes if only thos present
+			    R1_SUFFIX="_R1.fastq.gz"
+			    R2_SUFFIX="_R2.fastq.gz"
+			fi
+			if [ $(find ${FASTQ_DIR} -maxdepth 1 -name "*${R1_SUFFIX}" | wc -l) -eq 0 ] && [ $(find ${FASTQ_DIR} -maxdepth 1 -name "*_R1.fastq.gz" | wc -l) -ne 0 ]; then
+			# if illumina and element suffixes not present, use this other suffix that has been used occasionally
 			    R1_SUFFIX="_R1_001.fastq.gz"
 			    R2_SUFFIX="_R2_001.fastq.gz"
 			fi
 		    fi
+			#remove undetermined
 		    SAMPLE_ARRAY=( $(find ${FASTQ_DIR} -maxdepth 1 -name "*${R1_SUFFIX}" ! -name "Undetermined*" -exec basename {} \; | \
 					grep -v "Undetermined" | sed "s/${R1_SUFFIX}//") ) 
 
 		#WHY ARE UNDETERMINED STILL SHOWING UP THIS MAKES NO SENSE
+		   #idk why this command is here twice but probably not a good idea to delete
 		   SAMPLE_ARRAY=( $(find ${FASTQ_DIR} -maxdepth 1 -name "*${R1_SUFFIX}" ! -name "Undetermined*" -exec basename {} \; | \
 			grep -v "Undetermined" | sed "s/${R1_SUFFIX}//") )
 #		    if [ ${#SAMPLE_ARRAY[@]} -eq 0 ] && [ $STEP -le 1 ]; then
@@ -474,7 +495,7 @@ if [ $STEP -le 1 ]; then
 	
 
 	#If step set to 0, demultiplex
-	if [ $STEP -eq 0 ]; then
+	if [ $STEP -eq 0 ] && [ $ELEMENT -eq 0 ]; then
 	    echo "### Step 0 - Demultiplexing ### - START: $(date)" >> $PIPELINE_STATUS
 	    echo -e "Run dir: $RUN_DIR\nSample sheet: $SAMPLE_SHEET" >> $PIPELINE_STATUS
 	    DEPENDENCIES+=( $(sbatch --parsable -e ${STD_ERR_OUT_DIR}/%A_demultiplex_%x.err -o ${STD_ERR_OUT_DIR}/%A_demultiplex_%x.out \
@@ -492,7 +513,14 @@ if [ $STEP -le 1 ]; then
 		-e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
 		${PIPELINE_DIR}/submit_all.sh --step1 ${OPTIONS[@]}
 
-
+		elif [ $STEP -eq 0 ] && [ $ELEMENT -eq 1 ]; then
+			DEPENDENCIES+=( $(sbatch --parsable -e ${STD_ERR_OUT_DIR}/%A_element_demultiplex_%x.err -o ${STD_ERR_OUT_DIR}/%A_element_demultiplex_%x.out \
+        ${PIPELINE_DIR}/element_demultiplex.sh --run_dir $RUN_DIR --fastq_dir $FASTQ_DIR) )
+		
+		sbatch --dependency=afterok:${DEPENDENCIES[0]} -J $PROJECT \
+		-e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
+		${PIPELINE_DIR}/submit_all.sh --step1 ${OPTIONS[@]}
+		
 		elif [ $STEP -eq 1 ]; then
 		    if [ $TEMP_ARRAY_START -eq 0 ]; then
 			echo "### Step 1 - BAM construction ### - START: $(date)" >> $PIPELINE_STATUS
