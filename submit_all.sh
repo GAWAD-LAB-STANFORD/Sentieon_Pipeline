@@ -12,7 +12,7 @@
 
 ##YOU HAVE TO CHANGE THIS FOR SENTIEON TO WORK WHEN MERIGING!!!! CHANGE LINE BELOW WHEN MERGING!!!
 #PIPELINE_DIR="/oak/stanford/groups/cgawad/Scripts/Test_Sentieon_Pipeline"
-PIPELINE_DIR="/oak/stanford/groups/cgawad/Scripts/TEST_Sentieon_Pipeline"
+PIPELINE_DIR="/oak/stanford/groups/cgawad/Scripts/Sentieon_Pipeline"
 
 HELP="\
 Purpose: \n\t\
@@ -34,7 +34,7 @@ NUMBER_THREADS=4
 VARIANT_CLASS=1
 BAM_SUFFIX=".bqsr.marked.bam"
 SCAN2_BULK=0
-SCAN2=1
+SCAN2=0
 METHYLATION=1
 CIRCLE_MAP=1
 STEP=0
@@ -102,7 +102,7 @@ while [ "$1" != "" ]; do
         --scan2_bulk )          shift
                                 SCAN2_BULK=$1
                                 ;;
-        --skip_scan2 )          SCAN2=0
+        --run_scan2 )          SCAN2=1
                                 ;;
         --skip_methylation )    METHYLATION=0
                                 ;;
@@ -606,7 +606,7 @@ if [ $STEP -eq 15 ]; then
 
 fi
 
-if [ $STEP -eq 2 ]; then
+if [ $STEP -eq 2 ] && [ $SCAN2 -eq 1 ]; then
 	echo "### Running Scan2 ### - Start: $(date)" >> $PIPELINE_STATUS
 	SAMPLE_ARRAY=( $(find ${RESULTS_DIR} -maxdepth 1 -name "${SAMPLE_PREFIX}*.realigned_deduped_sorted.bam" -exec basename {} \;) )
         JOB_COUNT=${#SAMPLE_ARRAY[@]}
