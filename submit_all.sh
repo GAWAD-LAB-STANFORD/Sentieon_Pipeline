@@ -9,6 +9,7 @@
 
 #PIPELINE_DIR="$( cd "$( dirname "$0" )" && pwd )"
 
+set -x
 
 ##YOU HAVE TO CHANGE THIS FOR SENTIEON TO WORK WHEN MERIGING!!!! CHANGE LINE BELOW WHEN MERGING!!!
 #PIPELINE_DIR="/oak/stanford/groups/cgawad/Scripts/Test_Sentieon_Pipeline"
@@ -192,11 +193,9 @@ while [ "$1" != "" ]; do
 	--version ) 		shift
 				VERSION=$1
 				;;
-	--skip_manta )      shift
-				SKIP_MANTA=1
+	--skip_manta )   SKIP_MANTA=1
 				;;
-	--element )		shift
-				ELEMENT=1
+	--element ) ELEMENT=1
 				;;
     esac
     shift
@@ -288,7 +287,7 @@ elif [ -z $RUN_DIR ] && [ ! -z $SAMPLE_SHEET ]; then ### idk what's going on her
     exit 1
 fi
 # If you add new options please make sure to add them to OPTIONS as --number_threads is below 
-if [ ! -z $RUN_DIR ] && [ ! -z $SAMPLE_SHEET ]; then
+if [ ! -z $RUN_DIR ] && [ ! -z $SAMPLE_SHEET ] && [ $ELEMENT -eq 0 ]; then
     if [ ! -f $SAMPLE_SHEET ]; then
         echo "Sample sheet $SAMPLE_SHEET not found. Exiting with code 1"
         exit 1
@@ -481,6 +480,10 @@ if [ $STEP -le 1 ]; then
 		   #idk why this command is here twice but probably not a good idea to delete
 		   SAMPLE_ARRAY=( $(find ${FASTQ_DIR} -maxdepth 1 -name "*${R1_SUFFIX}" ! -name "Undetermined*" -exec basename {} \; | \
 			grep -v "Undetermined" | sed "s/${R1_SUFFIX}//") )
+
+			SAMPLE_ARRAY=( $(find ${FASTQ_DIR} -maxdepth 1 -name "*${R1_SUFFIX}" ! -name "Unassigned*" -exec basename {} \; | \
+            grep -v "Unassigned" | sed "s/${R1_SUFFIX}//") )
+
 #		    if [ ${#SAMPLE_ARRAY[@]} -eq 0 ] && [ $STEP -le 1 ]; then
 #			echo "No fastq.gz files found in the fastq directory. Exiting with code 1"
 #			echo "No fastq.gz files found in the fastq directory. Exiting with code 1" >> $PIPELINE_STATUS

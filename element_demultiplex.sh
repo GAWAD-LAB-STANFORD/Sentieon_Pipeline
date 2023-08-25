@@ -26,5 +26,4 @@ $BASE2FASTQ_DIR/bases2fastq $RUN_DIR $FASTQ_DIR
 #fix folder structure by moving to the Samples subfolder and then moving all files in their subfolders to the top structure
 cd $FASTQ_DIR/Samples
 
-find . -maxdepth 1 -exec mv {} $FASTQ_DIR/ \;
-
+find . -maxdepth 2 -type f -name "*.fastq.gz" -exec mv {} $FASTQ_DIR/ \;
