@@ -7,6 +7,7 @@
 #SBATCH --nodes=1
 #SBATCH --mem=60G
 
+set -x
 
 START_TIME=$(date +%s)
 TOOLS_DIR="/oak/stanford/groups/cgawad/Sequencing_Analysis_Tools/"
