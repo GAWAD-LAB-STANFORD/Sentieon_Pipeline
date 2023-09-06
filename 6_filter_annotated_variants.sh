@@ -274,12 +274,10 @@ head -n 1 *germline_merged_extract*.tsv > germline_header
 cat germline_header known_pathogenic.tsv > 01_germline_known_pathogenic.tsv
 
 grep athogenic *germline_merged_extract_snp*.tsv > snp_known_pathogenic.tsv
-cat germline_header snp_known_pathogenic.tsv > 01_snp_germline_known_pathogenic.tsv
-
-head -n 1 *germline_merged_extract_indel*.tsv > germline_indel_header
+cat header snp_known_pathogenic.tsv > 01_snp_germline_known_pathogenic.tsv
 
 grep athogenic *germline_merged_extract_indel*.tsv > indel_known_pathogenic.tsv
-cat germline_indel_header indel_known_pathogenic.tsv > 01_indel_germline_known_pathogenic.tsv
+cat indel_header indel_known_pathogenic.tsv > 01_indel_germline_known_pathogenic.tsv
 
 ### run deconstructSigs for clonal and non-clonal snv calls, note if something errored in scan2 doing this u have to fix it here too
 
