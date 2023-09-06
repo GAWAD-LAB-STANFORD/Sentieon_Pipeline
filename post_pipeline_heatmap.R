@@ -157,6 +157,11 @@ col_fun = structure(c("#978f8f", "#b2182b"), names = c(0,1))
 test_merged <- as.matrix(apply(test_merged, 1:2, as.numeric))
 
 #enforce no rows with all 0's, these can appear in data because "germline" sample is included in data ("germline" should have no reads as somatic mutations). additionally its possible (although usually unlikely) that other non-germline cells do not have any reads for any after filtering
+
+#we want to save the sample names of rows with all zeros so we can add them back in as empty rows into the heatmap after performing jaccard analysis. I think its fine to group these together at the top even if they are not reflected in the tree, probably preferable actaully to not show them as a part of the clustering
+
+
+#remove the rows
 test_merged <- test_merged[rowSums(test_merged[])>0,]
 print(test_merged)
 

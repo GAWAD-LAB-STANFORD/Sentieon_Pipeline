@@ -268,13 +268,18 @@ sbatch -c 2 --mem=32G -p cgawad --time=24:00:00 -e $STD_ERR_OUT_DIR/%A_${TSV_NAM
 
 grep athogenic *germline_merged_extract*.tsv > known_pathogenic.tsv
 #head -n1 *snp*final.tsv > header2
-cat header known_pathogenic.tsv > 01_germline_known_pathogenic.tsv
+
+head -n 1 *germline_merged_extract*.tsv > germline_header
+
+cat germline_header known_pathogenic.tsv > 01_germline_known_pathogenic.tsv
 
 grep athogenic *germline_merged_extract_snp*.tsv > snp_known_pathogenic.tsv
-cat header snp_known_pathogenic.tsv > 01_snp_germline_known_pathogenic.tsv
+cat germline_header snp_known_pathogenic.tsv > 01_snp_germline_known_pathogenic.tsv
+
+head -n 1 *germline_merged_extract_indel*.tsv > germline_indel_header
 
 grep athogenic *germline_merged_extract_indel*.tsv > indel_known_pathogenic.tsv
-cat indel_header indel_known_pathogenic.tsv > 01_indel_germline_known_pathogenic.tsv
+cat germline_indel_header indel_known_pathogenic.tsv > 01_indel_germline_known_pathogenic.tsv
 
 ### run deconstructSigs for clonal and non-clonal snv calls, note if something errored in scan2 doing this u have to fix it here too
 

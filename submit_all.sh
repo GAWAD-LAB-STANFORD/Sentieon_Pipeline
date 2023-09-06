@@ -630,9 +630,19 @@ if [ $STEP -eq 15 ]; then
                 echo "--only_step argument given, exiting"
                 exit
 	    fi
+
+if [ $SCAN2 -eq 1 ]; then
 		sbatch --dependency=afterany:$( IFS=$':'; echo "${DEPENDENCIES[*]}" ) -J $PROJECT \
 		    -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
-		    ${PIPELINE_DIR}/submit_all.sh --step3 ${OPTIONS[@]}
+		    ${PIPELINE_DIR}/submit_all.sh --step2 ${OPTIONS[@]}
+fi
+
+if [ $SCAN2 -eq 0 ]; then
+        sbatch --dependency=afterany:$( IFS=$':'; echo "${DEPENDENCIES[*]}" ) -J $PROJECT \
+            -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
+            ${PIPELINE_DIR}/submit_all.sh --step3 ${OPTIONS[@]}
+fi
+
 
 
 fi

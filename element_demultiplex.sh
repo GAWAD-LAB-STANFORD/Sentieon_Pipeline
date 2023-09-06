@@ -19,6 +19,8 @@ while [ "$1" != "" ]; do
     shift
 done
 
+source /home/groups/cgawad/element_python_environment/bin/activate
+
 BASE2FASTQ_DIR="/oak/stanford/projects/onc-seq/AV230702/"
 
 $BASE2FASTQ_DIR/bases2fastq $RUN_DIR $FASTQ_DIR
