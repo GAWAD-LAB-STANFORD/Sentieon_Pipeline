@@ -5,7 +5,7 @@
 #SBATCH --time=1-23:00:00
 #SBATCH --partition=cgawad
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=115G
+#SBATCH --mem=200G
 #SBATCH --time=4-00:00:00
 
 ml purge

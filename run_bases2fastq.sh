@@ -11,6 +11,7 @@
 RUN_DIR=$1
 FASTQ_DIR=$2
 
+ml python/3.6.1
 source /home/groups/cgawad/element_python_environment/bin/activate
 
 /oak/stanford/projects/onc-seq/AV230702/bases2fastq $RUN_DIR $FASTQ_DIR

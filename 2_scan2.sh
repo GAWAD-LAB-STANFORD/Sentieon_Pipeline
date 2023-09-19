@@ -5,7 +5,7 @@
 #SBATCH --partition=cgawad
 #SBATCH --cpus-per-task=4
 #SBATCH --nodes=1
-#SBATCH --mem=60G
+#SBATCH --mem=200G
 
 set -x
 
@@ -276,7 +276,7 @@ NORMAL_BAM_PATH="${RESULTS_DIR}/${NORMAL_SAMPLE_NAME}.realigned_deduped_sorted.b
 
 echo "normal sample is ${NORMAL_BAM_PATH}"
 
-SC_BAMS=$(find $RESULTS_DIR -maxdepth 1 -name "${SAMPLE_PREFIX}*.realigned_deduped_sorted.bam" -not -name "${NORMAL_BAM_PATH}")
+SC_BAMS=$(find $RESULTS_DIR -maxdepth 1 -name "${SAMPLE_PREFIX}*.realigned_deduped_sorted.bam" -not -name "${NORMAL_BAM_PATH}" -not -name "*${NORMAL_SAMPLE_NAME}*" -not -name "*${NORMAL_SAMPLE_NAME}.realigned_deduped_sorted.bam")
 
 echo "sc-bams is ${SC_BAMS}"
 
@@ -288,7 +288,7 @@ for i in ${SC_BAMS[@]}; do
         SCAN2_BAM_ARGS="${SCAN2_BAM_ARGS} ${TEMP}"
 done
 
-echo $SCAN2_BAM_ARGS
+echo Scan2 bam args are: $SCAN2_BAM_ARGS
 if [ $SKIP_PANEL -eq 0 ]; then
 	#need to call variants from another donor to do proper indel calling
 	CROSS_BAMS=$(find $CROSS_SAMPLE_DIR -maxdepth 1 -name "*.bam" -not -name "*bulk*")

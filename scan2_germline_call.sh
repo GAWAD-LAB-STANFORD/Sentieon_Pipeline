@@ -4,7 +4,7 @@
 #SBATCH --time=1-23:00:00
 #SBATCH --partition=cgawad
 #SBATCH --nodes=1
-#SBATCH --mem=60G
+#SBATCH --mem=200G
 #SBATCH --cpus-per-task=4
 
 RESULTS_DIR=$1
