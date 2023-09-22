@@ -113,17 +113,24 @@ fgrep -f unique_candidates ${PROJECT}_joint_germline_merged_extract_snp.hg38_mul
 head -n 1 ${PROJECT}_joint_germline_merged_extract_snp.hg38_multianno.tsv > 01_all_somatic_snvs_head.tsv
 cat 01_all_somatic_snvs_head.tsv 01_all_snv_variants.tsv > 01_all_somatic_snvs.tsv
 
+
+GT_COL_NUM=$( ($PIPELINE_DIR/colnum.sh 01_all_somatic_snvs.tsv GT) )
 ## find sites with >1 sample called
-awk '$119 == "0/1" || $119 == "1/1"' 01_all_somatic_snvs.tsv | cut -f1-5 | sort | uniq -c | awk '$1>1' | cut -c9- | sort > multiple_cells
+awk -v GT="$GT_COL_NUM" '$GT == "0/1" || $GT == "1/1"' 01_all_somatic_snvs.tsv | cut -f1-5 | sort | uniq -c | awk '$1>1' | cut -c9- | sort > multiple_cells
 
 ## pull out calls with >1 sample called
 grep -f multiple_cells 01_all_snv_variants.tsv > candidates.tsv
 
+## get the following column names and what number they are bc every time columns get inserted they shift
+AD_COLNUM=$( ($PIPELINE_DIR/colnum.sh 01_all_somatic_snvs.tsv AD) )
+DP_COLNUM=$( ($PIPELINE_DIR/colnum.sh 01_all_somatic_snvs.tsv DP) )
+
+#First number is supposed to be AD, second number is supposed to be DP
 ## calculate allele frequency for each call
-awk '{gsub(",","\t",$116)}1' candidates.tsv | sed 's/ /\t/g' | awk '{gsub("0","0.000001",$117)}1' | sed 's/ /\t/g' | awk '$118=$117/($116+$117)' | sed 's/ /\t/g' | awk '$123 = $1"_"$2"_"$3"_"$4"_"$5' | sed 's/ /\t/g'  > all_variants_AF.tsv
+awk '{gsub(",","\t",$117)}1' candidates.tsv | sed 's/ /\t/g' | awk '{gsub("0","0.000001",$118)}1' | sed 's/ /\t/g' | awk '$119=$118/($117+$118)' | sed 's/ /\t/g' | awk '$124 = $1"_"$2"_"$3"_"$4"_"$5' | sed 's/ /\t/g'  > all_variants_AF.tsv
 
 ## calculate average allele frequency by location and base change
-awk '$120 == "0/1" || $120 == "1/1"' all_variants_AF.tsv | sed 's/ /\t/g' | awk '{seen[$123]+=$118; count[$123]++} END{for (x in seen)print x, seen[x]/count[x]}' | sed 's/ /\t/g' > clonal_calls_pre.tsv
+awk '$121 == "0/1" || $121 == "1/1"' all_variants_AF.tsv | sed 's/ /\t/g' | awk '{seen[$124]+=$119; count[$124]++} END{for (x in seen)print x, seen[x]/count[x]}' | sed 's/ /\t/g' > clonal_calls_pre.tsv
 
 ## keep calls with average AF > 0.4 in called cells
 awk '$2 > 0.4' clonal_calls_pre.tsv | cut -f1 | sed 's/_/\t/g' > final_sites
@@ -172,18 +179,18 @@ head -n 1 ${PROJECT}_joint_germline_merged_extract_indel.hg38_multianno.tsv > 01
 cat all_indel_variants.tsv >> 01_all_somatic_indels.tsv
 
 ## find sites with >1 sample called
-awk '$114 == "0/1" || $114 == "1/1"' all_indel_variants.tsv | cut -f1-5 | sort | uniq -c | awk '$1>1' | cut -c9- | sort > multiple_indel_cells
+awk '$120 == "0/1" || $120 == "1/1"' all_indel_variants.tsv | cut -f1-5 | sort | uniq -c | awk '$1>1' | cut -c9- | sort > multiple_indel_cells
 ## pull out calls with >1 sample called
 ##DP FOR INDELS IS col 112, but for SNPs its 117, 
 grep -f multiple_indel_cells all_indel_variants.tsv > indel_candidates.tsv
 ## calculate allele frequency for each call, 
-## SNPS: 116=AD, 117=DP, 118=GQ
-##INDELS: 111=AD, 112=DP, 113=GQ
+## SNPS: 117=AD, 118=DP, 119=GQ
+##INDELS: 117=AD, 118=DP, 119=GQ
 ## awk '{gsub(",","\t",$116)}1' candidates.tsv | sed 's/ /\t/g' | awk '{gsub("0","0.000001",$117)}1' | sed 's/ /\t/g' | awk '$118=$117/($116+$117)' | sed 's/ /\t/g' | awk '$123 = $1"_"$2"_"$3"_"$4"_"$5' | sed 's/ /\t/g'  > all_variants_AF.tsv 
-awk '{gsub(",","\t",$111)}1' indel_candidates.tsv | sed 's/ /\t/g' | awk '{gsub("0","0.000001",$112)}1' | sed 's/ /\t/g' | awk '$113=$112/($111+$112)' | sed 's/ /\t/g' | awk '$118 = $1"_"$2"_"$3"_"$4"_"$5' | sed 's/ /\t/g'  > all_indels_AF.tsv
+awk '{gsub(",","\t",$117)}1' indel_candidates.tsv | sed 's/ /\t/g' | awk '{gsub("0","0.000001",$118)}1' | sed 's/ /\t/g' | awk '$119=$118/($117+$118)' | sed 's/ /\t/g' | awk '$124 = $1"_"$2"_"$3"_"$4"_"$5' | sed 's/ /\t/g'  > all_indels_AF.tsv
 
 ## calculate average allele frequency by location and base change
-awk '$115 == "0/1" || $115 == "1/1"' all_indels_AF.tsv | sed 's/ /\t/g' | awk '{seen[$118]+=$113; count[$118]++} END{for (x in seen)print x, seen[x]/count[x]}' | sed 's/ /\t/g' > clonal_indel_calls_pre.tsv
+awk '$121 == "0/1" || $121 == "1/1"' all_indels_AF.tsv | sed 's/ /\t/g' | awk '{seen[$124]+=$119; count[$124]++} END{for (x in seen)print x, seen[x]/count[x]}' | sed 's/ /\t/g' > clonal_indel_calls_pre.tsv
 ## keep calls with average AF > 0.4 in called cells
 awk '$2 > 0.4' clonal_indel_calls_pre.tsv | cut -f1 | sed 's/_/\t/g' > final_indel_sites
 ## pull out those sites and keep GATK pass
@@ -224,15 +231,15 @@ uniq nc_candidates > unique_nc_candidates
 fgrep -f unique_nc_candidates *_joint_germline_merged_extract_snp.hg38_multianno.tsv > all_nc_variants.tsv
 
 ## generate a non clonal calls file
-awk '$119 == "0/1" || $119 == "1/1"' all_nc_variants.tsv | cut -f1-5 | sort | uniq -c | awk '$1==1' | cut -c9- | sort > one_cell
+awk '$120 == "0/1" || $120 == "1/1"' all_nc_variants.tsv | cut -f1-5 | sort | uniq -c | awk '$1==1' | cut -c9- | sort > one_cell
 
 grep -f one_cell all_nc_variants.tsv > non_clonal_candidates.tsv
 
 ## calculate allele frequency for each call
-awk '{gsub(",","\t",$116)}1' non_clonal_candidates.tsv | sed 's/ /\t/g' | awk '{gsub("0","0.000001",$117)}1' | sed 's/ /\t/g' | awk '$118=$117/($116+$117)' | sed 's/ /\t/g' | awk '$123 = $1"_"$2"_"$3"_"$4"_"$5' | sed 's/ /\t/g'  > nc_all_variants_AF.tsv
+awk '{gsub(",","\t",$117)}1' non_clonal_candidates.tsv | sed 's/ /\t/g' | awk '{gsub("0","0.000001",$118)}1' | sed 's/ /\t/g' | awk '$119=$118/($117+$118)' | sed 's/ /\t/g' | awk '$124 = $1"_"$2"_"$3"_"$4"_"$5' | sed 's/ /\t/g'  > nc_all_variants_AF.tsv
 
 ## calculate average allele frequency by location and base change
-awk '$120 == "0/1" || $120 == "1/1"' nc_all_variants_AF.tsv | sed 's/ /\t/g' | awk '{seen[$123]+=$118; count[$123]++} END{for (x in seen)print x, seen[x]/count[x]}' | sed 's/ /\t/g' > non_clonal_calls_pre.tsv
+awk '$121 == "0/1" || $121 == "1/1"' nc_all_variants_AF.tsv | sed 's/ /\t/g' | awk '{seen[$124]+=$119; count[$124]++} END{for (x in seen)print x, seen[x]/count[x]}' | sed 's/ /\t/g' > non_clonal_calls_pre.tsv
 
 ## keep calls with average AF > 0.4 in called cells
 awk '$2 > 0.4' non_clonal_calls_pre.tsv | cut -f1 | sed 's/_/\t/g' > nc_final_sites

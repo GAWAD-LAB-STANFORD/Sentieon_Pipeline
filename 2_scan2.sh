@@ -276,7 +276,7 @@ NORMAL_BAM_PATH="${RESULTS_DIR}/${NORMAL_SAMPLE_NAME}.realigned_deduped_sorted.b
 
 echo "normal sample is ${NORMAL_BAM_PATH}"
 
-SC_BAMS=$(find $RESULTS_DIR -maxdepth 1 -name "${SAMPLE_PREFIX}*.realigned_deduped_sorted.bam" -not -name "${NORMAL_BAM_PATH}" -not -name "*${NORMAL_SAMPLE_NAME}*" -not -name "*${NORMAL_SAMPLE_NAME}.realigned_deduped_sorted.bam")
+SC_BAMS=$(find $RESULTS_DIR -maxdepth 1 -name "${SAMPLE_PREFIX}*.realigned_deduped_sorted.bam")
 
 echo "sc-bams is ${SC_BAMS}"
 
@@ -317,11 +317,15 @@ else
 fi
 echo BAM ARGS BEFORE STEPS START IS ${BAM_ARGS}
 echo SCAN2 BAM ARGS FOR CALL MUTS BEFOER STEPS IS ${SCAN2_BAM_ARGS}
+
+#BAM_ARGS get used for mutation calling (not direclty used for scan2 argument sample names)
 TEMP=$(echo ${BAM_ARGS} | sed 's/ -i /:/g')
 echo TEMP IS ${TEMP}
 BAM_SAMPLE_STRING=$(echo ${TEMP} | sed 's/-i //')
 echo BAM SAMPLE STRING IS ${BAM_SAMPLE_STRING}
-BAM_NAMES=$(find $RESULTS_DIR -maxdepth 1 -name "${SAMPLE_PREFIX}*.realigned_deduped_sorted.bam" -not -name "${NORMAL_SAMPLE_NAME}*" -exec basename {} \;)
+
+#may need to exclude normal sample from this bam calling
+BAM_NAMES=$(find $RESULTS_DIR -maxdepth 1 -name "${SAMPLE_PREFIX}*.realigned_deduped_sorted.bam" -exec basename {} \;)
 
 
 echo "### Running Scan2 SAMPLE: $PROJECT  ### - START: $(date)" >> $SCAN2_STATUS
@@ -453,6 +457,7 @@ if [ $STEP -eq 1 ]; then
 
 		#making the metadata.csv
 
+		#Bam names shouldn't have the germline name in it, but it doesn't break things if germline is erroneously labeled a single cell, it's just inefficient
 		BAM_NAMES=$(find $RESULTS_DIR -maxdepth 1 -name "${SAMPLE_PREFIX}*.realigned_deduped_sorted.bam" -not -name "${NORMAL_SAMPLE_NAME}*" -exec basename {} \;)
 
 		cd $SCAN2_RESULTS

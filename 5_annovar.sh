@@ -226,17 +226,17 @@ fi
 SNP_EXTRACT=${SNP_PREFIX}_extract_snp
 INDEL_EXTRACT=${SNP_PREFIX}_extract_indel
 
-perl ${ANNOVAR_DIR}/table_annovar.pl ${SNP_EXTRACT}.vcf.gz -vcfinput -operation g,f,f,f,f,f,f \
+perl ${ANNOVAR_DIR}/table_annovar.pl ${SNP_EXTRACT}.vcf.gz -vcfinput -operation g,f,f,f,f,f,f,f \
     ${ANNOVAR_DIR}/humandb -buildver $ANNOVAR_GENOME_VERSION \
     -out ${SNP_EXTRACT} -nastring . -remove -otherinfo \
-    -protocol refGene,avsnp150,dbnsfp35c,clinvar_20221231,cosmic91_coding,cosmic91_noncoding,gnomad211_exome
+    -protocol refGene,avsnp150,dbnsfp35c,clinvar_20221231,cosmic91_coding,cosmic91_noncoding,gnomad211_exome,AlphaMissense_hg38
 
 
 
-perl ${ANNOVAR_DIR}/table_annovar.pl ${INDEL_EXTRACT}.vcf.gz -vcfinput -operation g,f,f,f,f,f,f \
+perl ${ANNOVAR_DIR}/table_annovar.pl ${INDEL_EXTRACT}.vcf.gz -vcfinput -operation g,f,f,f,f,f,f,f \
     ${ANNOVAR_DIR}/humandb -buildver $ANNOVAR_GENOME_VERSION \
     -out ${INDEL_EXTRACT} -nastring . -remove -otherinfo \
-    -protocol refGene,avsnp150,dbnsfp35c,clinvar_20221231,cosmic91_coding,cosmic91_noncoding,gnomad211_exome
+    -protocol refGene,avsnp150,dbnsfp35c,clinvar_20221231,cosmic91_coding,cosmic91_noncoding,gnomad211_exome,AlphaMissense_hg38
 
 
 
