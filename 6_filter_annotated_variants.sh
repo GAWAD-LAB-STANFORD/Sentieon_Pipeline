@@ -13,6 +13,8 @@
 
 set -xv
 
+options(error = quote({dump.frames(to.file=TRUE); q()}))
+
 echo "### Annotating SNPs and Indels ###: $(date)"
 ml purge
 ml gsl/2.3
@@ -127,10 +129,10 @@ DP_COLNUM=$( ($PIPELINE_DIR/colnum.sh 01_all_somatic_snvs.tsv DP) )
 
 #First number is supposed to be AD, second number is supposed to be DP
 ## calculate allele frequency for each call
-awk '{gsub(",","\t",$117)}1' candidates.tsv | sed 's/ /\t/g' | awk '{gsub("0","0.000001",$118)}1' | sed 's/ /\t/g' | awk '$119=$118/($117+$118)' | sed 's/ /\t/g' | awk '$124 = $1"_"$2"_"$3"_"$4"_"$5' | sed 's/ /\t/g'  > all_variants_AF.tsv
+awk '{gsub(",","\t",$122)}1' candidates.tsv | sed 's/ /\t/g' | awk '{gsub("0","0.000001",$123)}1' | sed 's/ /\t/g' | awk '$124=$123/($122+$123)' | sed 's/ /\t/g' | awk '$125 = $1"_"$2"_"$3"_"$4"_"$5' | sed 's/ /\t/g'  > all_variants_AF.tsv
 
 ## calculate average allele frequency by location and base change
-awk '$121 == "0/1" || $121 == "1/1"' all_variants_AF.tsv | sed 's/ /\t/g' | awk '{seen[$124]+=$119; count[$124]++} END{for (x in seen)print x, seen[x]/count[x]}' | sed 's/ /\t/g' > clonal_calls_pre.tsv
+awk '$126 == "0/1" || $126 == "1/1"' all_variants_AF.tsv | sed 's/ /\t/g' | awk '{seen[$125]+=$124; count[$125]++} END{for (x in seen)print x, seen[x]/count[x]}' | sed 's/ /\t/g' > clonal_calls_pre.tsv
 
 ## keep calls with average AF > 0.4 in called cells
 awk '$2 > 0.4' clonal_calls_pre.tsv | cut -f1 | sed 's/_/\t/g' > final_sites
@@ -230,16 +232,18 @@ uniq nc_candidates > unique_nc_candidates
 
 fgrep -f unique_nc_candidates *_joint_germline_merged_extract_snp.hg38_multianno.tsv > all_nc_variants.tsv
 
+NC_GT_COL_NUM=$( ($PIPELINE_DIR/colnum.sh all_nc_variants.tsv GT) )
+## find sites with >1 sample called
 ## generate a non clonal calls file
-awk '$120 == "0/1" || $120 == "1/1"' all_nc_variants.tsv | cut -f1-5 | sort | uniq -c | awk '$1==1' | cut -c9- | sort > one_cell
+awk '$125 == "0/1" || $125 == "1/1"' all_nc_variants.tsv | cut -f1-5 | sort | uniq -c | awk '$1==1' | cut -c9- | sort > one_cell
 
 grep -f one_cell all_nc_variants.tsv > non_clonal_candidates.tsv
 
 ## calculate allele frequency for each call
-awk '{gsub(",","\t",$117)}1' non_clonal_candidates.tsv | sed 's/ /\t/g' | awk '{gsub("0","0.000001",$118)}1' | sed 's/ /\t/g' | awk '$119=$118/($117+$118)' | sed 's/ /\t/g' | awk '$124 = $1"_"$2"_"$3"_"$4"_"$5' | sed 's/ /\t/g'  > nc_all_variants_AF.tsv
+awk '{gsub(",","\t",$122)}1' non_clonal_candidates.tsv | sed 's/ /\t/g' | awk '{gsub("0","0.000001",$123)}1' | sed 's/ /\t/g' | awk '$123=$123/($122+$123)' | sed 's/ /\t/g' | awk '$125 = $1"_"$2"_"$3"_"$4"_"$5' | sed 's/ /\t/g'  > nc_all_variants_AF.tsv
 
 ## calculate average allele frequency by location and base change
-awk '$121 == "0/1" || $121 == "1/1"' nc_all_variants_AF.tsv | sed 's/ /\t/g' | awk '{seen[$124]+=$119; count[$124]++} END{for (x in seen)print x, seen[x]/count[x]}' | sed 's/ /\t/g' > non_clonal_calls_pre.tsv
+awk '$126 == "0/1" || $126 == "1/1"' nc_all_variants_AF.tsv | sed 's/ /\t/g' | awk '{seen[$125]+=$124; count[$125]++} END{for (x in seen)print x, seen[x]/count[x]}' | sed 's/ /\t/g' > non_clonal_calls_pre.tsv
 
 ## keep calls with average AF > 0.4 in called cells
 awk '$2 > 0.4' non_clonal_calls_pre.tsv | cut -f1 | sed 's/_/\t/g' > nc_final_sites
@@ -280,11 +284,19 @@ head -n 1 *germline_merged_extract*.tsv > germline_header
 
 cat germline_header known_pathogenic.tsv > 01_germline_known_pathogenic.tsv
 
-grep athogenic *germline_merged_extract_snp*.tsv > snp_known_pathogenic.tsv
-cat header snp_known_pathogenic.tsv > 01_snp_germline_known_pathogenic.tsv
+AM_PATHOGENICITY_COL_NUM=$( ($PIPELINE_DIR/colnum.sh ${PROJECT}_joint_germline_merged_extract_snp.hg38_multianno.tsv am_pathogenicity) )
 
-grep athogenic *germline_merged_extract_indel*.tsv > indel_known_pathogenic.tsv
-cat indel_header indel_known_pathogenic.tsv > 01_indel_germline_known_pathogenic.tsv
+awk -v AM_PATH="$AM_PATH_COL_NUM" '$AM_PATH>0.5' ${PROJECT}_joint_germline_merged_extract_snp.hg38_multianno.tsv > 01_snp_germline_known_pathogenic.tsv
+
+$AM_PATHOGENICITY_COL_NUM=$( ($PIPELINE_DIR/colnum.sh ${PROJECT}_joint_germline_merged_extract_indel.hg38_multianno.tsv am_pathogenicity) )
+
+awk -v AM_PATH="$AM_PATH_COL_NUM" '$AM_PATH>0.5' ${PROJECT}_joint_germline_merged_extract_indel.hg38_multianno.tsv > 01_indel_germline_known_pathogenic.tsv
+
+## the old way of doing it
+#grep athogenic *germline_merged_extract_snp*.tsv > snp_known_pathogenic.tsv
+#cat header snp_known_pathogenic.tsv > 01_snp_germline_known_pathogenic.tsv
+#grep athogenic *germline_merged_extract_indel*.tsv > indel_known_pathogenic.tsv
+#cat indel_header indel_known_pathogenic.tsv > 01_indel_germline_known_pathogenic.tsv
 
 ### run deconstructSigs for clonal and non-clonal snv calls, note if something errored in scan2 doing this u have to fix it here too
 
@@ -346,15 +358,19 @@ grep -v ncRNA functional_indels > functional_indels2
 head -n 1 indel_header > 01_functional_clonal_somatic_indels.tsv
 cat functional_indels2 >> 01_functional_clonal_somatic_indels.tsv
 
-
+if [[ $TARGETED -eq 0 ]]; then
 Rscript --verbose $PIPELINE_DIR/post_pipeline_heatmap.R --project snv_indel --directory $RESULTS_DIR --snv_filename 01_final_clonal_somatic_snvs.tsv --indel_filename 01_final_clonal_indel_calls.tsv > $STD_ERR_OUT_DIR/post_pipeline_heatmaps.Rout 2>&1
+fi
 
+if [[ $TARGETED -eq 1 ]]; then
+Rscript --verbose $PIPELINE_DIR/post_pipeline_heatmap.R --project snv_indel --directory $RESULTS_DIR --snv_filename 01_final_clonal_somatic_snvs.tsv --indel_filename 01_final_clonal_indel_calls.tsv --exome > $STD_ERR_OUT_DIR/post_pipeline_heatmaps.Rout 2>&1
+fi
 
 # this way of doing things is deprecated
 mkdir -p 01_final_outputs
 rsync -a --exclude '01_final_outputs' ${RESULTS_DIR}/01* 01_final_outputs/
 
-#PLEASE JUST PUT IT IN THE FOLDER WHY DOES THE PDF RANDOMLY GET DELTED WTF
+#PLEASE JUST PUT IT IN THE FOLDER WHY DOES THE PDF RANDOMLY GET DELTED
 rsync -a *vaf_heatmap.pdf 01_final_outputs/
 
 if [[ $EMAIL -eq 1 ]]; then

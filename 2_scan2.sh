@@ -458,7 +458,7 @@ if [ $STEP -eq 1 ]; then
 		#making the metadata.csv
 
 		#Bam names shouldn't have the germline name in it, but it doesn't break things if germline is erroneously labeled a single cell, it's just inefficient
-		BAM_NAMES=$(find $RESULTS_DIR -maxdepth 1 -name "${SAMPLE_PREFIX}*.realigned_deduped_sorted.bam" -not -name "${NORMAL_SAMPLE_NAME}*" -exec basename {} \;)
+		BAM_NAMES=$(find $RESULTS_DIR -maxdepth 1 -name "${SAMPLE_PREFIX}*.realigned_deduped_sorted.bam" -exec basename {} \;)
 
 		cd $SCAN2_RESULTS
 
@@ -699,7 +699,7 @@ echo "### Analyzing Scan2 mutational rates and true positives ### - START: $(dat
 
 if [ $STEP -eq 3 ]; then
 
-	BAM_NAMES=$(find $RESULTS_DIR -maxdepth 1 -name "${SAMPLE_PREFIX}*.realigned_deduped_sorted.bam" -not -name "${NORMAL_SAMPLE_NAME}*" -exec basename {} \;)
+	BAM_NAMES=$(find $RESULTS_DIR -maxdepth 1 -name "${SAMPLE_PREFIX}*.realigned_deduped_sorted.bam" -exec basename {} \;)
 
 	SCAN2_RESCUE_ARGS=""
 	for dir in $RESULTS_DIR/$SCAN2_RESULTS/call_mutations/*/; do

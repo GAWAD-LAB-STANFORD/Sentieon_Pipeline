@@ -67,9 +67,9 @@ addColumns <- function(df) {
   print('parsed sample name')
   df <- separate(df, 'AD', into=c("AD_ref", "AD_alt"), sep=",")
   print('seperated AD')
-  df$'genotype' = paste0(df$'Gene.refGene','_', df$'CHROM', '_', df$'POS')
+  df$'genotype' = paste0(df$'Gene.refGene','_', df$'CHROM', '_', df$'POS','_', df$'Func.refGene')
   print('genotype column created')
-  df$'VAF' <- as.numeric(df$'AD_alt')/as.numeric(df$'DP.1')
+  df$'VAF' <- as.numeric(df$'AD_alt')/(as.numeric(df$'AD_alt') + as.numeric(df$'AD_ref'))
   print('VAF column created')
   df <- df %>% filter(MQ > 59)
   print('filtered mq')
@@ -133,6 +133,7 @@ indel_df <- readTable(directory, indels)
 snv_df_updated <- addColumns(snv_df)
 indel_df_updated <- addColumns(indel_df)
 snv_premat_df <- create_is_mutated_column(snv_df_updated)
+write.table(snv_premat_df, file=paste0(directory,"/snv_premat_df.csv"), sep = ",", row.names=FALSE)
 indel_premat_df <- create_is_mutated_column(indel_df_updated)
 mat <- makeMatrix(snv_premat_df, 'SAMPLE_long', 'genotype', 'is_mutated')
 mat2 <- makeMatrix(indel_premat_df, 'SAMPLE_long', 'genotype', 'is_mutated')
@@ -165,7 +166,7 @@ test_merged <- as.matrix(apply(test_merged, 1:2, as.numeric))
 test_merged <- test_merged[rowSums(test_merged[])>0,]
 print(test_merged)
 
-write.table(test_merged,file=paste0(directory,"/vaf_heatmap_matrix.csv",sep=",")
+write.table(test_merged,file=paste0(directory,"/vaf_heatmap_matrix.csv"),sep=",")
 
 
 library(vegan)
