@@ -13,8 +13,6 @@
 
 set -xv
 
-options(error = quote({dump.frames(to.file=TRUE); q()}))
-
 echo "### Annotating SNPs and Indels ###: $(date)"
 ml purge
 ml gsl/2.3
@@ -127,10 +125,18 @@ grep -f multiple_cells 01_all_snv_variants.tsv > candidates.tsv
 AD_COLNUM=$( ($PIPELINE_DIR/colnum.sh 01_all_somatic_snvs.tsv AD) )
 DP_COLNUM=$( ($PIPELINE_DIR/colnum.sh 01_all_somatic_snvs.tsv DP) )
 
+## THIS IS NOT A GOOD WAY OF DOING THINGS
+# you really don't want to be selecting columns by the number instead of a header, i don't have 
+# time to fix this right now but at some point in the future change all of these to use a 
+# column name instead of column number 
+
 #First number is supposed to be AD, second number is supposed to be DP
+# the division equality (124) is a new column in the 124th slot with the VAF
+# the next number (125) is a combination of the first 5 columnst o create a unique identifier
 ## calculate allele frequency for each call
 awk '{gsub(",","\t",$122)}1' candidates.tsv | sed 's/ /\t/g' | awk '{gsub("0","0.000001",$123)}1' | sed 's/ /\t/g' | awk '$124=$123/($122+$123)' | sed 's/ /\t/g' | awk '$125 = $1"_"$2"_"$3"_"$4"_"$5' | sed 's/ /\t/g'  > all_variants_AF.tsv
 
+# 126 is the GT column, the next awk statement counts the number of unique identifiers 
 ## calculate average allele frequency by location and base change
 awk '$126 == "0/1" || $126 == "1/1"' all_variants_AF.tsv | sed 's/ /\t/g' | awk '{seen[$125]+=$124; count[$125]++} END{for (x in seen)print x, seen[x]/count[x]}' | sed 's/ /\t/g' > clonal_calls_pre.tsv
 
