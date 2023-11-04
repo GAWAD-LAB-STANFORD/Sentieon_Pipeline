@@ -80,13 +80,12 @@ head -n 1 ${PROJECT}_svc_merged_extract_snp.hg38_multianno.tsv > fixed_header.tx
 
 echo VAF col number is ${VAF_COL_NUM}
 
+#old column numbers left here for reference
 #awk '$126>0.4 && $127>9' *_svc_merged_extract_snp.hg38_multianno.tsv | cut -f1-5  | sort > candidates
 
 awk -v VAF="$VAF_COL_NUM" -v DP="$DP_COL_NUM" '$VAF>0.4 && $DP>9' ${PROJECT}_svc_merged_extract_snp.hg38_multianno.no_germline.tsv | cut -f1-5  | sort > candidates
 
 
-#this only pulls snp's is that okay?
-## pull Mutect calls out of GATK file
 
 ulimit -a 
 
@@ -194,6 +193,8 @@ grep -f multiple_indel_cells all_indel_variants.tsv > indel_candidates.tsv
 ## calculate allele frequency for each call, 
 ## SNPS: 117=AD, 118=DP, 119=GQ
 ##INDELS: 117=AD, 118=DP, 119=GQ
+
+#old column numbers kept here for reference
 ## awk '{gsub(",","\t",$116)}1' candidates.tsv | sed 's/ /\t/g' | awk '{gsub("0","0.000001",$117)}1' | sed 's/ /\t/g' | awk '$118=$117/($116+$117)' | sed 's/ /\t/g' | awk '$123 = $1"_"$2"_"$3"_"$4"_"$5' | sed 's/ /\t/g'  > all_variants_AF.tsv 
 awk '{gsub(",","\t",$117)}1' indel_candidates.tsv | sed 's/ /\t/g' | awk '{gsub("0","0.000001",$118)}1' | sed 's/ /\t/g' | awk '$119=$118/($117+$118)' | sed 's/ /\t/g' | awk '$124 = $1"_"$2"_"$3"_"$4"_"$5' | sed 's/ /\t/g'  > all_indels_AF.tsv
 
@@ -290,6 +291,8 @@ head -n 1 *germline_merged_extract*.tsv > germline_header
 
 cat germline_header known_pathogenic.tsv > 01_germline_known_pathogenic.tsv
 
+#use alpha-missense annotation t
+
 AM_PATHOGENICITY_COL_NUM=$( ($PIPELINE_DIR/colnum.sh ${PROJECT}_joint_germline_merged_extract_snp.hg38_multianno.tsv am_pathogenicity) )
 
 awk -v AM_PATH="$AM_PATH_COL_NUM" '$AM_PATH>0.5' ${PROJECT}_joint_germline_merged_extract_snp.hg38_multianno.tsv > 01_snp_germline_known_pathogenic.tsv
@@ -331,11 +334,6 @@ mkdir -p $CLONAL_DS
 
 Rscript --verbose $PIPELINE_DIR/deconstructSigs.R $CLONAL_DS/ $RESULTS_DIR/01_final_clonal_somatic_snvs.tsv > $STD_ERR_OUT_DIR/deconstructSigs_clonal.Rout 2>&1
 Rscript --verbose $PIPELINE_DIR/deconstructSigs.R $NON_CLONAL_DS/ $RESULTS_DIR/01_final_non_clonal_somatic_snvs.tsv > $STD_ERR_OUT_DIR/deconstructSigs_nc.Rout 2>&1
-
-#sbatch -c 2 --mem=32G --time=24:00:00 -p cgawad -o "$STD_ERR_OUT_DIR/%A_deconstructSigs_clonal.out" --wrap="Rscript $PIPELINE_DIR/deconstructSigs.R $SIGS_OUTPUTS/ 01_final_clonal_somatic_calls.tsv" 
-#mv $SIGS_OUTPUTS/01_combined_stacked_mutsig_plot.pdf $SIGS_OUTPUTS/01_combined_clonal_stacked_mutsig_plot.pdf
-#sbatch -c 2 --mem=32G --time=24:00:00 -p cgawad -o "$STD_ERR_OUT_DIR/%A_deconstructSigs_non_clonal.out" --wrap="Rscript $PIPELINE_DIR/deconstructSigs.R $SIGS_OUTPUTS/ 01_final_non_clonal_somatic_calls.tsv"  
-#mv $SIGS_OUTPUTS/01_combined_stacked_mutsig_plot.pdf $SIGS_OUTPUTS/01_combined_non_clonal_stacked_mutsig_plot.pdf
 
 ## use pdfunite now to merge the graphs
 
@@ -388,16 +386,6 @@ if [[ $EMAIL -eq 1 ]]; then
 #######
 
 rm temp_mq40.tsv
-
-#mkdir -p mutation_calls/
-#mv *multianno* mutation_calls/
-#mv *vqsr.vcf* mutation_calls/
-#mv *.g.vcf* mutation_calls/
-#mv candidates* mutation_calls/
-#mv final_sites* mutation_calls/
-#mv all_variants* mutation_calls/
-#mv *calls_pre* mutation_calls/
-
 rm *bed
 rm *.g.vcf.gz*
 rm -rf *gdb
