@@ -53,9 +53,9 @@ TOOLS_DIR="/oak/stanford/groups/cgawad/Sequencing_Analysis_Tools/"
 #change made
 
 ##IMPORT DEBUGGING NOTE##
-#R SCRIPTS ASSOCIATED WITH SCAN2 WILL SUPER DUPER BREAK IF YOU DONT PUT .libPaths("/home/groups/cgawad/miniconda3/envs/update_scan2/lib/R/library")
+#R SCRIPTS ASSOCIATED WITH SCAN2 WILL SUPER DUPER BREAK IF YOU DONT PUT .libPaths("/home/groups/cgawad/miniconda3/envs/scan2/lib/R/library")
 #IN THEM, THIS IS ASSOCIATED WITH SOME PROBLEM WITH THE CONDA ENVIRONMENTS THAT I AM NOT SURE ABOUT, THIS WORKAROUND SHOULD FIX ERRORS AND THE SCRIPTS
-#IN update_scan2 CONDA ENVIRONMENT ALREADY HAVE THIS LINE ADDED IN
+#IN scan2 CONDA ENVIRONMENT ALREADY HAVE THIS LINE ADDED IN
 
 ##MAY NEED TO DO IF STATEMENT WHERE IF ITS EXOME JUST DONT INPUT REGIONS FOR CALL_MUTATIONS/MAKE_PANEL, NOT ENTIRELY SURE THE REGIONS DO ANYTHING IF ITS NOT CALLING MUTATIONS, CUZ IT SEEMS LIKE IT ACTUALLY MAKES THINGS SLOWER/HANG WHEN CALCULATING HOW TO SPLIT UP THE JOBS BY REGION
 
@@ -157,9 +157,6 @@ while [ "$1" != "" ]; do
     shift
 done
 
-echo YOU ARE USING TEST SCAN2 PIPELINE!!!!!
-
-
 #del after debugging
 
 #OPTIONS=()
@@ -256,7 +253,7 @@ source /home/groups/cgawad/miniconda3/etc/profile.d/conda.sh
 
 conda deactivate
 
-conda activate update_scan2
+conda activate scan2 
 
 SCAN2_RESULTS="Scan2_Results_${PROJECT}"
 
@@ -530,7 +527,7 @@ if [ $STEP -eq 1 ]; then
 	#--regions-file $INTERVAL_LIST \
 	#uncomment after testing mustig rescue
 	# --mem={resources.mem}   <---- put this back into the sbatch args if stuff breaks
-	DEPENDENCIES=( $(sbatch --time=7-00:00:00 -p cgawad scan2 run --joblimit 95 --snakemake-args " --keep-going --max-status-checks-per-second 0.1" --cluster 'sbatch -p cgawad -c {threads} --mem={resources.mem} -t 7-00:00:00 -o %logdir/slurm-%A.log') )
+	DEPENDENCIES=( $(sbatch --time=7-00:00:00 -p cgawad scan2 run --joblimit 95 --snakemake-args " --keep-going --max-status-checks-per-second 0.1" --cluster 'sbatch -p cgawad -c {threads} --mem=200G -t 7-00:00:00 -o %logdir/slurm-%A.log') )
 		echo dependencies are ${DEPENDENCIES[-1]}
 		DEPENDENCIES="${DEPENDENCIES[-1]}"
 		echo dependencies are ${DEPENDENCIES}
@@ -578,7 +575,7 @@ echo "### Running call_mutations SAMPLE: $SAMPLE_NAME Time: $(date) ###" >> $SCA
 
 	conda deactivate
 
-	conda activate update_scan2
+	conda activate scan2 
     cd $SCAN2_RESULTS
 
 #changed some core numbers (besides abmodel-n-cores) to hopefully make scan2 run smoother and also use all cores on cluster if posisble, get
@@ -610,23 +607,7 @@ echo "### Running call_mutations SAMPLE: $SAMPLE_NAME Time: $(date) ###" >> $SCA
 		echo REGIONS BED IS $REGIONS_BED
 		echo GATK VCF IS $GATK_VCF
 		echo NORMAL BAM IS $NORMAL_BAM_PATH
-		#im doing this all on one line from now on because linux shell hates me and wants me to die
-		#this is entirely completley unequivocally broken and i have no idea why
 	
-		echo "*** comand about to pass is: 
-			scan2 config \
-                         --eagle-refpanel "/oak/stanford/groups/cgawad/Reference_Files/GATK_Resource_Bundle_hg38/eagle_1000g_panel" \
-                         --eagle-genmap "/oak/stanford/groups/cgawad/Reference_Files/GATK_Resource_Bundle_hg38/genetic_map_hg38_withX.txt.gz" \                         --verbose \
-                         --genome 'hg38' \
-                         --phaser "eagle" \
-                         --gatk "gatk3_joint" \
-                         --ref $REF_FASTA \
-                         --abmodel-n-cores 10 \
-                         --dbsnp $DBSNP_VCF \
-                         --bulk-bam $NORMAL_BAM_PATH \
-                         --gatk-vcf $GATK_VCF \
-                         --regions-file $REGIONS_BED \
-                         $SCAN2_BAM_ARGS"
 		
 		scan2 config \
 			 --eagle-refpanel "/oak/stanford/groups/cgawad/Reference_Files/GATK_Resource_Bundle_hg38/eagle_1000g_panel" \
@@ -653,7 +634,7 @@ echo "### Running call_mutations SAMPLE: $SAMPLE_NAME Time: $(date) ###" >> $SCA
 #--mem={resources.mem} <--- put this back in cluster sbatch args if stuff breaks
 #Dr. Luquette recommends maximum possible job limit, but i vaguely remember job limits higher than 95 causing some issues of potential hanging/just taking a really long time to compute and queue up jobs, might be worth trying changing --joblimit to 1000 if want to speed things up
 #i think 1000 job limit is better, the cluster has a job limit of 1000 anyways
-	DEPENDENCIES=( $(sbatch --time=7-00:00:00 -p cgawad scan2 run --joblimit 1000 --snakemake-args " --keep-going --max-status-checks-per-second 0.1" --cluster 'sbatch -p cgawad -c {threads} --mem={resources.mem} -t 7-00:00:00 -o %logdir/slurm-%A.log') )
+	DEPENDENCIES=( $(sbatch --time=7-00:00:00 -p cgawad scan2 run --joblimit 1000 --snakemake-args " --keep-going --max-status-checks-per-second 0.1" --cluster 'sbatch -p cgawad -c {threads} --mem=200G -t 7-00:00:00 -o %logdir/slurm-%A.log') )
 #
 #
      echo "Scan2 configured"
