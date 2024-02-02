@@ -364,7 +364,7 @@ if [ $STEP -eq 0 ] && [ ! -z $RUN_DIR ] && [ $ONLY_VARIANT_CALL -eq 0 ] && [ $EL
 elif [ $STEP -eq 0 ] && [ $ELEMENT -eq 1 ]; then
     echo -e "\nsbatch --parsable -e ${STD_ERR_OUT_DIR}/%A_element_demultiplex_%x.err -o ${STD_ERR_OUT_DIR}/%A_element_demultiplex_%x.out \
         ${PIPELINE_DIR}/element_demultiplex.sh --run_dir $RUN_DIR --fastq_dir $FASTQ_DIR\n" >> $PIPELINE_STATUS
-    DEPENDENY=$(sbatch --parsable -e ${STD_ERR_OUT_DIR}/%A_element_demultiplex_%x.err -o ${STD_ERR_OUT_DIR}/%A_element_demultiplex_%x.out \
+    DEPENDENCY=$(sbatch --parsable -e ${STD_ERR_OUT_DIR}/%A_element_demultiplex_%x.err -o ${STD_ERR_OUT_DIR}/%A_element_demultiplex_%x.out \
         ${PIPELINE_DIR}/element_demultiplex.sh --run_dir $RUN_DIR --fastq_dir $FASTQ_DIR)
     echo -e "\nsbatch --parsable --dependency=afterok:$DEPENDENCY -J $PROJECT \
         -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
@@ -390,7 +390,7 @@ elif ([ $STEP -eq 0 ] && [ -z $RUN_DIR ] && [ $ONLY_VARIANT_CALL -eq 0 ]) || [ $
         --array=1-${TEMP_JOB_COUNT} -p cgawad ${PIPELINE_DIR}/1_sentieon_BAM_construction.sh \
         $SCRATCH_DIR $SKIP_TRIMMOMATIC $SCRIPT_DIR $TOOLS_DIR $R1_SUFFIX $R2_SUFFIX $REF_FASTA \
         $NUMBER_THREADS $TEMP_SAMPLES_STRING $FASTQ_DIR $DBSNP_VCF $PROJECT $SKIP_BAM $TARGETED $STD_ERR_OUT_DIR $TARGETS_BED\n" >> $PIPELINE_STATUS
-    DEPENDENY=$(sbatch --parsable -e $STD_ERR_OUT_DIR/%A_bam_construction_%x.err -o $STD_ERR_OUT_DIR/%A_bam_construction_%x.out \
+    DEPENDENCY=$(sbatch --parsable -e $STD_ERR_OUT_DIR/%A_bam_construction_%x.err -o $STD_ERR_OUT_DIR/%A_bam_construction_%x.out \
         --array=1-${TEMP_JOB_COUNT} -p cgawad ${PIPELINE_DIR}/1_sentieon_BAM_construction.sh \
         $SCRATCH_DIR $SKIP_TRIMMOMATIC $SCRIPT_DIR $TOOLS_DIR $R1_SUFFIX $R2_SUFFIX $REF_FASTA \
         $NUMBER_THREADS $TEMP_SAMPLES_STRING $FASTQ_DIR $DBSNP_VCF $PROJECT $SKIP_BAM $TARGETED $STD_ERR_OUT_DIR $TARGETS_BED)
