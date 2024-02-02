@@ -12,10 +12,8 @@ RESULTS_DIR=$1
 SCRIPT_DIR=$2
 PROJECT=$3
 TARGETED=$4
-CELL_BARCODES=$5
-UMI_PATTERN=$6
-RUN_DIR=$7
-SAMPLE_SHEET=$8
+RUN_DIR=$5
+SAMPLE_SHEET=$6
 
 cd $RESULTS_DIR
 
@@ -191,12 +189,6 @@ if [ $TARGETED -eq 1 ]; then
         Rscript ${SCRIPT_DIR}/graph_coverage.R ${PROJECT}.merged_targeted_coverage_5M_reads.tsv $PROJECT "5M_reads_targeted"
     fi
 fi
-if [ "$CELL_BARCODES" != "0" ] || [ "$UMI_PATTERN" != "0" ]; then
-    EXTRACTION_METRICS_FILENAMES=( $(ls *.extraction_metrics.tsv) )
-    head -n 1 ${EXTRACTION_METRICS_FILENAMES[0]} > ${PROJECT}.extraction_metrics_merged.tsv
-    for i in ${EXTRACTION_METRICS_FILENAMES[@]}; do tail -n +2 $i; done >> ${PROJECT}.merged_extraction_metrics.tsv
-    echo "Merged extraction metrics"
-fi
 echo "### Summarizing metrics ### - END: $(date)"
 
 echo "### Deleting intermediate files ### - START: $(date)"
@@ -210,9 +202,6 @@ if [ -f ${PROJECT}.temporary_3_column_bed_interval_file ]; then
 fi
 if [ $TARGETED -eq 1 ]; then
     rm ${TARGETED_COVERAGE_FILENAMES[@]} ${TARGETED_DOWN_SAMPLE_COV_FILENAMES[@]}
-fi
-if [ "$CELL_BARCODES" != "0" ] || [ "$UMI_PATTERN" != "0" ]; then
-    rm ${EXTRACTION_METRICS_FILENAMES[@]}
 fi
 
 grep 999900000000.0 ${PROJECT}.merged_preseq_future_coverage.tsv | sort -k1 | awk -F'\t' '$6=$3/1000000000' | sed 's/ /\t/g' | cut -f6 | sed '1i Predicted_Billion_Bases_Covered' > ${PROJECT}.preseq.qual

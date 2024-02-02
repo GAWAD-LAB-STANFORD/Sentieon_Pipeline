@@ -21,10 +21,9 @@ FASTQ_DIR=${10}
 dbSNP=${11}
 PROJECT=${12}
 SKIP_BAM=${13}
-SKIP_QC=${14}
-TARGETED=${15}
-STD_ERR_OUT_DIR=${16}
-TARGETS_BED=${17}
+TARGETED=${14}
+STD_ERR_OUT_DIR=${15}
+TARGETS_BED=${16}
 
 echo "1 is: $1, 2 is $2, 3 is: $3, 4 is: $4, 5 is $5, 6 is $6, 7 is $7, 8 is $8, 9 is $9, 10 is ${10}, 11 is ${11}, 13 is ${13}, 14 is ${14}, 15 is ${15}, 16 is ${16}"
 
