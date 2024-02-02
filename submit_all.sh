@@ -370,7 +370,7 @@ elif [ $STEP -eq 0 ] && [ $ELEMENT -eq 1 ]; then
         -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
         ${PIPELINE_DIR}/submit_all.sh --step 1 ${OPTIONS[@]})
     echo -e "Dependency job array number: $DEPENDENCY\nDepender job number: $DEPENDER" >> $PIPELINE_STATUS
-elif ([ $STEP -eq 0 ] && [ -z $RUN_DIR ] && [ $ONLY_IDENTIFY -eq 0 ]) || [ $STEP -eq 1 ]; then
+elif ([ $STEP -eq 0 ] && [ -z $RUN_DIR ] && [ $ONLY_VARIANT_CALL -eq 0 ]) || [ $STEP -eq 1 ]; then
     if [ $TEMP_ARRAY_START -eq 0 ]; then
         echo -e "Number of samples: ${#SAMPLE_ARRAY[@]}\nSamples: ${SAMPLE_ARRAY[@]}" >> $PIPELINE_STATUS
         echo "### Step 1 - BAM construction ### - START: $(date)" >> $PIPELINE_STATUS
@@ -513,7 +513,7 @@ elif [ $STEP -eq 3 ] && [ $TEMP_ARRAY_START -eq 0 ]; then
 fi
 
 
-if ([ $STEP -eq 0 ] && [ $ONLY_IDENTIFY -eq 1 ]) || [ $STEP -ge 3 ]; then
+if ([ $STEP -eq 0 ] && [ $ONLY_VARIANT_CALL -eq 1 ]) || [ $STEP -ge 3 ]; then
     SAMPLE_ARRAY=( $(ls *${BAM_SUFFIX} | sed "s/${BAM_SUFFIX}//") )
     if [ ${#SAMPLE_ARRAY[@]} -eq 0 ]; then
         echo "No files ending with bam suffix $BAM_SUFFIX found in the results directory. Exiting with code 1" >> $PIPELINE_STATUS
