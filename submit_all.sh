@@ -228,6 +228,9 @@ if [ ! -z $RUN_DIR ] && [ ! -z $SAMPLE_SHEET ]; then
     fi
     OPTIONS+=( "--run_dir $RUN_DIR --sample_sheet $SAMPLE_SHEET" )
 fi
+if [ ! -z $FASTQ_DIR ]; then
+    OPTIONS+=( "-f $FASTQ_DIR" )
+fi
 if [ $SKIP_VARIANT_CALL -eq 1 ] && [ $ONLY_VARIANT_CALL -eq 1 ]; then
     echo "Variables not supplied correctly. Please specify either --skip_variant_call or --only_variant_call, not both. Exiting with code 1"
     exit 1
