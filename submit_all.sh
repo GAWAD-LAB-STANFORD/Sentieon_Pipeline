@@ -247,7 +247,7 @@ if [ ! -z $R2_SUFFIX ]; then
 fi
 if [ $RNA -eq 1 ]; then
     OPTIONS+=( "--rna" )
-    if [ "$BAM_SUFFIX" == ".bqsr.marked.bam" ]; then
+    if [ "$BAM_SUFFIX" == ".recalibrated_realigned_deduped_sorted.bam" ]; then
         BAM_SUFFIX=".rna.bam"
     fi
     SKIP_TRIMMOMATIC=1
@@ -258,7 +258,7 @@ fi
 if [ $NUMBER_THREADS -ne 4 ]; then
     OPTIONS+=( "--number_threads $NUMBER_THREADS" )
 fi
-if [ $BAM_SUFFIX != ".bqsr.marked.bam" ]; then
+if [ $BAM_SUFFIX != ".recalibrated_realigned_deduped_sorted.bam" ]; then
     OPTIONS+=( "--bam_suffix $BAM_SUFFIX" )
 fi
 if [ ! -z $NORMAL_SAMPLE_NAME ]; then
