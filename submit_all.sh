@@ -490,7 +490,7 @@ elif [ $STEP -eq 3 ] && [ $SCAN2 -eq 1 ] && [ $TEMP_ARRAY_START -eq 0 ]; then
         ${PIPELINE_DIR}/submit_all.sh --step 3 ${OPTIONS[@]}
 elif [ $STEP -eq 3 ] && [ $TEMP_ARRAY_START -eq 0 ]; then
     if [ $SCAN2 -eq 0 ]; then
-        echo "### Step 2 - QC metrics ### - START: $(date)" >> $PIPELINE_STATUS
+        echo "### Step 2 - QC metrics ### - END: $(date)" >> $PIPELINE_STATUS
     fi
     echo "### Asynchronous summarize metrics ### - $(date)" >> $PIPELINE_STATUS
     mkdir -p ${SCRATCH_DIR}/ginkgo_outputs
@@ -634,17 +634,17 @@ elif [ $STEP -eq 5 ]; then
     fi
     if [ ! -z "$(find -name "${SAMPLE_PREFIX}*.g.vcf")" ]; then
         echo "Joint genotyping - Start: $(date)" >> $PIPELINE_STATUS
-        echo "\nsbatch --parsable -e ${STD_ERR_OUT_DIR}/%A_joint_genotyping_%x.err -o ${STD_ERR_OUT_DIR}/%A_joint_genotyping_%x.out \
+        echo -e "\nsbatch --parsable -e ${STD_ERR_OUT_DIR}/%A_joint_genotyping_%x.err -o ${STD_ERR_OUT_DIR}/%A_joint_genotyping_%x.out \
             ${PIPELINE_DIR}/4_joint_genotyping.sh \
             $SCRATCH_DIR $REFERENCE_DIR $REF_FASTA $NUMBER_THREADS $PROJECT $TARGETS_BED\n" >> $PIPELINE_STATUS
-        DEPENDENCY2=$(sbatch --parsable -e ${STD_ERR_OUT_DIR}/%A_joint_genotyping_%x.err -o ${STD_ERR_OUT_DIR}/%A_joint_genotyping_%x.out \
+        DEPENDENCY="$DEPENDENCY:$(sbatch --parsable -e ${STD_ERR_OUT_DIR}/%A_joint_genotyping_%x.err -o ${STD_ERR_OUT_DIR}/%A_joint_genotyping_%x.out \
             ${PIPELINE_DIR}/4_joint_genotyping.sh \
-            $SCRATCH_DIR $REFERENCE_DIR $REF_FASTA $NUMBER_THREADS $PROJECT $TARGETS_BED)
+            $SCRATCH_DIR $REFERENCE_DIR $REF_FASTA $NUMBER_THREADS $PROJECT $TARGETS_BED)"
     fi
-    echo "\nsbatch --parsable --dependency=afterany:$DEPENDENCY:$DEPENDENCY2 -J $PROJECT \
+    echo -e "\nsbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
         -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
         ${PIPELINE_DIR}/submit_all.sh --step 6 ${OPTIONS[@]}\n" >> $PIPELINE_STATUS
-    DEPENDER=$(sbatch --parsable --dependency=afterany:$DEPENDENCY:$DEPENDENCY2 -J $PROJECT \
+    DEPENDER=$(sbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
         -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
         ${PIPELINE_DIR}/submit_all.sh --step 6 ${OPTIONS[@]})
     echo -e "Dependency job array number: $DEPENDENCY\nDepender job number: $DEPENDER" >> $PIPELINE_STATUS
@@ -706,11 +706,11 @@ elif [ $STEP -eq 7 ]; then
         echo "\nsbatch --array=1-${TEMP_JOB_COUNT} --parsable -e $STD_ERR_OUT_DIR/%A_manta_%a.err \
             -o $STD_ERR_OUT_DIR/%A_manta_%a.out ${PIPELINE_DIR}/6_manta_sv.sh \
             $SAMPLES_STRING $REF_FASTA $SCRATCH_DIR $RESULTS_DIR $TARGETED\n" >> $PIPELINE_STATUS
-        DEPENDENCY2=$(sbatch --array=1-${TEMP_JOB_COUNT} --parsable -e $STD_ERR_OUT_DIR/%A_manta_%a.err \
+        DEPENDENCY="$DEPENDENCY:$(sbatch --array=1-${TEMP_JOB_COUNT} --parsable -e $STD_ERR_OUT_DIR/%A_manta_%a.err \
             -o $STD_ERR_OUT_DIR/%A_manta_%a.out ${PIPELINE_DIR}/6_manta_sv.sh \
-            $SAMPLES_STRING $REF_FASTA $SCRATCH_DIR $RESULTS_DIR $TARGETED)
+            $SAMPLES_STRING $REF_FASTA $SCRATCH_DIR $RESULTS_DIR $TARGETED)"
     fi
-    DEPENDER=$(sbatch --parsable --dependency=afterany:$DEPENDENCY:$DEPENDENCY2 -J $PROJECT \
+    DEPENDER=$(sbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
         -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
         ${PIPELINE_DIR}/submit_all.sh --step 8 ${OPTIONS[@]})
 elif [ $STEP -eq 8 ]; then
