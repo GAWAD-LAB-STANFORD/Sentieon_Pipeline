@@ -438,6 +438,9 @@ elif [ $STEP -eq 2 ]; then
         --tools_dir $TOOLS_DIR --r1_suffix $R1_SUFFIX --r2_suffix $R2_SUFFIX --ref_fasta $REF_FASTA \
         --number_threads $NUMBER_THREADS --sample_string $TEMP_SAMPLES_STRING --fastq_dir $FASTQ_DIR \
         --dbSNP $DBSNP_VCF --project $PROJECT --skip_bam $SKIP_BAM --targeted $TARGETED --std_err_out_dir $STD_ERR_OUT_DIR --targets_bed $TARGETS_BED --interval_list $INTERVAL_LIST)
+    TEMP_ARRAY_START=$(($TEMP_ARRAY_START + $TEMP_ARRAY_INCREMENT))
+    echo -e "$(date)\nIncrement: $TEMP_ARRAY_INCREMENT\nNew start: $TEMP_ARRAY_START" >> $PIPELINE_STATUS
+    
     if [ $TEMP_ARRAY_START -le ${#SAMPLE_ARRAY[@]} ]; then
         echo -e "\nsbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
             -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
@@ -592,8 +595,8 @@ elif [ $STEP -eq 4 ]; then
     DEPENDENCY=$(sbatch --parsable -e $STD_ERR_OUT_DIR/%A_somatic_variant_call_%a.err -o $STD_ERR_OUT_DIR/%A_somatic_variant_call_%a.out \
         --array=1-${TEMP_JOB_COUNT} ${PIPELINE_DIR}/3_somatic_variant_calling.sh  \
         $SCRATCH_DIR $REFERENCE_DIR $REF_FASTA $NUMBER_THREADS $NORMAL_SAMPLE_NAME $TEMP_SAMPLES_STRING $DBSNP_VCF $TARGETS_BED)
-    echo -e "$(date)\nIncrement: $TEMP_ARRAY_INCREMENT\nNew start: $TEMP_ARRAY_START" >> $PIPELINE_STATUS
     TEMP_ARRAY_START=$(($TEMP_ARRAY_START + $TEMP_ARRAY_INCREMENT))
+    echo -e "$(date)\nIncrement: $TEMP_ARRAY_INCREMENT\nNew start: $TEMP_ARRAY_START" >> $PIPELINE_STATUS
     
     if [ $TEMP_ARRAY_START -le ${#SAMPLE_ARRAY[@]} ]; then
         echo -e "\nsbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
@@ -669,9 +672,9 @@ elif [ $STEP -eq 6 ]; then
         -o $STD_ERR_OUT_DIR/%A_annotate_%a.out ${PIPELINE_DIR}/5_annovar.sh $TEMP_SAMPLES_STRING $TRANCHE \
         $PIPELINE_DIR $ANNOVAR_GENOME_VERSION $ANNOVAR_DIR $TOOLS_DIR $SCRATCH_DIR $STD_ERR_OUT_DIR \
         $REFERENCE_DIR $TARGETED $REF_FASTA $NORMAL_SAMPLE_NAME)
-    echo -e "$(date)\nIncrement: $TEMP_ARRAY_INCREMENT\nNew start: $TEMP_ARRAY_START" >> $PIPELINE_STATUS
     TEMP_ARRAY_START=$(($TEMP_ARRAY_START + $TEMP_ARRAY_INCREMENT))
-    
+    echo -e "$(date)\nIncrement: $TEMP_ARRAY_INCREMENT\nNew start: $TEMP_ARRAY_START" >> $PIPELINE_STATUS
+        
     if [ $TEMP_ARRAY_START -le ${#SAMPLE_ARRAY[@]} ]; then
         echo -e "\nsbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
             -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
