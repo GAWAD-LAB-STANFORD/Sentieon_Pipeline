@@ -141,7 +141,7 @@ while [ "$1" != "" ]; do
         --element )             ELEMENT=1
                                 ;;
         --step )		        shift
-                                STEP=0
+                                STEP=$1
                                 ;;
         --temp_array_start )    shift
                                 TEMP_ARRAY_START=$1
@@ -304,7 +304,6 @@ cd $RESULTS_DIR
 if [ "$TEMP_PIPELINE_DIR" = "$PIPELINE_DIR" ]; then
     echo -e "\nSTART: $(date)\nSentieon Pipeline\n\n$PIPELINE_DIR/submit_all.sh $PIPELINE_COMMAND\n\nProject: $PROJECT\nResults dir: $RESULTS_DIR\nScratch dir: $SCRATCH_DIR\nErr out dir: $STD_ERR_OUT_DIR\n" >> $PIPELINE_STATUS
     echo -e "\nOPTIONS variable holding parameters/arguments for pipeline resubmission: ${OPTIONS[@]}\n" >> $PIPELINE_STATUS
-
 fi
 
 
