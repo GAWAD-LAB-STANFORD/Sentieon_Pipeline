@@ -496,10 +496,10 @@ elif [ $STEP -eq 3 ] && [ $TEMP_ARRAY_START -eq 0 ]; then
     mkdir -p ${SCRATCH_DIR}/ginkgo_outputs
     echo -e "\nsbatch -J $PROJECT -e ${STD_ERR_OUT_DIR}/%A_ginkgo_%x.err -o ${STD_ERR_OUT_DIR}/%A_ginkgo_%x.out \
         ${PIPELINE_DIR}/2_ginkgo_cnv.sh --new_5M_folder $SCRATCH_DIR/${PROJECT}_5M_Read_BAM_Files \
-        --bam_dir $SCRATCH_DIR --results_dir $SCRATCH_DIR --final_dir $RESULTS_DIR --bam_regex $BAM_SUFFIX --bam_suffix $BAM_SUFFIX\n" >> $PIPELINE_STATUS
+        --bam_dir $SCRATCH_DIR --results_dir $RESULTS_DIR --bam_regex $BAM_SUFFIX --bam_suffix $BAM_SUFFIX\n" >> $PIPELINE_STATUS
     sbatch -J $PROJECT -e ${STD_ERR_OUT_DIR}/%A_ginkgo_%x.err -o ${STD_ERR_OUT_DIR}/%A_ginkgo_%x.out \
         ${PIPELINE_DIR}/2_ginkgo_cnv.sh --new_5M_folder $SCRATCH_DIR/${PROJECT}_5M_Read_BAM_Files \
-        --bam_dir $SCRATCH_DIR --results_dir $SCRATCH_DIR --final_dir $RESULTS_DIR --bam_regex $BAM_SUFFIX --bam_suffix $BAM_SUFFIX
+        --bam_dir $SCRATCH_DIR --results_dir $RESULTS_DIR --bam_regex $BAM_SUFFIX --bam_suffix $BAM_SUFFIX
     echo -e "\nsbatch -J $PROJECT -e ${STD_ERR_OUT_DIR}/%A_summarise_metrics_%x.err -o ${STD_ERR_OUT_DIR}/%A_summarise_metrics_%x.out \
         ${PIPELINE_DIR}/2_summarize_metrics.sh $SCRATCH_DIR $SCRIPT_DIR $PROJECT $TARGETED $CELL_BARCODES $UMI_PATTERN $RUN_DIR $SAMPLE_SHEET\n" >> $PIPELINE_STATUS
     sbatch -J $PROJECT -e ${STD_ERR_OUT_DIR}/%A_summarise_metrics_%x.err -o ${STD_ERR_OUT_DIR}/%A_summarise_metrics_%x.out \
