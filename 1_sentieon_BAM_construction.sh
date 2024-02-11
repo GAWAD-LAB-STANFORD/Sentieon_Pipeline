@@ -33,10 +33,6 @@ NUMBER_THREADS=16
 SENTIEON_STATUS=${STD_ERR_OUT_DIR}/${PROJECT}_sentieon_status.txt
 
 REFERENCE_DIR="/oak/stanford/groups/cgawad/Reference_Files"
-#INTERVAL_LIST="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38_n25chr.interval_list"
-#TARGETS_BED="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/xgen-exome-research-panel-targets_grch38_3col.bed"
-#N25CHR_INTERVAL_LIST="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38_n25chr.interval_list"
-#N25CHR_BED="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38_n25chr_fixed.bed"
 
 echo "FASTQ_DIR IS "{FASTQ_DIR}
 TOOLS_DIR="/oak/stanford/groups/cgawad/Sequencing_Analysis_Tools"
@@ -153,17 +149,17 @@ if [ $SKIP_BAM -eq 0 ]; then
 
 
 	echo "### Calculate and plot data metrics Sample: $SAMPLE ### - START: $(date)" >> $SENTIEON_STATUS
-#	sentieon driver -t $NUMBER_THREADS -r $REF_FASTA -i $SORTED_BAM \
-#	    --algo GCBias --summary ${SAMPLE}_GC_summary.txt ${SAMPLE}_GC_metric.txt \
-#	    --algo MeanQualityByCycle ${SAMPLE}_MQ_metric.txt \
-#	    --algo QualDistribution ${SAMPLE}_QD_metric.txt \
-#	    --algo InsertSizeMetricAlgo ${SAMPLE}_IS_metric.txt \
-#	    --algo AlignmentStat ${SAMPLE}_ALN_metric.txt
-
-#	sentieon plot GCBias -o ${SAMPLE}_QC_metric.pdf ${SAMPLE}_GC_metric.txt
-#	sentieon plot MeanQualityByCycle -o ${SAMPLE}_MQ_metric.pdf ${SAMPLE}_MQ_metric.txt
-#	sentieon plot QualDistribution -o ${SAMPLE}_QD_metric.pdf ${SAMPLE}_QD_metric.txt
-#	sentieon plot InsertSizeMetricAlgo -o ${SAMPLE}_IS_metric.pdf ${SAMPLE}_IS_metric.txt
+    # sentieon driver -t $NUMBER_THREADS -r $REF_FASTA -i $SORTED_BAM \
+    #     --algo GCBias --summary ${SAMPLE}_GC_summary.txt ${SAMPLE}_GC_metric.txt \
+    #     --algo MeanQualityByCycle ${SAMPLE}_MQ_metric.txt \
+    #     --algo QualDistribution ${SAMPLE}_QD_metric.txt \
+    #     --algo InsertSizeMetricAlgo ${SAMPLE}_IS_metric.txt \
+    #     --algo AlignmentStat ${SAMPLE}_ALN_metric.txt
+    
+    # sentieon plot GCBias -o ${SAMPLE}_QC_metric.pdf ${SAMPLE}_GC_metric.txt
+    # sentieon plot MeanQualityByCycle -o ${SAMPLE}_MQ_metric.pdf ${SAMPLE}_MQ_metric.txt
+    # sentieon plot QualDistribution -o ${SAMPLE}_QD_metric.pdf ${SAMPLE}_QD_metric.txt
+    # sentieon plot InsertSizeMetricAlgo -o ${SAMPLE}_IS_metric.pdf ${SAMPLE}_IS_metric.txt
 	echo "### Calculate and plot data metrics Sample: $SAMPLE ### - END: $(date)" >> $SENTIEON_STATUS
 
 
@@ -192,25 +188,4 @@ if [ $SKIP_BAM -eq 0 ]; then
 	    --before ${SAMPLE}_recal_data.table --after ${SAMPLE}_recal_data.table.after ${SAMPLE}_recal_result.csv
 	sentieon plot QualCal -o ${SAMPLE}_BQSR_PDF ${SAMPLE}_recal_result.csv
 	echo "### Base quality score recalibration Sample: $SAMPLE ### - END: $(date)" >> $SENTIEON_STATUS
-
-
-#Doesn't seem like we need this variant calling part, will uncomment if we do
-#	if [ $VARIANT_CLASS -eq 1 ]; then
-#	    echo "### Basic bcftools variant calling - START: $(date) ###"
-#	    samtools mpileup -uf $REF_FASTA ${RECALIBRATED_BAM} | bcftools call -mv > ${SAMPLE}.pileup_calls.vcf
-#		echo -e "count\tref\talt" > ${SAMPLE}.variant_class_counts.tsv
-#	    cat ${SAMPLE}.pileup_calls.vcf | cut -f 4,5 | sort | uniq -c | sort -k1n | \
-#			sed 's/^[[:space:]]*//' | sed "s/ /$(printf '\t')/" >> ${SAMPLE}.variant_class_counts.tsv
-#		rm ${SAMPLE}.pileup_calls.vcf
-#	    echo "### Basic bcftools variant calling - END: $(date) ###"
-#	fi
-
-
-#	tail -12 ${SAMPLE}.variant_class_counts.tsv > ${SAMPLE}.variant_class_counts.tsv2
-#	mv ${SAMPLE}.variant_class_counts.tsv2 ${SAMPLE}.variant_class_counts.tsv
-
-
 fi
-
-
-

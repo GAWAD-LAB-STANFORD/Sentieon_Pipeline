@@ -316,7 +316,6 @@ if [ ! -z $SLURM_OPTIONS ]; then
 fi
 
 
-# TODO: Instead of providing a sample_prefix, have the script get sample_prefixes somehow (find every instance where first n letters are shared by > 2 fastq files or by > 1 fastq file with same R#_SUFFIX, then make a dictionary with a key that is that prefix and a sample string that is all sample names shared under that prefix, then for each sample prefix in that dictionary run the pippeline on that set of samples.
 # Don't use --mem, use --mem-per-cpu and --cpu-per-task to allocate resources unless you don't want to allocate resources based on what task needs.
 # In my experience, --mem reserves entire node if used with --cpu-per-task
 
@@ -475,13 +474,13 @@ elif [ $STEP -eq 3 ] && [ $SCAN2 -eq 1 ] && [ $TEMP_ARRAY_START -eq 0 ]; then
     fi
     echo "\nsbatch --time=7-00:00:00 -e $STD_ERR_OUT_DIR/%A_scan2_%x.err -o $STD_ERR_OUT_DIR/%A_scan2_%x.out \
         ${PIPELINE_DIR}/2_scan2.sh --project $PROJECT --results_dir $SCRATCH_DIR --genome_version $ANNOVAR_GENOME_VERSION \
-        --script_dir $SCRIPT_DIR --sample_prefix $SAMPLE_PREFIX --normal_path $NORMAL_PATH --sample_string $SAMPLES_STRING \
+        --script_dir $SCRIPT_DIR --normal_path $NORMAL_PATH --sample_string $SAMPLES_STRING \
         --vcf_path $VCF_PATH --std_err_out $STD_ERR_OUT_DIR --normal_name $NORMAL_SAMPLE_NAME  --pipeline_dir $PIPELINE_DIR \
         --final_dir $RESULTS_DIR --targeted $TARGETED --targets_bed $TARGETS_BED --interval_list $INTERVAL_LIST \
         --annovar_dir $ANNOVAR_DIR --skip_panel $SKIP_PANEL --cross_dir $CROSS_SAMPLE_DIR\n" >> $PIPELINE_STATUS
     sbatch --time=7-00:00:00 -e $STD_ERR_OUT_DIR/%A_scan2_%x.err -o $STD_ERR_OUT_DIR/%A_scan2_%x.out \
         ${PIPELINE_DIR}/2_scan2.sh --project $PROJECT --results_dir $SCRATCH_DIR --genome_version $ANNOVAR_GENOME_VERSION \
-        --script_dir $SCRIPT_DIR --sample_prefix $SAMPLE_PREFIX --normal_path $NORMAL_PATH --sample_string $SAMPLES_STRING \
+        --script_dir $SCRIPT_DIR --normal_path $NORMAL_PATH --sample_string $SAMPLES_STRING \
         --vcf_path $VCF_PATH --std_err_out $STD_ERR_OUT_DIR --normal_name $NORMAL_SAMPLE_NAME  --pipeline_dir $PIPELINE_DIR \
         --final_dir $RESULTS_DIR --targeted $TARGETED --targets_bed $TARGETS_BED --interval_list $INTERVAL_LIST \
         --annovar_dir $ANNOVAR_DIR --skip_panel $SKIP_PANEL --cross_dir $CROSS_SAMPLE_DIR
@@ -588,7 +587,6 @@ elif [ $STEP -eq 4 ]; then
     TEMP_JOB_COUNT=${#TEMP_SAMPLE_ARRAY[@]}
     echo "Submitting $TEMP_JOB_COUNT jobs for samples $TEMP_ARRAY_START to $(($TEMP_ARRAY_START + ${#TEMP_SAMPLE_ARRAY[@]} - 1))" >> $PIPELINE_STATUS
     TEMP_SAMPLES_STRING=$( IFS=$':'; echo "${TEMP_SAMPLE_ARRAY[*]}" )     
-    # This was broken by not having a sample_prefix, never, ever, EVER use positional arguments again - sorry, most of the pipeline is positional arguments :O
     echo -e "\nsbatch --parsable -e $STD_ERR_OUT_DIR/%A_somatic_variant_call_%a.err -o $STD_ERR_OUT_DIR/%A_somatic_variant_call_%a.out \
         --array=1-${TEMP_JOB_COUNT} ${PIPELINE_DIR}/3_somatic_variant_calling.sh  \
         $SCRATCH_DIR $REFERENCE_DIR $REF_FASTA $NUMBER_THREADS $NORMAL_SAMPLE_NAME $TEMP_SAMPLES_STRING $DBSNP_VCF $TARGETS_BED\n" >> $PIPELINE_STATUS
@@ -622,17 +620,17 @@ elif [ $STEP -eq 5 ]; then
     ######TODO########
     # Do joint calling and merge somatic variant files if they exist
     echo "Normal sample name is: ${NORMAL_SAMPLE_NAME}" >> $PIPELINE_STATUS
-    echo "Variant vcf is: $(find -name "${SAMPLE_PREFIX}*_variant.vcf")" >> $PIPELINE_STATUS
+    echo "Variant vcf is: $(find -name "*_variant.vcf")" >> $PIPELINE_STATUS
     VCF_PATH="${SCRATCH_DIR}${PROJECT}_svc_merged.vcf"
     NORMAL_PATH="${SCRATCH_DIR}/${NORMAL_SAMPLE_NAME}.realigned_deduped_sorted.bam"
-    if [ ! -z $NORMAL_SAMPLE_NAME ] && [ ! -z "$(find -name "${SAMPLE_PREFIX}*_variant.vcf")" ]; then
+    if [ ! -z $NORMAL_SAMPLE_NAME ] && [ ! -z "$(find -name "*_variant.vcf")" ]; then
         echo "VCF concatenation" >> $PIPELINE_STATUS
         echo -e "\nsbatch -e ${STD_ERR_OUT_DIR}/%A_somatic_merge_%x.err -o ${STD_ERR_OUT_DIR}/%A_somatic_merge_%x.out \
-            --parsable ${PIPELINE_DIR}/4_vcf_concat.sh $SCRATCH_DIR $PROJECT $SAMPLE_PREFIX\n" >> $PIPELINE_STATUS
+            --parsable ${PIPELINE_DIR}/4_vcf_concat.sh $SCRATCH_DIR $PROJECT\n" >> $PIPELINE_STATUS
         DEPENDENCY=$(sbatch -e ${STD_ERR_OUT_DIR}/%A_somatic_merge_%x.err -o ${STD_ERR_OUT_DIR}/%A_somatic_merge_%x.out \
-            --parsable ${PIPELINE_DIR}/4_vcf_concat.sh $SCRATCH_DIR $PROJECT $SAMPLE_PREFIX)
+            --parsable ${PIPELINE_DIR}/4_vcf_concat.sh $SCRATCH_DIR $PROJECT)
     fi
-    if [ ! -z "$(find -name "${SAMPLE_PREFIX}*.g.vcf")" ]; then
+    if [ ! -z "$(find -name "*.g.vcf")" ]; then
         echo "Joint genotyping - Start: $(date)" >> $PIPELINE_STATUS
         echo -e "\nsbatch --parsable -e ${STD_ERR_OUT_DIR}/%A_joint_genotyping_%x.err -o ${STD_ERR_OUT_DIR}/%A_joint_genotyping_%x.out \
             ${PIPELINE_DIR}/4_joint_genotyping.sh \
