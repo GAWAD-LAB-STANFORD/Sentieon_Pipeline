@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#SBATCH --job-name=summarize_metrics
+#SBATCH --job-name=3_summarize_metrics
 #SBATCH --cpus-per-task=2
 #SBATCH --nodes=1
 #SBATCH --time=1-23:00:00
@@ -8,13 +8,31 @@
 #SBATCH --mem=30G
 
 START_TIME=$(date +%s)
-RESULTS_DIR=$1
-SCRIPT_DIR=$2
-PROJECT=$3
-TARGETED=$4
-RUN_DIR=$5
-SAMPLE_SHEET=$6
+SCRIPT_COMMAND="$@"
+while [ "$1" != "" ]; do
+    case $1 in
+        --results_dir )             shift
+                                    RESULTS_DIR=$1
+                                    ;;
+        --script_dir )              shift
+                                    SCRIPT_DIR=$1
+                                    ;;
+        --project )                 shift
+                                    PROJECT=$1
+                                    ;;
+        --targeted )                shift
+                                    TARGETED=$1
+                                    ;;
+    esac
+    shift
+done
 
+if [ -z $RESULTS_DIR ] || [ -z $SCRIPT_DIR ] || [ -z $PROJECT ] || [ -z $TARGETED ]; then
+    echo "Variables not supplied correctly. Check script for intake parameters. All are required to be specified. Exiting with code 1"
+    exit 1
+fi
+
+echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND"
 cd $RESULTS_DIR
 
 echo project is ${PROJECT} 
@@ -155,8 +173,8 @@ Rscript ${SCRIPT_DIR}/graph_preseq.R ${PROJECT}.merged_preseq_future_coverage.ts
 VARIANT_CLASS_COUNTS_FILENAMES=( $(ls *.variant_class_counts.tsv) )
 head -n 1 ${VARIANT_CLASS_COUNTS_FILENAMES[0]} | sed "s/^/sample\t/" > ${PROJECT}.merged_variant_class_counts.tsv
 for i in ${VARIANT_CLASS_COUNTS_FILENAMES[@]}; do
-	SAMPLE=$(echo $i | sed "s/.variant_class_counts.tsv//")
-	tail -n +2 $i | sed "s/^/${SAMPLE}\t/" >> ${PROJECT}.merged_variant_class_counts.tsv
+    SAMPLE=$(echo $i | sed "s/.variant_class_counts.tsv//")
+    tail -n +2 $i | sed "s/^/${SAMPLE}\t/" >> ${PROJECT}.merged_variant_class_counts.tsv
 done
 Rscript ${SCRIPT_DIR}/variant_class_analysis.R ${PROJECT}.merged_variant_class_counts.tsv $PROJECT
 
@@ -219,11 +237,11 @@ grep CCG ${PROJECT}.merged_oxog_metrics.tsv | sort -k1 | cut -f11,12,19,20 |  se
 
 #if [ $TARGETED -eq 1 ]; then
 
-	cat ${PROJECT}.merged_hs_metrics.tsv | (sed -u 1q; sort -k1) | cut -f2,3,8,14,35,39,40,42,43,47-58 > ${PROJECT}.hs.cover.qual
+    cat ${PROJECT}.merged_hs_metrics.tsv | (sed -u 1q; sort -k1) | cut -f2,3,8,14,35,39,40,42,43,47-58 > ${PROJECT}.hs.cover.qual
 
 #	else
 
-	cat ${PROJECT}.merged_wgs_metrics.tsv | (sed -u 1q; sort -k1) | cut -f2-4,8,9,11,15-30 > ${PROJECT}.wgs.cover.qual
+    cat ${PROJECT}.merged_wgs_metrics.tsv | (sed -u 1q; sort -k1) | cut -f2-4,8,9,11,15-30 > ${PROJECT}.wgs.cover.qual
 
 #fi
 

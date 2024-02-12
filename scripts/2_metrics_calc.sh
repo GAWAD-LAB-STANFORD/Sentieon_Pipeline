@@ -1,79 +1,84 @@
 #!/bin/bash
 #
-#SBATCH --job-name=1.5_metrics_calc
+#SBATCH --job-name=2_metrics_calc
 #SBATCH --cpus-per-task=2
 #SBATCH --time=1-23:00:00
 #SBATCH --partition=cgawad
 #SBATCH --mem=31G
 #SBATCH --nodes=1
 
+START_TIME=$(date +%s)
+SCRIPT_COMMAND="$@"
 while [ "$1" != "" ]; do
     case $1 in
-        --results_dir )     shift
-                            RESULTS_DIR=$1
-                            ;;
-	--skip_trimmomatic ) shift
-		  	    SKIP_TRIMMOMATIC=$1
-			    ;;
-	--script_dir )      shift
-			    SCRIPT_DIR=$1
-			    ;;
-	--tools_dir )       shift
-			    TOOLS_DIR=$1
-			    ;;
-	--r1_suffix )       shift
-	 		    R1_SUFFIX=$1
-			    ;;
-	--r2_suffix )       shift
-			    R2_SUFFIX=$1
-			    ;;
-	--ref_fasta ) 	    shift
-	   	  	    REF_FASTA=$1
-			    ;;
-	--number_threads )  shift
-			    NUMBER_THREADS=$1
-			    ;;
-	--sample_string )   shift
-			    SAMPLE_STRING=$1
-			    ;;
-	--fastq_dir ) 	    shift
-			    FASTQ_DIR=$1
-			    ;;
-	--dbSNP ) 	    shift
-			    dbSNP=$1
-			    ;;
-	--project ) 	    shift
-			    PROJECT=$1
-			    ;;
-	--skip_bam ) 	    shift
-			    SKIP_BAM=$1
-			    ;;
-	--targeted )        shift
-			    TARGETED=$1
-			    ;;
-	--std_err_out_dir ) shift
-			    STD_ERR_OUT_DIR=$1
-			    ;;
-	--targets_bed )     shift
-			    TARGETS_BED=$1
-			    ;;
-	--interval_list )   shift
-			    INTERVAL_LIST=$1
-			    ;;
+        --results_dir )         shift
+                                RESULTS_DIR=$1
+                                ;;
+        --skip_trimmomatic )    shift
+                                  SKIP_TRIMMOMATIC=$1
+                                ;;
+        --script_dir )          shift
+                                SCRIPT_DIR=$1
+                                ;;
+        --tools_dir )           shift
+                                TOOLS_DIR=$1
+                                ;;
+        --r1_suffix )           shift
+                                 R1_SUFFIX=$1
+                                ;;
+        --r2_suffix )           shift
+                                R2_SUFFIX=$1
+                                ;;
+        --ref_fasta ) 	        shift
+                                     REF_FASTA=$1
+                                ;;
+        --number_threads )      shift
+                                NUMBER_THREADS=$1
+                                ;;
+        --sample_string )       shift
+                                SAMPLE_ARRAY=( $(echo $1 | sed 's/:/ /g') )
+                                ;;
+        --fastq_dir ) 	        shift
+                                FASTQ_DIR=$1
+                                ;;
+        --dbSNP ) 	            shift
+                                dbSNP=$1
+                                ;;
+        --project ) 	        shift
+                                PROJECT=$1
+                                ;;
+        --skip_bam ) 	        shift
+                                SKIP_BAM=$1
+                                ;;
+        --targeted )            shift
+                                TARGETED=$1
+                                ;;
+        --std_err_out_dir )     shift
+                                STD_ERR_OUT_DIR=$1
+                                ;;
+        --targets_bed )         shift
+                                TARGETS_BED=$1
+                                ;;
+        --interval_list )       shift
+                                INTERVAL_LIST=$1
+                                ;;
     esac
     shift
 done
 
-SAMPLE_ARRAY=( $(echo ${SAMPLE_STRING} | sed 's/:/ /g') )
+if [ -z $RESULTS_DIR ] || [ -z $SKIP_TRIMMOMATIC ] || [ -z $SCRIPT_DIR ] || [ -z $TOOLS_DIR ] || \
+    [ -z $R1_SUFFIX ] || [ -z $R2_SUFFIX ] || [ -z $REF_FASTA ] || [ -z $NUMBER_THREADS ] || \
+    [ -z $SAMPLE_ARRAY ] || [ -z $FASTQ_DIR ] || [ -z $dbSNP ] || [ -z $PROJECT ] || \
+    [ -z $SKIP_BAM ] || [ -z $TARGETED ] || [ -z $STD_ERR_OUT_DIR ] || [ -z $TARGETS_BED ] || \
+    [ -z $INTERVAL_LIST ]; then
+    echo "Variables not supplied correctly. Check script for intake parameters. All are required to be specified. Exiting with code 1"
+    exit 1
+fi
+
 SAMPLE=${SAMPLE_ARRAY[$(( $SLURM_ARRAY_TASK_ID - 1 ))]}
 SAMPLE_NAME=${SAMPLE%.recalibrated_realigned_deduped_sorted.bam}
 SAMPLE=${SAMPLE_NAME}
-
-echo "TARGETED is $TARGETED"
-echo "TARGETS_BED is $TARGETS_BED"
-echo "INTERVAL_LIST is $INTERVAL_LIST"
-
-echo "1 is: $1, 2 is $2, 3 is: $3, 4 is: $4, 5 is $5, 6 is $6, 7 is $7, 8 is $8, 9 is $9, 10 is ${10}, 11 is ${11}, 13 is ${13}, 14 is ${14}, 15 is ${15}, 16 is ${16}"
+echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND\nSample: $SAMPLE"
 
 SENTIEON_STATUS=${STD_ERR_OUT_DIR}/${PROJECT}_sentieon_status.txt
 
@@ -197,7 +202,7 @@ if [ $TOTAL_READS -le 5000000 ]; then
 else
     echo "BAM is larger than 5M reads. Will not compute PreSeq"
 fi
-	
+    
 # 	echo "downsample for non miniseq WGS as well (get coverage too)"
 if [ $TOTAL_READS -ge 500000000 ] && [ $TARGETED -eq 0]; then
     FRACTION=$(awk -v y="$TOTAL_READS" 'BEGIN {printf "%3f", 500000000 / y}')
@@ -252,7 +257,7 @@ gatk --java-options "-XX:+UseParallelGC -XX:ParallelGCThreads=4 -Xmx31G -Xmx31G"
     --MAX_RECORDS_IN_RAM 3500000
 echo "CollectOxoGMetrics done"
 
-	
+    
 
 if [ $TARGETED -eq 1 ]; then
     if [ -f ${SAMPLE}${BAM_5M_SUFFIX} ]; then
@@ -272,7 +277,7 @@ echo "Calculating QC metric"
 #	rm ${SAMPLE}.rg.bam* ${SAMPLE}.bqsr ${SAMPLE}.marked.bam*
 #	rm ${SAMPLE}.bqsr.marked.n25chr.bam* ${SAMPLE}.bqsr.marked.n25chr.bed
 #	rm *pre.bam
-	# rm -rf `pwd`/tmp*
+    # rm -rf `pwd`/tmp*
 
 mkdir "${RESULTS_DIR}/${SAMPLE}_temp_qualimap_output"
 echo "made the qualimap directory"
@@ -282,8 +287,8 @@ $QUALIMAP_TOOL bamqc -nt 4 -nw 3000 --java-mem-size=31G -bam ${BAM_NAME} -gff $N
     -c -hm 3 -outdir ${RESULTS_DIR}/${SAMPLE}_temp_qualimap_output -outformat PDF
 
 #Temporarily removed bed input for testing since its not working with the bed input
-	#$QUALIMAP_TOOL bamqc -nt 4 -nw 3000 --java-mem-size=55G -bam ${BAM_NAME} -gff $N25CHR_BED \
-	#    -c -hm 3 -outdir ${RESULTS_DIR}/${SAMPLE}_temp_qualimap_output -outformat PDF
+    #$QUALIMAP_TOOL bamqc -nt 4 -nw 3000 --java-mem-size=55G -bam ${BAM_NAME} -gff $N25CHR_BED \
+    #    -c -hm 3 -outdir ${RESULTS_DIR}/${SAMPLE}_temp_qualimap_output -outformat PDF
 if [ ! -f ${SAMPLE}_temp_qualimap_output/report.pdf ]; then
     echo "QualiMap encountered a problem and did not complete"
 else
@@ -293,7 +298,7 @@ else
     pdfunite ${SAMPLE}_temp_qualimap_output/pages*.pdf `pwd`/${SAMPLE}.multiple_metrics.qualimap_report.pdf
     # mv ${SAMPLE}_temp_qualimap_output/report.pdf ${SAMPLE}.multiple_metrics.qualimap_report.pdf
     mv ${SAMPLE}_temp_qualimap_output/genome_results.txt `pwd`/${SAMPLE}.multiple_metrics.qualimap_genome_results.txt
-	echo "QualiMap done"
+    echo "QualiMap done"
 fi
 
 rm -rf *_temp_qualimap_output

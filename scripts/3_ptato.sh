@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#SBATCH --job-name=PTATO
+#SBATCH --job-name=3_PTATO
 #SBATCH --time=6-23:00:00
 #SBATCH --partition=cgawad
 #SBATCH --cpus-per-task=4

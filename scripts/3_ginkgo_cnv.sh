@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#SBATCH --job-name=ginkgo_cnv
+#SBATCH --job-name=3_ginkgo_cnv
 #SBATCH --cpus-per-task=2
 #SBATCH --nodes=1
 #SBATCH --time=1-23:00:00
@@ -43,7 +43,12 @@ while [ "$1" != "" ]; do
     shift
 done
 
-echo -e "START: $(date)\nBam dir: ${BAM_DIR}\nResults dir: $RESULTS_DIR\nBam regex: ${BAM_REGEX}\nBam suffix: ${BAM_SUFFIX}\nKb bin size: $KB_BIN_SIZE\nFull work dir: $FULL_WORK_DIR"
+if [ -z $BAM_DIR ]; then
+    echo "Variables not supplied correctly. Check script for intake parameters. All are required to be specified. Exiting with code 1"
+    exit 1
+fi
+
+echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND\nBam dir: $BAM_DIR\nResults dir: $RESULTS_DIR\nBam regex: $BAM_REGEX\nBam suffix: $BAM_SUFFIX\nKb bin size: $KB_BIN_SIZE\nFull work dir: $FULL_WORK_DIR"
 if [ -z $RESULTS_DIR ]; then
     RESULTS_DIR=$BAM_DIR
 fi

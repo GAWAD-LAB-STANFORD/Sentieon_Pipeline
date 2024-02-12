@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#SBATCH --job-name=sentieon_somatic_calling
+#SBATCH --job-name=4_sentieon_somatic_variant_calling
 #SBATCH --time=1-00:00:00
 #SBATCH --partition=cgawad
 #SBATCH --nodes=1
@@ -8,42 +8,51 @@
 #SBATCH --mem=115G
 #SBATCH --nice=[-20]
 
+NUMBER_THREADS=16
+START_TIME=$(date +%s)
+SCRIPT_COMMAND="$@"
+while [ "$1" != "" ]; do
+    case $1 in
+        --results_dir )             shift
+                                    RESULTS_DIR=$1
+                                    ;;
+        --reference_dir )           shift
+                                    REFERENCE_DIR=$1
+                                    ;;
+        --ref_fasta )               shift
+                                    REF_FASTA=$1
+                                    ;;
+        --normal_sample_name )      shift
+                                    NORMAL_SAMPLE_NAME=$1
+                                    ;;
+        --sample_string )           shift
+                                    SAMPLE_ARRAY=( $(echo $1 | sed 's/:/ /g') )
+                                    ;;
+        --dbSNP )                   shift
+                                    dbSNP=$1
+                                    ;;
+        --targets_bed )             shift
+                                    TARGETS_BED=$1
+                                    ;;
+    esac
+    shift
+done
+
+if [ -z $RESULTS_DIR ] || [ -z $REFERENCE_DIR ] || [ -z $REF_FASTA ] || [ -z $NORMAL_SAMPLE_NAME ] || \
+    [ -z $SAMPLE_ARRAY ] || [ -z $dbSNP ] || [ -z $TARGETS_BED ]; then
+    echo "Variables not supplied correctly. Check script for intake parameters. All are required to be specified. Exiting with code 1"
+    exit 1
+fi
+
+SAMPLE=${SAMPLE_ARRAY[$(( $SLURM_ARRAY_TASK_ID - 1 ))]}
+echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND\nSample: $SAMPLE"
+
 ml purge
 ml biology bwa/0.7.17 samtools/1.8 java/1.8.0_131 bcftools/1.16
 module load biology sentieon/202112.01
 export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/ #your Sentieon package location
 export SENTIEON_LICENSE=license4.stanford.edu:5443 #your license file location
 
-RESULTS_DIR=$1
-REFERENCE_DIR=$2
-REF_FASTA=$3
-#NUMBER_THREADS=$4
-NORMAL_SAMPLE_NAME=$5
-SAMPLE_STRING=$6
-dbSNP=$7
-TARGETS_BED=$8
-NUMBER_THREADS=16
-
-SAMPLE_ARRAY=( $(echo ${SAMPLE_STRING} | sed 's/:/ /g') )
-
-echo "results_dir is ${RESULTS_DIR}"
-echo "REFERENCE_DIR IS ${REFERENCE_DIR}"
-echo "NUMBER_THREADS IS ${NUMBER_THREADS}"
-echo "NORMAL_SAMPLE_NAME IS ${NORMAL_SAMPLE_NAME}"
-echo "Sample prefix is ${SAMPLE_PREFIX}"
-echo "sample string is ${SAMPLE_STRING}"
-
-for SAMPLE in "${SAMPLE_ARRAY[@]}"
-do
-    echo "SAMPLE is $SAMPLE"
-done
-
-echo ${SAMPLE_ARRAY}
-
-echo "slurm array task id is: ${SLURM_ARRAY_TASK_ID}"
-SAMPLE=${SAMPLE_ARRAY[$(( $SLURM_ARRAY_TASK_ID - 1 ))]}
-#SAMPLE_ARRAY=( $(echo ${9} | sed 's/:/ /g') )
-echo "SAMPLE is ${SAMPLE}"
 echo "### Variant calling ### - START: $(date)"
 
 ERROR_DIR1="${RESULTS_DIR}/std_err_out_files/""%A_variant_call%x.err"
@@ -104,8 +113,8 @@ SEGMENTS="${CONTAMINATION_DATA}.segments"
       --normal_sample ${NORMAL_SAMPLE_NAME} \
       --dbsnp $dbSNP \
       --pon $PANEL_OF_NORMAL \
-	  --disable_detector sv \
-	${OUT_TN_VCF}
+      --disable_detector sv \
+    ${OUT_TN_VCF}
 
 #This command will filter out weird ALT alleles, note this overwrites the vcf file so use with caution
 #cat ${OUT_TN_VCF}.before_filter | awk -F'\t' '/^#/ || $5 ~ /^[ACGTNacgtn<]+|\*|\.)$/' > $OUT_TN_VCF
@@ -126,16 +135,10 @@ cat $OUT_TN_VCF | awk '{ if ($4 == "M") { print } }'
 #   --orientation_priors $ORIENTATION_DATA \
 #	 $OUT_TN_VCF
 
-
-
-
 echo "### Variant calling ### - END: $(date)"
-
 
 if [ ! -f $OUT_TN_VCF ]; then
     echo "No $VARIANT_VCF found. Exiting with code 1"
     exit 1
 fi
-
-
-
+echo -e "END: $(date)\nRuntime: $(($(date +%s)-$START_TIME)) seconds"

@@ -9,6 +9,7 @@
 
 
 START_TIME=$(date +%s)
+SCRIPT_COMMAND="$@"
 while [ "$1" != "" ]; do
     case $1 in
         --run_dir )             shift
@@ -27,7 +28,12 @@ while [ "$1" != "" ]; do
     shift
 done
 
-echo -e "START: $(date)\nWGS WES Pipeline\nRun dir: $RUN_DIR\nSample sheet: $SAMPLE_SHEET\nFastq dir: $FASTQ_DIR"
+if [ -z $RUN_DIR ] || [ -z $SAMPLE_SHEET ] || [ -z $FASTQ_DIR ] || [ -z $PIPELINE_STATUS ]; then
+    echo "Variables not supplied correctly. Check script for intake parameters. All are required to be specified. Exiting with code 1"
+    exit 1
+fi
+
+echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND"
 
 ml biology bcl2fastq
 bcl2fastq --runfolder-dir $RUN_DIR --sample-sheet $SAMPLE_SHEET --output-dir $FASTQ_DIR
@@ -42,4 +48,4 @@ BCL_SIZE=$(du -sh $RUN_DIR | cut -f 1)
 UND_SIZE=$(du -shc ${FASTQ_DIR}/Undetermined*.fastq.gz | tail -n 1 | cut -f 1)
 FASTQ_SIZE=$(ls ${FASTQ_DIR}/*.fastq.gz | grep -v "Undetermined\|extracted" | xargs du -shc | tail -n 1 | cut -f 1)
 echo -e "$BCL_SIZE run dir produced $UND_SIZE of undetermined fastq.gz and $FASTQ_SIZE of determined fastq.gz" >> $PIPELINE_STATUS
-    echo "### Step 0 - Demultiplexing ### - END: $(date)" >> $PIPELINE_STATUS
+echo "### Step 0 - Demultiplexing ### - END: $(date)" >> $PIPELINE_STATUS

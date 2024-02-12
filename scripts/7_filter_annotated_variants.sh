@@ -1,17 +1,56 @@
 #!/bin/bash
 
-#SBATCH --job-name=filter_annotated_variants
+#SBATCH --job-name=7_filter_annotated_variants
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
 #SBATCH --time=6-23:00:00
 #SBATCH --partition=cgawad
 #SBATCH --mem=200G
 
-#i split up the files to test if splitting up the scripts would fix a problem where multianno tsv file was truncated, but i just realized that it probably shouldn't solve the problem. WIll keep this for testing anyways because this breakdown of the scripts is a lot better, if we can get things to work usuing this it will be preferable
+# i split up the files to test if splitting up the scripts would fix a problem where multianno tsv file was truncated,
+#   but i just realized that it probably shouldn't solve the problem
+# Will keep this for testing anyways because this breakdown of the scripts is a lot better,
+#   if we can get things to work usuing this it will be preferable
 
-#this is for debugging, when more detailed error logs not necessary comment set -xv
+PYTHON_LIBS="/home/groups/cgawad/python_libs/bin"
+PYTHON_LIBS_SITE_PACKAGES="/home/groups/cgawad/python_libs/lib/python3.6/site-packages"
+START_TIME=$(date +%s)
+SCRIPT_COMMAND="$@"
+while [ "$1" != "" ]; do
+    case $1 in
+        --project )                     shift
+                                        PROJECT=$1
+                                        ;;
+        --results_dir )                 shift
+                                        RESULTS_DIR=$1
+                                        ;;
+        --pipeline_dir )                shift
+                                        PIPELINE_DIR=$1
+                                        ;;
+        --std_err_out_dir )             shift
+                                        STD_ERR_OUT_DIR=$1
+                                        ;;
+        --exome )                       shift
+                                        EXOME=$1
+                                        ;;
+        --python_libs )                 shift
+                                        PYTHON_LIBS=$1
+                                        ;;
+        --python_libs_site_packages )   shift
+                                        PYTHON_LIBS_SITE_PACKAGES=$1
+                                        ;;
+    esac
+    shift
+done
 
-set -xv
+if [ -z $PROJECT ] || [ -z $RESULTS_DIR ] || [ -z $PIPELINE_DIR ] || [ -z $STD_ERR_OUT_DIR ] || \
+    [ -z $EXOME ]; then
+    echo "Variables not supplied correctly. Check script for intake parameters. All are required to be specified. Exiting with code 1"
+    exit 1
+fi
+
+echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND"
+cd $RESULTS_DIR
 
 echo "### Annotating SNPs and Indels ###: $(date)"
 ml purge
@@ -26,38 +65,18 @@ export PYTHONPATH=${PYTHON_LIBS_SITE_PACKAGES}:$PYTHONPATH
 echo DEBUG: 6_filter_annotated_variants.sh, printing modules on next line
 module list
 
-echo python libs is ${PYTHON_LIBS}
-echo python libs site packages is ${PYTHON_LIBS_SITE_PACKAGES}
-
-PROJECT=$1
-RESULTS_DIR=$2
-EMAIL=$3
-PIPELINE_DIR=$4
-STD_ERR_OUT_DIR=$5
-EXOME=$6
-
-echo PIPELINE_DIR is $PIPELINE_DIR
-
-	if [[ $EMAIL -eq 1 ]]; then
-                # Email the user when the job is started if --email flag was set in submit_all
-        echo "Scan2 job for ${PROJECT} has started, with job name: ${SLURM_JOB_NAME}, start time: ${SLURM_JOB_START_TIME}. Please see ${PROJECT} folders std_err_out folder for more details. " | mailx -s "Scan2 job for ${PROJECT}:${SLURM_JOB_ID} has started" "${USER}@stanford.edu"
-        fi
-
-cd $RESULTS_DIR
-
-
 ##### filter for final somatic calls
 
 ###functions###
 
 make_unique_col_names(){
-	#takes a *text file* with the header and replaces
+    #takes a *text file* with the header and replaces
     #all non-unique occurences of a word with
-	#a unique version
-	file=$1
-	header=$( (head -n 1 $file) )
-	
-	
+    #a unique version
+    file=$1
+    header=$( (head -n 1 $file) )
+    
+    
 }
 
 #i was lazy here and only implemented fixing the header having AF appear twice, in future can make this extensible by making a function which takes an input string for the column and iteratively changes all instances of that input string with a unique one with a number appended
@@ -402,3 +421,4 @@ rm *.deduped_sorted.bam.bai
 rm *.sorted.bam.bai
 
 echo "ANNOTATION DONE: $(date)"
+echo -e "END: $(date)\nRuntime: $(($(date +%s)-$START_TIME)) seconds"

@@ -41,19 +41,20 @@ while [ "$1" != "" ]; do
         --bam_args )        shift
                             BAM_ARGS=$1
                             ;;
-	--sample_string )   shift
-			    SAMPLE_STRING=$1
-			    ;;
-	--mmq )		    shift
-			    MMQ=$1
-			    ;;
-	--pipeline_dir )    shift
-						PIPELINE_DIR=$1
-						;;
+	    --sample_string )   shift
+			                SAMPLE_STRING=$1
+			                ;;
+        --mmq )		        shift
+			                MMQ=$1
+                            ;;
+	    --pipeline_dir )    shift
+						    PIPELINE_DIR=$1
+						    ;;
     esac
     shift
 done
 
+SCRIPT_DIR=${PIPELINE_DIR}/scripts
 SAMPLE_ARRAY=( $(echo ${SAMPLE_STRING} | sed 's/:/ /g') )
 SAMPLE=${SAMPLE_ARRAY[$(( $SLURM_ARRAY_TASK_ID - 1 ))]}
 NUMBER_THREADS=16
@@ -77,7 +78,7 @@ mkdir -p ${RESULTS_DIR}/${SCAN2_RESULTS}/gatk
 #collaborators don't send recal data table so we can just 
 #make it ourselves
 if [ ! "$(ls -A "${SAMPLE_NAME}_recal_data.table")" ] || [ ! "$(ls -A "${SAMPLE_NAME}*bai")" ]; then
-    sh $PIPELINE_DIR/get_recal_table.sh --results-dir $RESULTS_DIR --table-name ${SAMPLE_NAME}_recal_data.table --sample-bam $REALIGNED_BAM
+    sh $SCRIPT_DIR/get_recal_table.sh --results-dir $RESULTS_DIR --table-name ${SAMPLE_NAME}_recal_data.table --sample-bam $REALIGNED_BAM
 fi
 
 
