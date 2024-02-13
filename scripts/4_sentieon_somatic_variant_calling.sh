@@ -13,8 +13,8 @@ START_TIME=$(date +%s)
 SCRIPT_COMMAND="$@"
 while [ "$1" != "" ]; do
     case $1 in
-        --results_dir )             shift
-                                    RESULTS_DIR=$1
+        --scratch_dir )             shift
+                                    SCRATCH_DIR=$1
                                     ;;
         --reference_dir )           shift
                                     REFERENCE_DIR=$1
@@ -38,7 +38,7 @@ while [ "$1" != "" ]; do
     shift
 done
 
-if [ -z $RESULTS_DIR ] || [ -z $REFERENCE_DIR ] || [ -z $REF_FASTA ] || [ -z $NORMAL_SAMPLE_NAME ] || \
+if [ -z $SCRATCH_DIR ] || [ -z $REFERENCE_DIR ] || [ -z $REF_FASTA ] || [ -z $NORMAL_SAMPLE_NAME ] || \
     [ -z $SAMPLE_ARRAY ] || [ -z $dbSNP ] || [ -z $TARGETS_BED ]; then
     echo "Variables not supplied correctly. Check script for intake parameters. All are required to be specified. Exiting with code 1"
     exit 1
@@ -55,19 +55,19 @@ export SENTIEON_LICENSE=license4.stanford.edu:5443 #your license file location
 
 echo "### Variant calling ### - START: $(date)"
 
-ERROR_DIR1="${RESULTS_DIR}/std_err_out_files/""%A_variant_call%x.err"
-ERROR_DIR2="${RESULTS_DIR}/std_err_out_files/""%A_variant_call_2%x.err"
+ERROR_DIR1="${SCRATCH_DIR}/std_err_out_files/""%A_variant_call%x.err"
+ERROR_DIR2="${SCRATCH_DIR}/std_err_out_files/""%A_variant_call_2%x.err"
 GERMLINE_RESOURCE="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/af-only-gnomad.hg38.vcf.gz"
 #CONTAMINATION_VCF="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/Axiom_Exome_Plus.genotypes.all_populations.poly.hg38.vcf.gz"
 PANEL_OF_NORMAL="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/1000g_pon.hg38.vcf.gz"   
 
-cd ${RESULTS_DIR}
+cd ${SCRATCH_DIR}
 CONTAMINATION_VCF="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/af-only-gnomad.hg38.vcf.gz"
 
 echo "### Variant calling ### - START: $(date)"
 
-ERROR_DIR1="${RESULTS_DIR}/std_err_out_files/""%A_variant_call%x.err"
-ERROR_DIR2="${RESULTS_DIR}/std_err_out_files/""%A_variant_call_2%x.err"
+ERROR_DIR1="${SCRATCH_DIR}/std_err_out_files/""%A_variant_call%x.err"
+ERROR_DIR2="${SCRATCH_DIR}/std_err_out_files/""%A_variant_call_2%x.err"
 
 
 SAMPLE=${SAMPLE%".realigned_deduped_sorted.bam"}
@@ -81,10 +81,10 @@ TUMOR_RECAL_TABLE="${SAMPLE}_recal_data.table"
 NORMAL_REALIGN_BAM="${NORMAL_SAMPLE_NAME}.realigned_deduped_sorted.bam"
 NORMAL_RECAL_TABLE="${NORMAL_SAMPLE_NAME}_recal_data.table"
 SOMATIC_VCF="${SAMPLE}_somatic.vcf"
-TMP_OUT_TN_VCF="${RESULTS_DIR}/${SAMPLE}_temp.vcf"
-OUT_TN_VCF="${RESULTS_DIR}/${SAMPLE}_variant.vcf"
-ORIENTATION_DATA="${RESULTS_DIR}/${SAMPLE}_orienation_data"
-CONTAMINATION_DATA="${RESULTS_DIR}/${SAMPLE}_contamination_data"
+TMP_OUT_TN_VCF="${SCRATCH_DIR}/${SAMPLE}_temp.vcf"
+OUT_TN_VCF="${SCRATCH_DIR}/${SAMPLE}_variant.vcf"
+ORIENTATION_DATA="${SCRATCH_DIR}/${SAMPLE}_orienation_data"
+CONTAMINATION_DATA="${SCRATCH_DIR}/${SAMPLE}_contamination_data"
 SEGMENTS="${CONTAMINATION_DATA}.segments"
 
 #somethin's goin on where control samples have all the somatic calls of control samples, not sure what is happening
@@ -94,12 +94,12 @@ SEGMENTS="${CONTAMINATION_DATA}.segments"
 #has one PBMC normal sample at the time of writing this
 
 #sentieon driver -t $NUMBER_THREADS -r $REF_FASTA \
-#   -i ${RESULTS_DIR}"/"${TUMOR_REALIGNED_BAM}  \
+#   -i ${SCRATCH_DIR}"/"${TUMOR_REALIGNED_BAM}  \
 #   --algo OrientationBias --tumor_sample ${SAMPLE} \
   #     $ORIENTATION_DATA
 
 #sentieon driver -t $NUMBER_THREADS -r $REF_FASTA \
-#   -i ${RESULTS_DIR}"/"${TUMOR_REALIGNED_BAM} \
+#   -i ${SCRATCH_DIR}"/"${TUMOR_REALIGNED_BAM} \
 #	--algo ContaminationModel --tumor_sample ${SAMPLE} --vcf ${CONTAMINATION_VCF} \
 #		$CONTAMINATION_DATA
 
@@ -107,8 +107,8 @@ SEGMENTS="${CONTAMINATION_DATA}.segments"
 #Can't get it to run the two other algo calls in one sentieon call so seperated them, prob will be less eficient Sadge
 
  sentieon driver -t $NUMBER_THREADS -r $REF_FASTA --interval $TARGETS_BED \
-   -i ${RESULTS_DIR}"/"${TUMOR_REALIGNED_BAM} -q ${RESULTS_DIR}"/"${TUMOR_RECAL_TABLE} \
-   -i ${RESULTS_DIR}"/"${NORMAL_REALIGN_BAM} -q ${RESULTS_DIR}"/"${NORMAL_RECAL_TABLE} \
+   -i ${SCRATCH_DIR}"/"${TUMOR_REALIGNED_BAM} -q ${SCRATCH_DIR}"/"${TUMOR_RECAL_TABLE} \
+   -i ${SCRATCH_DIR}"/"${NORMAL_REALIGN_BAM} -q ${SCRATCH_DIR}"/"${NORMAL_RECAL_TABLE} \
    --algo TNscope --tumor_sample ${SAMPLE} \
       --normal_sample ${NORMAL_SAMPLE_NAME} \
       --dbsnp $dbSNP \

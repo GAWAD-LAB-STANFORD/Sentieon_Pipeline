@@ -11,8 +11,8 @@ START_TIME=$(date +%s)
 SCRIPT_COMMAND="$@"
 while [ "$1" != "" ]; do
     case $1 in
-        --results_dir )             shift
-                                    RESULTS_DIR=$1
+        --scratch_dir )             shift
+                                    SCRATCH_DIR=$1
                                     ;;
         --skip_trimmomatic )        shift
                                     SKIP_TRIMMOMATIC=$1
@@ -38,7 +38,7 @@ while [ "$1" != "" ]; do
         --sample_string )           shift
                                     SAMPLE_ARRAY=( $(echo $1 | sed 's/:/ /g') )
                                     ;;
-        --kfastq_dir )              shift
+        --fastq_dir )               shift
                                     FASTQ_DIR=$1
                                     ;;
         --dbSNP )                   shift
@@ -63,7 +63,7 @@ while [ "$1" != "" ]; do
     shift
 done
 
-if [ -z $RESULTS_DIR ] || [ -z $SKIP_TRIMMOMATIC ] || [ -z $SCRIPT_DIR ] || [ -z $TOOLS_DIR ] || \
+if [ -z $SCRATCH_DIR ] || [ -z $SKIP_TRIMMOMATIC ] || [ -z $SCRIPT_DIR ] || [ -z $TOOLS_DIR ] || \
     [ -z $R1_SUFFIX ] || [ -z $R2_SUFFIX ] || [ -z $REF_FASTA ] || [ -z $NUMBER_THREADS ] || \
     [ -z $SAMPLE_ARRAY ] || [ -z $FASTQ_DIR ] || [ -z $dbSNP ] || [ -z $PROJECT ] || \
     [ -z $SKIP_BAM ] || [ -z $TARGETED ] || [ -z $STD_ERR_OUT_DIR ] || [ -z $TARGETS_BED ]; then
@@ -115,8 +115,8 @@ RECALIBRATED_BAM="${SAMPLE}.recalibrated_realigned_deduped_sorted.bam"
 VARIANT_VCF="${SAMPLE}.g.vcf"
 BAM_SUFFIX=".bqsr.bam"
 
-echo -e "START: $(date)\nSentieon Pipeline\nResults dir: $RESULTS_DIR\nSample: $SAMPLE\nRef fasta: $REF_FASTA" >> $SENTIEON_STATUS
-cd $RESULTS_DIR
+echo -e "START: $(date)\nSentieon Pipeline\nResults dir: $SCRATCH_DIR\nSample: $SAMPLE\nRef fasta: $REF_FASTA" >> $SENTIEON_STATUS
+cd $SCRATCH_DIR
 
 ml gsl/2.3
 ml java/1.8.0_131
@@ -132,12 +132,12 @@ R2_FASTQ=${FASTQ_DIR}"/"${SAMPLE}${R2_SUFFIX}
 
 echo "R1_FASTQ is $R1_FASTQ"
 
-cd $RESULTS_DIR
+cd $SCRATCH_DIR
 echo "### Counting fastq read counts Sample: $SAMPLE ### - START: $(date)" >> $SENTIEON_STATUS
 READ_COUNT=$(echo $(zcat $R1_FASTQ | wc -l ) \
     $(zcat $R2_FASTQ | wc -l) | awk '{ print ($1 + $2) / 4 }' )
-echo -e "sample\tread_count" > $RESULTS_DIR/${SAMPLE}.read_counts.tsv
-echo -e "$SAMPLE\t$READ_COUNT" >> $RESULTS_DIR/${SAMPLE}.read_counts.tsv
+echo -e "sample\tread_count" > $SCRATCH_DIR/${SAMPLE}.read_counts.tsv
+echo -e "$SAMPLE\t$READ_COUNT" >> $SCRATCH_DIR/${SAMPLE}.read_counts.tsv
 echo "### Counting fastq read counts Sample: $SAMPLE ### - END: $(date)" >> $SENTIEON_STATUS
 
 

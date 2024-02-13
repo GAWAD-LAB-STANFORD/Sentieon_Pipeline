@@ -11,8 +11,8 @@ START_TIME=$(date +%s)
 SCRIPT_COMMAND="$@"
 while [ "$1" != "" ]; do
     case $1 in
-        --results_dir )             shift
-                                    RESULTS_DIR=$1
+        --scratch_dir )             shift
+                                    SCRATCH_DIR=$1
                                     ;;
         --project )                 shift
                                     PROJECT=$1
@@ -21,15 +21,15 @@ while [ "$1" != "" ]; do
     shift
 done
 
-if [ -z $RESULTS_DIR ] || [ -z $PROJECT ]; then
+if [ -z $SCRATCH_DIR ] || [ -z $PROJECT ]; then
     echo "Variables not supplied correctly. Check script for intake parameters. All are required to be specified. Exiting with code 1"
     exit 1
 fi
 
 echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND"
-cd $RESULTS_DIR
+cd $SCRATCH_DIR
 
-VCF_LIST=( $(find ${RESULTS_DIR} -maxdepth 1 -name "*variant.vcf" ) )
+VCF_LIST=( $(find ${SCRATCH_DIR} -maxdepth 1 -name "*variant.vcf" ) )
 
 #Currently major bugs i think from merging vcfs, transition to using gather vcf instead
 ml biology bwa/0.7.17 samtools/1.8 java/1.8.0_131 bcftools/1.16
@@ -46,9 +46,9 @@ done
 
 echo "exited for loop"
 
-VCF_LIST=( $(find ${RESULTS_DIR} -maxdepth 1 -name "*_filtered.vcf.gz" ! -name "*PBMC*") )
+VCF_LIST=( $(find ${SCRATCH_DIR} -maxdepth 1 -name "*_filtered.vcf.gz" ! -name "*PBMC*") )
 
-bcftools merge --force-samples -o "$RESULTS_DIR/${PROJECT}_svc_merged.vcf" *_filtered.vcf.gz
+bcftools merge --force-samples -o "$SCRATCH_DIR/${PROJECT}_svc_merged.vcf" *_filtered.vcf.gz
 
 #Attempt to filter out still remaining problematic <INS> record that was still in vcf, possible this won't remove all of the junk, causing the run to still fail
 

@@ -14,8 +14,8 @@ START_TIME=$(date +%s)
 SCRIPT_COMMAND="$@"
 while [ "$1" != "" ]; do
     case $1 in
-        --results_dir )                 shift
-                                        RESULTS_DIR=$1
+        --scratch_dir )                 shift
+                                        SCRATCH_DIR=$1
                                         ;;
         --tools_dir )                   shift
                                         TOOLS_DIR=$1
@@ -60,7 +60,7 @@ while [ "$1" != "" ]; do
     shift
 done
 
-if [ -z $RESULTS_DIR ] || [ -z $TOOLS_DIR ] || [ -z $ANNOVAR_GENOME_VERSION ] || [ -z $ANNOVAR_DIR ] || \
+if [ -z $SCRATCH_DIR ] || [ -z $TOOLS_DIR ] || [ -z $ANNOVAR_GENOME_VERSION ] || [ -z $ANNOVAR_DIR ] || \
     [ -z $PIPELINE_DIR ] || [ -z $REFERENCE_DIR ] || [ -z $REF_FASTA ] || [ -z $NORMAL_SAMPLE_NAME ] || \
     [ -z $SAMPLE_ARRAY ] || [ -z $TARGETED ] || [ -z $STD_ERR_OUT_DIR ] || [ -z $TRANCHE ]; then
     echo "Variables not supplied correctly. Check script for intake parameters. All are required to be specified. Exiting with code 1"
@@ -69,7 +69,7 @@ fi
 
 SAMPLE=${SAMPLE_ARRAY[$(( $SLURM_ARRAY_TASK_ID - 1 ))]}
 echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND\nSample: $SAMPLE"
-cd $RESULTS_DIR
+cd $SCRATCH_DIR
 
 echo "### Annotating SNPs and Indels ###: $(date)"
 ml purge
@@ -89,7 +89,7 @@ DBSNP_VCF="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38.db
 MILLS_VCF="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz"
 AXIOM_VCF="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/Axiom_Exome_Plus.genotypes.all_populations.poly.hg38.vcf.gz"
 SNP_PREFIX=${SAMPLE%.vcf.gz}
-VCF_FILE="${RESULTS_DIR}/${SAMPLE}"
+VCF_FILE="${SCRATCH_DIR}/${SAMPLE}"
 SCRIPT_DIR="${PIPELINE_DIR}/scripts"
 
 #This is a text file containing blacklisted mutations, edit this text file not stuff here to add or remove from blacklist
@@ -283,12 +283,12 @@ export PYTHONPATH=${PYTHON_LIBS_SITE_PACKAGES}:$PYTHONPATH
 ## this was a workaround to calculate the VAF we wanted in the old script, leaving it in for posterity but prob not exactly what you want now
 ## now tho we'll want a way to calculate VAF probably right? currently this pipeline doesn't do that for you
 #python3 ${SCRIPT_DIR}/split_add_VAF.py \
-#    -i ${RESULTS_DIR}/${SNP_EXTRACT}.${ANNOVAR_GENOME_VERSION}_multianno.tsv \
-#    -o ${RESULTS_DIR}/${SNP_EXTRACT}.${ANNOVAR_GENOME_VERSION}_multianno.final.tsv
+#    -i ${SCRATCH_DIR}/${SNP_EXTRACT}.${ANNOVAR_GENOME_VERSION}_multianno.tsv \
+#    -o ${SCRATCH_DIR}/${SNP_EXTRACT}.${ANNOVAR_GENOME_VERSION}_multianno.final.tsv
 #
 #python3 ${SCRIPT_DIR}/split_add_VAF.py \
-#    -i ${RESULTS_DIR}/${INDEL_EXTRACT}.${ANNOVAR_GENOME_VERSION}_multianno.tsv \
-#    -o ${RESULTS_DIR}/${INDEL_EXTRACT}.${ANNOVAR_GENOME_VERSION}_multianno.final.tsv
+#    -i ${SCRATCH_DIR}/${INDEL_EXTRACT}.${ANNOVAR_GENOME_VERSION}_multianno.tsv \
+#    -o ${SCRATCH_DIR}/${INDEL_EXTRACT}.${ANNOVAR_GENOME_VERSION}_multianno.final.tsv
 #
 rm ${SNP_EXTRACT}.${ANNOVAR_GENOME_VERSION}_multianno.temp.tsv
 rm ${INDEL_EXTRACT}.${ANNOVAR_GENOME_VERSION}_multianno.temp.tsv
@@ -328,20 +328,20 @@ if [[ ${SAMPLE} != *"joint_germline"* ]]; then
     ml math py-numpy/1.19.2_py36
     ml py-pandas/1.0.3_py36
     python3 ${SCRIPT_DIR}/remove_control_rows.py \
-        -d ${RESULTS_DIR}/${SNP_EXTRACT}.${ANNOVAR_GENOME_VERSION}_multianno.tsv \
-        -p ${RESULTS_DIR}/${SNP_EXTRACT}.${ANNOVAR_GENOME_VERSION}_multianno.no_germline.tsv \
+        -d ${SCRATCH_DIR}/${SNP_EXTRACT}.${ANNOVAR_GENOME_VERSION}_multianno.tsv \
+        -p ${SCRATCH_DIR}/${SNP_EXTRACT}.${ANNOVAR_GENOME_VERSION}_multianno.no_germline.tsv \
         -n ${NORMAL_SAMPLE_NAME}
 
     python3 ${SCRIPT_DIR}/remove_control_rows.py \
-            -d ${RESULTS_DIR}/${INDEL_EXTRACT}.${ANNOVAR_GENOME_VERSION}_multianno.tsv \
-            -p ${RESULTS_DIR}/${INDEL_EXTRACT}.${ANNOVAR_GENOME_VERSION}_multianno.no_germline.tsv \
+            -d ${SCRATCH_DIR}/${INDEL_EXTRACT}.${ANNOVAR_GENOME_VERSION}_multianno.tsv \
+            -p ${SCRATCH_DIR}/${INDEL_EXTRACT}.${ANNOVAR_GENOME_VERSION}_multianno.no_germline.tsv \
             -n ${NORMAL_SAMPLE_NAME}
 fi
 
 srun -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
     ${SCRIPT_DIR}/SigProfiler.sh --project "all_non_germline_calls" \
     --tsv ${SNP_EXTRACT}.${ANNOVAR_GENOME_VERSION}_multianno.no_germline.tsv \
-    --script_dir ${SCRIPT_DIR} --results_dir ${RESULTS_DIR} ${OPTIONS[@]}
+    --script_dir ${SCRIPT_DIR} --results_dir ${SCRATCH_DIR} ${OPTIONS[@]}
 # rm -rf $SCRATCH/$SLURM_JOB_ID
 
 

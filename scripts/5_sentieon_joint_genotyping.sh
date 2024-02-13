@@ -11,8 +11,8 @@ START_TIME=$(date +%s)
 SCRIPT_COMMAND="$@"
 while [ "$1" != "" ]; do
     case $1 in
-        --results_dir )             shift
-                                    RESULTS_DIR=$1
+        --scratch_dir )             shift
+                                    SCRATCH_DIR=$1
                                     ;;
         --reference_dir )           shift
                                     REFERENCE_DIR=$1
@@ -30,14 +30,14 @@ while [ "$1" != "" ]; do
     shift
 done
 
-if [ -z $RESULTS_DIR ] || [ -z $REFERENCE_DIR ] || [ -z $REF_FASTA ] || [ -z $PROJECT ] || \
+if [ -z $SCRATCH_DIR ] || [ -z $REFERENCE_DIR ] || [ -z $REF_FASTA ] || [ -z $PROJECT ] || \
     [ -z $TARGETS_BED ]; then
     echo "Variables not supplied correctly. Check script for intake parameters. All are required to be specified. Exiting with code 1"
     exit 1
 fi
 
 echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND"
-cd $RESULTS_DIR
+cd $SCRATCH_DIR
 
 ml purge
 ml biology bwa samtools java

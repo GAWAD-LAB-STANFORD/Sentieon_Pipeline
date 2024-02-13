@@ -11,8 +11,8 @@ START_TIME=$(date +%s)
 SCRIPT_COMMAND="$@"
 while [ "$1" != "" ]; do
     case $1 in
-        --results_dir )         shift
-                                RESULTS_DIR=$1
+        --scratch_dir )         shift
+                                SCRATCH_DIR=$1
                                 ;;
         --skip_trimmomatic )    shift
                                   SKIP_TRIMMOMATIC=$1
@@ -66,7 +66,7 @@ while [ "$1" != "" ]; do
     shift
 done
 
-if [ -z $RESULTS_DIR ] || [ -z $SKIP_TRIMMOMATIC ] || [ -z $SCRIPT_DIR ] || [ -z $TOOLS_DIR ] || \
+if [ -z $SCRATCH_DIR ] || [ -z $SKIP_TRIMMOMATIC ] || [ -z $SCRIPT_DIR ] || [ -z $TOOLS_DIR ] || \
     [ -z $R1_SUFFIX ] || [ -z $R2_SUFFIX ] || [ -z $REF_FASTA ] || [ -z $NUMBER_THREADS ] || \
     [ -z $SAMPLE_ARRAY ] || [ -z $FASTQ_DIR ] || [ -z $dbSNP ] || [ -z $PROJECT ] || \
     [ -z $SKIP_BAM ] || [ -z $TARGETED ] || [ -z $STD_ERR_OUT_DIR ] || [ -z $TARGETS_BED ] || \
@@ -113,8 +113,8 @@ RECALIBRATED_BAM="${SAMPLE}.recalibrated_realigned_deduped_sorted.bam"
 VARIANT_VCF="${SAMPLE}.g.vcf"
 BAM_SUFFIX=".bqsr.bam"
 BAM_NAME=${RECALIBRATED_BAM}
-echo -e "START: $(date)\nSentieon Pipeline\nResults dir: $RESULTS_DIR\nSample: $SAMPLE\nRef fasta: $REF_FASTA" >> $SENTIEON_STATUS
-cd $RESULTS_DIR
+echo -e "START: $(date)\nSentieon Pipeline\nResults dir: $SCRATCH_DIR\nSample: $SAMPLE\nRef fasta: $REF_FASTA" >> $SENTIEON_STATUS
+cd $SCRATCH_DIR
 
 #ml gsl/2.3
 #ml java/1.8.0_131
@@ -140,7 +140,7 @@ echo "### Aligning fastqs Sample: $SAMPLE ### - START: $(date)" >> $SENTIEON_STA
 RG="@RG\tID:${SAMPLE}_ID\tSM:$SAMPLE\tPL:ILLUMINA"
 echo "Read group: $RG"
 
-cd ${RESULTS_DIR}
+cd ${SCRATCH_DIR}
 echo "### Calculating QC metrics Sample: $SAMPLE ### - START: $(date)" >> $SENTIEON_STATUS
 #	if [ $TARGETED -eq 1 ]; then
 #	    echo "start Hs metrics: $(date)"
@@ -279,16 +279,16 @@ echo "Calculating QC metric"
 #	rm *pre.bam
     # rm -rf `pwd`/tmp*
 
-mkdir "${RESULTS_DIR}/${SAMPLE}_temp_qualimap_output"
+mkdir "${SCRATCH_DIR}/${SAMPLE}_temp_qualimap_output"
 echo "made the qualimap directory"
 echo "${QUALIMAP_TOOL} is the qualimap tool"
 
 $QUALIMAP_TOOL bamqc -nt 4 -nw 3000 --java-mem-size=31G -bam ${BAM_NAME} -gff $N25CHR_BED \
-    -c -hm 3 -outdir ${RESULTS_DIR}/${SAMPLE}_temp_qualimap_output -outformat PDF
+    -c -hm 3 -outdir ${SCRATCH_DIR}/${SAMPLE}_temp_qualimap_output -outformat PDF
 
 #Temporarily removed bed input for testing since its not working with the bed input
     #$QUALIMAP_TOOL bamqc -nt 4 -nw 3000 --java-mem-size=55G -bam ${BAM_NAME} -gff $N25CHR_BED \
-    #    -c -hm 3 -outdir ${RESULTS_DIR}/${SAMPLE}_temp_qualimap_output -outformat PDF
+    #    -c -hm 3 -outdir ${SCRATCH_DIR}/${SAMPLE}_temp_qualimap_output -outformat PDF
 if [ ! -f ${SAMPLE}_temp_qualimap_output/report.pdf ]; then
     echo "QualiMap encountered a problem and did not complete"
 else

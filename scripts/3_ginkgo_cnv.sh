@@ -31,8 +31,8 @@ while [ "$1" != "" ]; do
         --kb_bin_size )         shift
                                 KB_BIN_SIZE=$1
                                 ;;
-        --results_dir )         shift
-                                RESULTS_DIR=$1
+        --scratch_dir )         shift
+                                SCRATCH_DIR=$1
                                 ;;
         --group_segmentation )  GROUP_SEGMENTATION=1
                                 ;;
@@ -48,12 +48,12 @@ if [ -z $BAM_DIR ]; then
     exit 1
 fi
 
-echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND\nBam dir: $BAM_DIR\nResults dir: $RESULTS_DIR\nBam regex: $BAM_REGEX\nBam suffix: $BAM_SUFFIX\nKb bin size: $KB_BIN_SIZE\nFull work dir: $FULL_WORK_DIR"
-if [ -z $RESULTS_DIR ]; then
-    RESULTS_DIR=$BAM_DIR
+echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND\nBam dir: $BAM_DIR\nResults dir: $SCRATCH_DIR\nBam regex: $BAM_REGEX\nBam suffix: $BAM_SUFFIX\nKb bin size: $KB_BIN_SIZE\nFull work dir: $FULL_WORK_DIR"
+if [ -z $SCRATCH_DIR ]; then
+    SCRATCH_DIR=$BAM_DIR
 fi
 mkdir -p $FULL_WORK_DIR
-mkdir -p $RESULTS_DIR/ginkgo_outputs
+mkdir -p $SCRATCH_DIR/ginkgo_outputs
 cd $GINKGO_DIR
 
 ml php/7.3.0 ghostscript/9.53.2 java gsl/2.3 R/4.0.2 biology bedtools samtools/1.8
@@ -61,8 +61,8 @@ export R_LIBS="/home/groups/cgawad/R_LIBS"
 
 SAMPLE_ARRAY=( $(find ${BAM_DIR} -maxdepth 1 -regextype sed -regex ".*${BAM_REGEX}" -exec basename {} \; | sed "s/${BAM_SUFFIX}//") )
 echo -e "Number of samples: ${#SAMPLE_ARRAY[@]}\nSamples: ${SAMPLE_ARRAY[@]}"
-if [ -z $RESULTS_DIR ]; then
-    RESULTS_DIR=$BAM_DIR
+if [ -z $SCRATCH_DIR ]; then
+    SCRATCH_DIR=$BAM_DIR
 fi
 
 > $FULL_WORK_DIR/list
@@ -98,17 +98,17 @@ fi
 # gs -dNOPAUSE -sDEVICE=pdfwrite -sOUTPUTFILE=01_Combined_CNV_Plots.pdf -dBATCH *CN.pdf
 # cp 01_Combined_CNV_Plots.pdf ..
 
-cd $RESULTS_DIR
-mkdir -p $RESULTS_DIR/Ginkgo_CN_Plots
+cd $SCRATCH_DIR
+mkdir -p $SCRATCH_DIR/Ginkgo_CN_Plots
 
-find $RESULTS_DIR/ginkgo_outputs -name '*CN.pdf' -exec mv {} $RESULTS_DIR/Ginkgo_CN_Plots \;
+find $SCRATCH_DIR/ginkgo_outputs -name '*CN.pdf' -exec mv {} $SCRATCH_DIR/Ginkgo_CN_Plots \;
 
 if [ -f "01_Combined_Ginkgo_CNV.pdf" ] ; then
     rm 01_Combined_Ginkgo_CNV.pdf
 fi
 
 ml system poppler/0.47.0
-pdfunite $RESULTS_DIR/Ginkgo_CN_Plots/*CN.pdf $RESULTS_DIR/01_Combined_Ginkgo_CNV.pdf
+pdfunite $SCRATCH_DIR/Ginkgo_CN_Plots/*CN.pdf $SCRATCH_DIR/01_Combined_Ginkgo_CNV.pdf
 
 exit
 echo -e "END: $(date)\nRuntime: $(($(date +%s)-$START_TIME)) seconds"

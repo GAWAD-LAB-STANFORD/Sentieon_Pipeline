@@ -11,8 +11,8 @@ START_TIME=$(date +%s)
 SCRIPT_COMMAND="$@"
 while [ "$1" != "" ]; do
     case $1 in
-        --results_dir )             shift
-                                    RESULTS_DIR=$1
+        --scratch_dir )             shift
+                                    SCRATCH_DIR=$1
                                     ;;
         --script_dir )              shift
                                     SCRIPT_DIR=$1
@@ -23,17 +23,23 @@ while [ "$1" != "" ]; do
         --targeted )                shift
                                     TARGETED=$1
                                     ;;
+        --run_dir )                 shift
+                                    RUN_DIR=$1
+                                    ;;
+        --sample_sheet )            shift
+                                    SAMPLE_SHEET=$1
+                                    ;;
     esac
     shift
 done
 
-if [ -z $RESULTS_DIR ] || [ -z $SCRIPT_DIR ] || [ -z $PROJECT ] || [ -z $TARGETED ]; then
+if [ -z $SCRATCH_DIR ] || [ -z $SCRIPT_DIR ] || [ -z $PROJECT ] || [ -z $TARGETED ]; then
     echo "Variables not supplied correctly. Check script for intake parameters. All are required to be specified. Exiting with code 1"
     exit 1
 fi
 
 echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND"
-cd $RESULTS_DIR
+cd $SCRATCH_DIR
 
 echo project is ${PROJECT} 
 
@@ -250,7 +256,7 @@ paste ${PROJECT}.read.qual ${PROJECT}.preseq.qual ${PROJECT}.mito.qual ${PROJECT
 paste ${PROJECT}.read.qual ${PROJECT}.preseq.qual ${PROJECT}.mito.qual ${PROJECT}.dup.qual ${PROJECT}.hs.cover.qual ${PROJECT}.align.qual ${PROJECT}.oxo.qual > 01.${PROJECT}.hs.data.quality.tsv
 
 
-cp $RESULTS_DIRECTORY/RunCompletionStatus.xml `pwd`
+cp $SCRATCH_DIR/RunCompletionStatus.xml `pwd`
 
 
 if [ -f "RunCompletionStatus.xml" ]; then

@@ -21,8 +21,8 @@ while [ "$1" != "" ]; do
         --project )                     shift
                                         PROJECT=$1
                                         ;;
-        --results_dir )                 shift
-                                        RESULTS_DIR=$1
+        --scratch_dir )                 shift
+                                        SCRATCH_DIR=$1
                                         ;;
         --pipeline_dir )                shift
                                         PIPELINE_DIR=$1
@@ -43,14 +43,14 @@ while [ "$1" != "" ]; do
     shift
 done
 
-if [ -z $PROJECT ] || [ -z $RESULTS_DIR ] || [ -z $PIPELINE_DIR ] || [ -z $STD_ERR_OUT_DIR ] || \
+if [ -z $PROJECT ] || [ -z $SCRATCH_DIR ] || [ -z $PIPELINE_DIR ] || [ -z $STD_ERR_OUT_DIR ] || \
     [ -z $EXOME ]; then
     echo "Variables not supplied correctly. Check script for intake parameters. All are required to be specified. Exiting with code 1"
     exit 1
 fi
 
 echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND"
-cd $RESULTS_DIR
+cd $SCRATCH_DIR
 
 echo "### Annotating SNPs and Indels ###: $(date)"
 ml purge
@@ -246,7 +246,7 @@ cat final_clonal_* > 01_final_clonal_snp_indel_calls.tsv
 
 C_TSV_NAME="All_somatic_calls"
 
-sbatch -c 2 --mem=32G -p cgawad --time=24:00:00 -e $STD_ERR_OUT_DIR/%A_${TSV_NAME}_sigprofile_%x.err -o $STD_ERR_OUT_DIR/%A_${TSV_NAME}_sigprofile_%x.out ${SCRIPT_DIR}/Scan2_SigProfiler.sh --tsv 01_final_clonal_somatic_snvs.tsv --script_dir ${SCRIPT_DIR} --results_dir ${RESULTS_DIR} --project ${C_TSV_NAME}
+sbatch -c 2 --mem=32G -p cgawad --time=24:00:00 -e $STD_ERR_OUT_DIR/%A_${TSV_NAME}_sigprofile_%x.err -o $STD_ERR_OUT_DIR/%A_${TSV_NAME}_sigprofile_%x.out ${SCRIPT_DIR}/Scan2_SigProfiler.sh --tsv 01_final_clonal_somatic_snvs.tsv --script_dir ${SCRIPT_DIR} --results_dir ${SCRATCH_DIR} --project ${C_TSV_NAME}
 
 
 VAF_COL_NUM=$( ($PIPELINE_DIR/colnum.sh ${PROJECT}_svc_merged_extract_snp.hg38_multianno.no_germline.tsv AF) )
@@ -284,7 +284,7 @@ cat header final_non_clonal_somatic_calls_pre.tsv >  01_final_non_clonal_somatic
 
 NC_TSV_NAME="non_clonal_calls"
 
-sbatch -c 2 --mem=32G -p cgawad --time=24:00:00 -e $STD_ERR_OUT_DIR/%A_${TSV_NAME}_sigprofile_%x.err -o $STD_ERR_OUT_DIR/%A_${TSV_NAME}_sigprofile_%x.out ${SCRIPT_DIR}/Scan2_SigProfiler.sh --tsv 01_final_non_clonal_somatic_snvs.tsv --script_dir ${SCRIPT_DIR} --results_dir ${RESULTS_DIR} --project ${NC_TSV_NAME}
+sbatch -c 2 --mem=32G -p cgawad --time=24:00:00 -e $STD_ERR_OUT_DIR/%A_${TSV_NAME}_sigprofile_%x.err -o $STD_ERR_OUT_DIR/%A_${TSV_NAME}_sigprofile_%x.out ${SCRIPT_DIR}/Scan2_SigProfiler.sh --tsv 01_final_non_clonal_somatic_snvs.tsv --script_dir ${SCRIPT_DIR} --results_dir ${SCRATCH_DIR} --project ${NC_TSV_NAME}
 
 
 ## generate a file with all MUTECT calls but quality filtered such that user can look at and compare potential germline calls
@@ -301,7 +301,7 @@ cat *_joint_germline_merged_extract_*.hg38_multianno.tsv >> 01_all_germline_snp_
 
 I_TSV_NAME="All_indel_calls"
 
-sbatch -c 2 --mem=32G -p cgawad --time=24:00:00 -e $STD_ERR_OUT_DIR/%A_${TSV_NAME}_sigprofile_%x.err -o $STD_ERR_OUT_DIR/%A_${TSV_NAME}_sigprofile_%x.out ${SCRIPT_DIR}/Scan2_SigProfiler.sh --tsv 01_final_clonal_indel_calls.tsv --script_dir ${SCRIPT_DIR} --results_dir ${RESULTS_DIR} --project ${I_TSV_NAME}
+sbatch -c 2 --mem=32G -p cgawad --time=24:00:00 -e $STD_ERR_OUT_DIR/%A_${TSV_NAME}_sigprofile_%x.err -o $STD_ERR_OUT_DIR/%A_${TSV_NAME}_sigprofile_%x.out ${SCRIPT_DIR}/Scan2_SigProfiler.sh --tsv 01_final_clonal_indel_calls.tsv --script_dir ${SCRIPT_DIR} --results_dir ${SCRATCH_DIR} --project ${I_TSV_NAME}
 
 grep athogenic *germline_merged_extract*.tsv > known_pathogenic.tsv
 #head -n1 *snp*final.tsv > header2
@@ -342,7 +342,7 @@ conda list
 echo python libs is ${PYTHON_LIBS}
 echo python libs site packages is ${PYTHON_LIBS_SITE_PACKAGES}
 
-SIGS_OUTPUTS=$RESULTS_DIR/deconstructSigsOutputs
+SIGS_OUTPUTS=$SCRATCH_DIR/deconstructSigsOutputs
 mkdir -p $SIGS_OUTPUTS
 
 echo making the directories
@@ -351,20 +351,20 @@ CLONAL_DS=$SIGS_OUTPUTS/clonal_deconstructSigs
 mkdir -p $NON_CLONAL_DS 
 mkdir -p $CLONAL_DS
 
-Rscript --verbose $PIPELINE_DIR/deconstructSigs.R $CLONAL_DS/ $RESULTS_DIR/01_final_clonal_somatic_snvs.tsv > $STD_ERR_OUT_DIR/deconstructSigs_clonal.Rout 2>&1
-Rscript --verbose $PIPELINE_DIR/deconstructSigs.R $NON_CLONAL_DS/ $RESULTS_DIR/01_final_non_clonal_somatic_snvs.tsv > $STD_ERR_OUT_DIR/deconstructSigs_nc.Rout 2>&1
+Rscript --verbose $PIPELINE_DIR/deconstructSigs.R $CLONAL_DS/ $SCRATCH_DIR/01_final_clonal_somatic_snvs.tsv > $STD_ERR_OUT_DIR/deconstructSigs_clonal.Rout 2>&1
+Rscript --verbose $PIPELINE_DIR/deconstructSigs.R $NON_CLONAL_DS/ $SCRATCH_DIR/01_final_non_clonal_somatic_snvs.tsv > $STD_ERR_OUT_DIR/deconstructSigs_nc.Rout 2>&1
 
 ## use pdfunite now to merge the graphs
 
 echo pdf uniting
 ml system poppler/0.47.0
 
-#pdfunite $SIGS_OUTPUTS/mutsig_plot_bar* $RESULTS_DIR/01_individual_bar_signatures.pdf
-pdfunite $CLONAL_DS/mutsig_plot_stacked* $RESULTS_DIR/01_clonal_individual_stacked_signatures.pdf
-cp $CLONAL_DS/01_combined*_stacked_mutsig_plot.pdf $RESULTS_DIR/01_clonal_combined_stacked_mutsig_plot.pdf
+#pdfunite $SIGS_OUTPUTS/mutsig_plot_bar* $SCRATCH_DIR/01_individual_bar_signatures.pdf
+pdfunite $CLONAL_DS/mutsig_plot_stacked* $SCRATCH_DIR/01_clonal_individual_stacked_signatures.pdf
+cp $CLONAL_DS/01_combined*_stacked_mutsig_plot.pdf $SCRATCH_DIR/01_clonal_combined_stacked_mutsig_plot.pdf
 
-pdfunite $NON_CLONAL_DS/mutsig_plot_stacked* $RESULTS_DIR/01_non_clonal_individual_stacked_signatures.pdf
-cp $NON_CLONAL_DS/01_combined*_stacked_mutsig_plot.pdf $RESULTS_DIR/01_non_clonal_combined_stacked_mutsig_plot.pdf
+pdfunite $NON_CLONAL_DS/mutsig_plot_stacked* $SCRATCH_DIR/01_non_clonal_individual_stacked_signatures.pdf
+cp $NON_CLONAL_DS/01_combined*_stacked_mutsig_plot.pdf $SCRATCH_DIR/01_non_clonal_combined_stacked_mutsig_plot.pdf
 
 ##get the functional mutations 
 grep -E "nonsyn|stop|splic" 01_final_clonal_somatic_snvs.tsv > functional_snvs
@@ -382,16 +382,16 @@ head -n 1 indel_header > 01_functional_clonal_somatic_indels.tsv
 cat functional_indels2 >> 01_functional_clonal_somatic_indels.tsv
 
 if [[ $TARGETED -eq 0 ]]; then
-Rscript --verbose $PIPELINE_DIR/post_pipeline_heatmap.R --project snv_indel --directory $RESULTS_DIR --snv_filename 01_final_clonal_somatic_snvs.tsv --indel_filename 01_final_clonal_indel_calls.tsv > $STD_ERR_OUT_DIR/post_pipeline_heatmaps.Rout 2>&1
+Rscript --verbose $PIPELINE_DIR/post_pipeline_heatmap.R --project snv_indel --directory $SCRATCH_DIR --snv_filename 01_final_clonal_somatic_snvs.tsv --indel_filename 01_final_clonal_indel_calls.tsv > $STD_ERR_OUT_DIR/post_pipeline_heatmaps.Rout 2>&1
 fi
 
 if [[ $TARGETED -eq 1 ]]; then
-Rscript --verbose $PIPELINE_DIR/post_pipeline_heatmap.R --project snv_indel --directory $RESULTS_DIR --snv_filename 01_final_clonal_somatic_snvs.tsv --indel_filename 01_final_clonal_indel_calls.tsv --exome > $STD_ERR_OUT_DIR/post_pipeline_heatmaps.Rout 2>&1
+Rscript --verbose $PIPELINE_DIR/post_pipeline_heatmap.R --project snv_indel --directory $SCRATCH_DIR --snv_filename 01_final_clonal_somatic_snvs.tsv --indel_filename 01_final_clonal_indel_calls.tsv --exome > $STD_ERR_OUT_DIR/post_pipeline_heatmaps.Rout 2>&1
 fi
 
 # this way of doing things is deprecated
 mkdir -p 01_final_outputs
-rsync -a --exclude '01_final_outputs' ${RESULTS_DIR}/01* 01_final_outputs/
+rsync -a --exclude '01_final_outputs' ${SCRATCH_DIR}/01* 01_final_outputs/
 
 #PLEASE JUST PUT IT IN THE FOLDER WHY DOES THE PDF RANDOMLY GET DELTED
 rsync -a *vaf_heatmap.pdf 01_final_outputs/
@@ -409,7 +409,7 @@ rm *bed
 rm *.g.vcf.gz*
 rm -rf *gdb
 #rm -rf tmp*
-#rm $RESULTS_DIR/*allsample*
+#rm $SCRATCH_DIR/*allsample*
 rm *marked.bam*
 rm *list
 rm *chrM

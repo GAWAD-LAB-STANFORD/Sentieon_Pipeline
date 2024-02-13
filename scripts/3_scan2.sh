@@ -88,8 +88,8 @@ while [ "$1" != "" ]; do
         --project )         shift
                             PROJECT=$1
                             ;;
-        --results_dir )     shift
-                            RESULTS_DIR=$1
+        --scratch_dir )     shift
+                            SCRATCH_DIR=$1
                             ;;
         --genome_version )  shift
                             GENOME_VERSION=$1
@@ -100,7 +100,7 @@ while [ "$1" != "" ]; do
         --normal_path )     shift
                             NORMAL_BAM_PATH=$1
                             ;;
-           --sample_string )   shift
+        --sample_string )   shift
                             SAMPLE_STRING=$1
                             ;;
         --normal_name )     shift
@@ -155,7 +155,7 @@ while [ "$1" != "" ]; do
     shift
 done
 
-if [ -z $PROJECT ] || [ -z $RESULTS_DIR ] || [ -z $GENOME_VERSION ] || [ -z $SCRIPT_DIR ] || \
+if [ -z $PROJECT ] || [ -z $SCRATCH_DIR ] || [ -z $GENOME_VERSION ] || [ -z $SCRIPT_DIR ] || \
     [ -z $NORMAL_BAM_PATH ] || [ -z $SAMPLE_STRING ] || [ -z $NORMAL_SAMPLE_NAME ] || [ -z $CROSS_SAMPLE_DIR ] || \
     [ -z $STD_ERR_OUT_DIR ] || [ -z $PIPELINE_DIR ] || [ -z $TARGETED ] || [ -z $TARGETS_BED ] || \
     [ -z $INTERVAL_LIST ] || [ -z $ANNOVAR_DIR ]; then
@@ -165,24 +165,8 @@ fi
 
 echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND"
 
-#del after debugging
-
-#OPTIONS=()
-#OPTIONS+=( "--project=$PROJECT" )
-#OPTIONS+=( "--results_dir=$RESULTS_DIR" )
-#OPTIONS+=( "--genome_ver=$GENOME_VERSION" )
-#OPTIONS+=( "--script_dir=$SCRIPT_DIR" )
-#OPTIONS+=( "--normal_path=$NORMAL_BAM_PATH" )
-#OPTIONS+=( "--std_err_out=$STD_ERR_OUT" )
-#OPTIONS+=( "--final_dir=$FINAL_DIR" )
-#OPTIONS+=( "--sample_string=$SAMPLE_STRING" )
-#OPTIONS+=( "--normal_name=$NORMAL_SAMPLE_NAME" )
-#OPTIONS+=( "--cross_dir=$CROSS_SAMPLE_DIR" )
-#echo OPTIONS ARE ${OPTIONS[*]}
-
 OPTIONS="--project $PROJECT"
-OPTIONS="${OPTIONS} --results_dir ${RESULTS_DIR}"
-OPTIONS="${OPTIONS} --final_dir ${FINAL_DIR}"
+OPTIONS="${OPTIONS} --scratch_dir ${SCRATCH_DIR}"
 OPTIONS="${OPTIONS} --genome_ver $GENOME_VERSION"
 OPTIONS="${OPTIONS} --script_dir $SCRIPT_DIR"
 OPTIONS="${OPTIONS} --normal_path $NORMAL_BAM_PATH"
@@ -215,8 +199,8 @@ SAMPLE_NAME=${SAMPLE%.realigned_deduped_sorted.bam}
 
 SCAN2_STATUS=${STD_ERR_OUT_DIR}/${PROJECT}_SCAN2_status.txt
 
-CROSS_SAMPLE_PANEL=$RESULTS_DIR/$SCAN2_RESULTS/panel/panel.tab.gz
-GATK_VCF=$RESULTS_DIR/$SCAN2_RESULTS/gatk/hc_raw.mmq60.vcf
+CROSS_SAMPLE_PANEL=$SCRATCH_DIR/$SCAN2_RESULTS/panel/panel.tab.gz
+GATK_VCF=$SCRATCH_DIR/$SCAN2_RESULTS/gatk/hc_raw.mmq60.vcf
 
 ml purge
 ml system gsl/2.3 curl/7.54.0 devel java/1.8.0_131 perl/5.26.0
@@ -231,18 +215,8 @@ export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/ 
 export SENTIEON_LICENSE=license4.stanford.edu:5443 #your license file location
 
 export R_LIBS="/home/groups/cgawad/R_libs"
-echo "PIPELINE DIR IS ${PIPELINE_DIR}"
-echo "normal_sample is ${NORMAL_SAMPLE_NAME}"
-echo "resutls_dir is ${RESULTS_DIR}"
-echo "cross_dir is ${CROSS_SAMPLE_DIR}"
 
-echo "ref fasta is ${REF_FASTA}"
-echo "sampe is ${SAMPLE}"
-
-echo "bed file is $TARGETS_BED"
-echo "Interval list is $INTERVAL_LIST"
-
-cd $RESULTS_DIR
+cd $SCRATCH_DIR
 
 #
 #if [ $GENOME_VERSION = "b37" ]; then
@@ -273,13 +247,13 @@ mkdir -p $SCAN2_RESULTS
 #    cd Scan2_Results_${SAMPLE}
 #else
 
-cd ${RESULTS_DIR}
+cd ${SCRATCH_DIR}
 
-NORMAL_BAM_PATH="${RESULTS_DIR}/${NORMAL_SAMPLE_NAME}.realigned_deduped_sorted.bam"
+NORMAL_BAM_PATH="${SCRATCH_DIR}/${NORMAL_SAMPLE_NAME}.realigned_deduped_sorted.bam"
 
 echo "normal sample is ${NORMAL_BAM_PATH}"
 
-SC_BAMS=$(find $RESULTS_DIR -maxdepth 1 -name "*.realigned_deduped_sorted.bam")
+SC_BAMS=$(find $SCRATCH_DIR -maxdepth 1 -name "*.realigned_deduped_sorted.bam")
 
 echo "sc-bams is ${SC_BAMS}"
 
@@ -328,7 +302,7 @@ BAM_SAMPLE_STRING=$(echo ${TEMP} | sed 's/-i //')
 echo BAM SAMPLE STRING IS ${BAM_SAMPLE_STRING}
 
 #may need to exclude normal sample from this bam calling
-BAM_NAMES=$(find $RESULTS_DIR -maxdepth 1 -name "*.realigned_deduped_sorted.bam" -exec basename {} \;)
+BAM_NAMES=$(find $SCRATCH_DIR -maxdepth 1 -name "*.realigned_deduped_sorted.bam" -exec basename {} \;)
 
 
 echo "### Running Scan2 SAMPLE: $PROJECT  ### - START: $(date)" >> $SCAN2_STATUS
@@ -353,7 +327,7 @@ if [ $STEP -eq 0 ]; then
         export LD_PRELOAD=/share/software/user/open/jemalloc/5.3.0/lib/libjemalloc.so
         MALLOC_CONF=metadata_thp:auto,background_thread:true,dirty_decay_ms:30000,muzzy_decay_ms:30000
         echo "Folder does not exist. Will create folder and configure for Scan2 running"
-        cd $RESULTS_DIR
+        cd $SCRATCH_DIR
 
         rm -R $SCAN2_RESULTS
 
@@ -373,9 +347,9 @@ if [ $STEP -eq 0 ]; then
         echo "dependencies are: ${DEPENDENCIES[*]}" 
 
         echo "***STARTING VARIANT CALLING NOW***"
-        DEPENDENCIES+=( $(sbatch --verbose --array=1-${TEMP_JOB_COUNT} --parsable -e ${STD_ERR_OUT_DIR}/%A_mmq1_sentieon_variant_call_scan2_%x.err -o ${STD_ERR_OUT_DIR}/%A_mmq1_sentieon_variant_call_scan2_%x.out $SCRIPT_DIR/scan2_germline_call.sh --results-dir $RESULTS_DIR --normal-path $NORMAL_BAM_PATH --ref $REF_FASTA --dbsnp $DBSNP_VCF --scan2-results $SCAN2_RESULTS --regions-bed $TARGETS_BED --sample_string $BAM_SAMPLE_STRING --mmq 1 --pipeline_dir $PIPELINE_DIR --bam_args echo ${BAM_ARGS}) )
+        DEPENDENCIES+=( $(sbatch --verbose --array=1-${TEMP_JOB_COUNT} --parsable -e ${STD_ERR_OUT_DIR}/%A_mmq1_sentieon_variant_call_scan2_%x.err -o ${STD_ERR_OUT_DIR}/%A_mmq1_sentieon_variant_call_scan2_%x.out $SCRIPT_DIR/scan2_germline_call.sh --results-dir $SCRATCH_DIR --normal-path $NORMAL_BAM_PATH --ref $REF_FASTA --dbsnp $DBSNP_VCF --scan2-results $SCAN2_RESULTS --regions-bed $TARGETS_BED --sample_string $BAM_SAMPLE_STRING --mmq 1 --pipeline_dir $PIPELINE_DIR --bam_args echo ${BAM_ARGS}) )
 
-        DEPENDENCIES+=( $(sbatch --verbose --array=1-${TEMP_JOB_COUNT} --parsable -e ${STD_ERR_OUT_DIR}/%A_mmq60_sentieon_variant_call_scan2_%x.err -o ${STD_ERR_OUT_DIR}/%A_mmq60_sentieon_variant_call_scan2_%x.out $SCRIPT_DIR/scan2_germline_call.sh --results-dir $RESULTS_DIR --normal-path $NORMAL_BAM_PATH --ref $REF_FASTA --dbsnp $DBSNP_VCF --scan2-results $SCAN2_RESULTS --regions-bed $TARGETS_BED --sample_string $BAM_SAMPLE_STRING --mmq 60 --pipeline_dir $PIPELINE_DIR --bam_args echo ${BAM_ARGS}) )
+        DEPENDENCIES+=( $(sbatch --verbose --array=1-${TEMP_JOB_COUNT} --parsable -e ${STD_ERR_OUT_DIR}/%A_mmq60_sentieon_variant_call_scan2_%x.err -o ${STD_ERR_OUT_DIR}/%A_mmq60_sentieon_variant_call_scan2_%x.out $SCRIPT_DIR/scan2_germline_call.sh --results-dir $SCRATCH_DIR --normal-path $NORMAL_BAM_PATH --ref $REF_FASTA --dbsnp $DBSNP_VCF --scan2-results $SCAN2_RESULTS --regions-bed $TARGETS_BED --sample_string $BAM_SAMPLE_STRING --mmq 60 --pipeline_dir $PIPELINE_DIR --bam_args echo ${BAM_ARGS}) )
     fi
     echo dependencies are ${DEPENDENCIES}
     if [ ! -z $DEPENDENCIES ]; then
@@ -390,17 +364,11 @@ if [ $STEP -eq 0 ]; then
 fi
 
 if [ $STEP -eq 15 ]; then
-
-    #RESULTS_DIR=$1
-    #REFERENCE_DIR=$2
-    #REF_FASTA=$3
-    #PROJECT=$4
-    #MMQ=$5
     FILE=$SCAN2_RESULTS/gatk/hc_raw.mmq60.vcf
 
     if [ ! -f "$FILE" ]; then
-        DEPENDENCIES+=( $(sbatch --parsable -e ${STD_ERR_OUT_DIR}/%A_mmq1_joint_gt_%x.err -o ${STD_ERR_OUT_DIR}/%A_mmq1_joint_gt_%x.out $SCRIPT_DIR/scan2_joint_genotyping.sh $RESULTS_DIR $REFERENCE_DIR $REF_FASTA $PROJECT 1 $SCAN2_RESULTS) )
-        DEPENDENCIES+=( $(sbatch --parsable -e ${STD_ERR_OUT_DIR}/%A_mmq60_joint_gt_%x.err -o ${STD_ERR_OUT_DIR}/%A_mmq60_joint_gt_%x.out $SCRIPT_DIR/scan2_joint_genotyping.sh $RESULTS_DIR $REFERENCE_DIR $REF_FASTA $PROJECT 60 $SCAN2_RESULTS) )
+        DEPENDENCIES+=( $(sbatch --parsable -e ${STD_ERR_OUT_DIR}/%A_mmq1_joint_gt_%x.err -o ${STD_ERR_OUT_DIR}/%A_mmq1_joint_gt_%x.out $SCRIPT_DIR/scan2_joint_genotyping.sh $SCRATCH_DIR $REFERENCE_DIR $REF_FASTA $PROJECT 1 $SCAN2_RESULTS) )
+        DEPENDENCIES+=( $(sbatch --parsable -e ${STD_ERR_OUT_DIR}/%A_mmq60_joint_gt_%x.err -o ${STD_ERR_OUT_DIR}/%A_mmq60_joint_gt_%x.out $SCRIPT_DIR/scan2_joint_genotyping.sh $SCRATCH_DIR $REFERENCE_DIR $REF_FASTA $PROJECT 60 $SCAN2_RESULTS) )
     fi
     if [ ! -z $DEPENDENCIES ]; then
                 sbatch --dependency=afterany:$( IFS=$':'; echo "${DEPENDENCIES[*]}" ) --partition=cgawad -e $STD_ERR_OUT_DIR/%A_scan2_step1_%x.err -o $STD_ERR_OUT_DIR/%A_scan2_step1_%x.out --time=5-00:00:00 --wrap "sh $SCRIPT_DIR/3_scan2.sh --step1 ${OPTIONS}"
@@ -418,14 +386,14 @@ if [ $STEP -eq 1 ]; then
 
     if [ $SKIP_PANEL -eq 0 ]; then	
         #no clue why we lost the hc_raw.mmq60.vcf and i hate that it randomly gets deleted so copy it into a backup here
-        cp $GATK_VCF $RESULTS_DIR/$SCAN2_RESULTS/gatk/BACKUP_hc_raw.mmq60.vcf
+        cp $GATK_VCF $SCRATCH_DIR/$SCAN2_RESULTS/gatk/BACKUP_hc_raw.mmq60.vcf
 
         #Pretty sure need to make panel first as they do in demo
 
         #making the metadata.csv
 
         #Bam names shouldn't have the germline name in it, but it doesn't break things if germline is erroneously labeled a single cell, it's just inefficient
-        BAM_NAMES=$(find $RESULTS_DIR -maxdepth 1 -name "*.realigned_deduped_sorted.bam" -exec basename {} \;)
+        BAM_NAMES=$(find $SCRATCH_DIR -maxdepth 1 -name "*.realigned_deduped_sorted.bam" -exec basename {} \;)
 
         cd $SCAN2_RESULTS
 
@@ -524,8 +492,8 @@ fi
 
 #TODO: Making the cross sample panel is EXTREMELY time consuming, we should construct 1 cross sample panel for use in as many things as possible and then add option to specify cross sample panel, which will just copy the specified reference panel into the $CROSS_SAMPLE_PANEL directory below so that scan2 can use it, this option should skip makepanel altogether but still do sentieon variant calling, just with nothing inserted for the cross_sample directory
 
-CROSS_SAMPLE_PANEL=$RESULTS_DIR/$SCAN2_RESULTS/panel/panel.tab.gz
-GATK_VCF=$RESULTS_DIR/$SCAN2_RESULTS/gatk/hc_raw.mmq60.vcf
+CROSS_SAMPLE_PANEL=$SCRATCH_DIR/$SCAN2_RESULTS/panel/panel.tab.gz
+GATK_VCF=$SCRATCH_DIR/$SCAN2_RESULTS/gatk/hc_raw.mmq60.vcf
 
 
 
@@ -641,17 +609,17 @@ echo "### Analyzing Scan2 mutational rates and true positives ### - START: $(dat
 #echo "Waiting for callmutations to finish"
 
 #until [ -f $checkpoint ]; do
-#	checkpoint="$RESULTS_DIR/$SCAN2_RESULTS/call_mutations/*.realigned_deduped_sorted.bam/scan2_object.rda"
+#	checkpoint="$SCRATCH_DIR/$SCAN2_RESULTS/call_mutations/*.realigned_deduped_sorted.bam/scan2_object.rda"
 #	read -t 5
 #done
 #echo "callmutations finished"
 
 if [ $STEP -eq 3 ]; then
 
-    BAM_NAMES=$(find $RESULTS_DIR -maxdepth 1 -name "*.realigned_deduped_sorted.bam" -exec basename {} \;)
+    BAM_NAMES=$(find $SCRATCH_DIR -maxdepth 1 -name "*.realigned_deduped_sorted.bam" -exec basename {} \;)
 
     SCAN2_RESCUE_ARGS=""
-    for dir in $RESULTS_DIR/$SCAN2_RESULTS/call_mutations/*/; do
+    for dir in $SCRATCH_DIR/$SCAN2_RESULTS/call_mutations/*/; do
         SAMPLE_DIR=${dir%*/}
         echo "dir is ${SAMPLE_DIR}"
         
@@ -661,7 +629,7 @@ if [ $STEP -eq 3 ]; then
         if [ echo ${SAMPLE_NAME} | grep -q ${NORMAL_SAMPLE_NAME} ]; then
             echo "this is the normal sample scan2 object; skipping"	
         else
-            #RDA="$RESULTS_DIR/$SCAN2_RESULTS/call_mutations/${SAMPLE%.realigned_deduped_sorted.bam}/scan2_object.rda"
+            #RDA="$SCRATCH_DIR/$SCAN2_RESULTS/call_mutations/${SAMPLE%.realigned_deduped_sorted.bam}/scan2_object.rda"
             TEMP=${RDA/#/--scan2-object }
             SCAN2_RESCUE_ARGS="${SCAN2_RESCUE_ARGS} ${TEMP} ${RDA}"
         fi
@@ -697,23 +665,23 @@ if [ $STEP -eq 3 ]; then
 
 fi
 
-results="${RESULTS_DIR}/${SCAN2_RESULTS}/results"
+results="${SCRATCH_DIR}/${SCAN2_RESULTS}/results"
 mkdir -p $results
-MERGED_TSV="${results}/all_cells_merged.tsv"
-MERGED_VCF="${results}/all_cells_merged.vcf"
+MERGED_TSV="${SCRATCH_DIR}/all_cells_merged.tsv"
+MERGED_VCF="${SCRATCH_DIR}/all_cells_merged.vcf"
 
 
 
 if [ $STEP -eq 4 ];then
 
 
-    cd $RESULTS_DIR/$SCAN2_RESULTS
-    results="${RESULTS_DIR}/${SCAN2_RESULTS}/results"
+    cd $SCRATCH_DIR/$SCAN2_RESULTS
+    results="${SCRATCH_DIR}/${SCAN2_RESULTS}/results"
     mkdir -p $results
-    MERGED_TSV="${results}/all_cells_merged.tsv"
+    MERGED_TSV="${SCRATCH_DIR}/all_cells_merged.tsv"
     count=0
-    MERGED_VCF="${results}/all_cells_merged.vcf"
-    for dir in $RESULTS_DIR/$SCAN2_RESULTS/call_mutations/*/; do
+    MERGED_VCF="${SCRATCH_DIR}/all_cells_merged.vcf"
+    for dir in $SCRATCH_DIR/$SCAN2_RESULTS/call_mutations/*/; do
     #tsv_extract saves the dataframes in the R objects as TSVs
             SAMPLE_DIR=${dir%*/}
         SAMPLE_PATH=${dir%/}
@@ -751,7 +719,7 @@ if [ $STEP -eq 4 ];then
         ml purge
         DEPENDENCIES+=( $(sbatch -c 2 --mem=32G -p cgawad --time=24:00:00 -e $STD_ERR_OUT_DIR/%A_${SAMPLE_NAME}_sigprofile_%x.err -o $STD_ERR_OUT_DIR/%A_${SAMPLE_NAME}_sigprofile_%x.out ${SCRIPT_DIR}/Scan2_SigProfiler.sh --project "${PROJECT}.tranche_${TRANCHE}" \
                         --tsv $TSV \
-                        --script_dir ${SCRIPT_DIR} --results_dir ${results} --project ${SAMPLE_NAME}) )
+                        --script_dir ${SCRIPT_DIR} --results_dir ${SCRATCH_DIR} --project ${SAMPLE_NAME}) )
         #add tsv with sample name in columns to merged tsv (may want to only run annovar on this
         #think there's a problem with inserting sample into these columns, change back to 6 if this doesn't work
         awk -vsample="$SAMPLE_NAME" 'BEGIN{ FS=OFS="\t" } {$9 = $9 FS (NR==1? "SAMPLE" : sample) }1' $TSV > tmp
@@ -795,25 +763,21 @@ if [ $STEP -eq 4 ];then
         count=$((count + 1))
 
         done
-    
-    mkdir -p $FINAL_DIR/$SCAN2_RESULTS
-        chmod g+rwx $RESULTS_DIR/$SCAN2_RESULTS/*
-    rsync -a $RESULTS_DIR/$SCAN2_RESULTS $FINAL_DIR/
 
     sbatch --partition=cgawad -e $STD_ERR_OUT_DIR/%A_post_scan2_%x.err -o $STD_ERR_OUT_DIR/%A_post_scan2_%x.out --time=5-00:00:00 --dependency=afterany:$( echo "${DEPENDENCIES}" ) --job-name="step5" --wrap "sh $SCRIPT_DIR/3_scan2.sh --step5 ${OPTIONS}"
 fi
 
 
 if [ $STEP -eq 5 ];then
-     cd $RESULTS_DIR/$SCAN2_RESULTS
-        results="${RESULTS_DIR}/${SCAN2_RESULTS}/results"
+     cd $SCRATCH_DIR/$SCAN2_RESULTS
+        results="${SCRATCH_DIR}/${SCAN2_RESULTS}/results"
         mkdir -p $results
-        MERGED_TSV="${results}/01_all_cells_merged.tsv"
+        MERGED_TSV="${SCRATCH_DIR}/01_all_cells_merged.tsv"
         count=0
-        MERGED_VCF="${results}/all_cells_merged.vcf"
+        MERGED_VCF="${SCRATCH_DIR}/all_cells_merged.vcf"
     ml biology bcftools/1.8 samtools/1.8
     #changed this loop to loop over directories instead, this may break post scan2 but it was inconsistent before anyways
-    for dir in $RESULTS_DIR/$SCAN2_RESULTS/call_mutations/*/; do
+    for dir in $SCRATCH_DIR/$SCAN2_RESULTS/call_mutations/*/; do
         SAMPLE_DIR=${dir%*/}
         SAMPLE_NAME=$(basename $SAMPLE_DIR)
         RDA="${SAMPLE_DIR}/scan2_object.rda"
@@ -848,7 +812,7 @@ if [ $STEP -eq 5 ];then
 #	grep "^[^##;]" $MERGED_VCF > $MERGED_TSV
 #        sed '0,/#/{s/#//}' $MERGED_TSV > $MERGED_TSV
 
-    cd $RESULTS_DIR/$SCAN2_RESULTS/results
+    cd $SCRATCH_DIR/$SCAN2_RESULTS/results
     
     #get the candidates, i think this should pull out clonal and non-clonal correctly 
     ## find sites with >1 sample called
@@ -862,14 +826,8 @@ if [ $STEP -eq 5 ];then
 
     ## pull out calls with >1 sample called
     grep -f multiple_cells $MERGED_TSV > 01_clonal_candidates.tsv
-
-
-    mkdir -p $FINAL_DIR/$SCAN2_RESULTS
     
-        chmod g+rwx $RESULTS_DIR/$SCAN2_RESULTS/*
-    rsync -a $RESULTS_DIR/$SCAN2_RESULTS $FINAL_DIR/$SCAN2_RESULTS
-    
-    pdfunite ./*SigProfiler_Results/SBS96/Suggested_Solution/COSMIC*/*pdf $RESULTS_DIR/01_somatic_signatures.pdf
+    pdfunite ./*SigProfiler_Results/SBS96/Suggested_Solution/COSMIC*/*pdf $SCRATCH_DIR/01_somatic_signatures.pdf
     mv 01_somatic_signatures.pdf ..
     
     files=( *mutburden.tsv )
@@ -880,13 +838,7 @@ if [ $STEP -eq 5 ];then
     head -n1 *mutburden.tsv | sort | uniq > head
     cat head all_mutburden.tsv > $results/01_all_mutburden.tsv
 
-    
-    mkdir -p $FINAL_DIR/$SCAN2_RESULTS
-    
-        chmod g+rwx $RESULTS_DIR/$SCAN2_RESULTS/*
-    rsync -a $RESULTS_DIR/$SCAN2_RESULTS $FINAL_DIR/$SCAN2_RESULTS
-
-    cd $RESULTS_DIR
+    cd $SCRATCH_DIR
 
     echo "### Analyzing Scan2 mutational rates and true positives ### - END: $(date)"
     
@@ -916,13 +868,13 @@ fi
 if [ $STEP -eq 6 ];then
 
     #doing same thing as above, but including rescued mutations
-    cd $RESULTS_DIR/$SCAN2_RESULTS
-    results="${RESULTS_DIR}/${SCAN2_RESULTS}/results"
+    cd $SCRATCH_DIR/$SCAN2_RESULTS
+    results="${SCRATCH_DIR}/${SCAN2_RESULTS}/results"
     mkdir -p $results
-    MERGED_TSV="${results}/rescued_all_cells_merged.tsv"
+    MERGED_TSV="${SCRATCH_DIR}/rescued_all_cells_merged.tsv"
     count=0
-    MERGED_VCF="${results}/rescued_all_cells_merged.vcf"
-    for dir in $RESULTS_DIR/$SCAN2_RESULTS/call_mutations/*/; do
+    MERGED_VCF="${SCRATCH_DIR}/rescued_all_cells_merged.vcf"
+    for dir in $SCRATCH_DIR/$SCAN2_RESULTS/call_mutations/*/; do
         #tsv_extract saves the dataframes in the R objects as TSVs
         SAMPLE_DIR=${dir%*/}
         SAMPLE_NAME=$(basename ${SAMPLE_DIR})
@@ -953,7 +905,7 @@ if [ $STEP -eq 6 ];then
         ml purge
         DEPENDENCIES+=( $(sbatch -c 2 --mem=32G -p cgawad --time=24:00:00 -e $STD_ERR_OUT_DIR/%A_${SAMPLE_NAME}_sigprofile_%x.err -o $STD_ERR_OUT_DIR/%A_${SAMPLE_NAME}_sigprofile_%x.out ${SCRIPT_DIR}/Scan2_SigProfiler.sh --project "${PROJECT}.tranche_${TRANCHE}" \
                         --tsv $TSV \
-                        --script_dir ${SCRIPT_DIR} --results_dir ${results} --project ${SAMPLE_NAME}) )
+                        --script_dir ${SCRIPT_DIR} --results_dir ${SCRATCH_DIR} --project ${SAMPLE_NAME}) )
         #add tsv with sample name in columns to merged tsv (may want to only run annovar on this
         #think there's a problem with inserting sample into these columns, change back to 6 if this doesn't work
         awk -vsample="$SAMPLE_NAME" 'BEGIN{ FS=OFS="\t" } {$9 = $9 FS (NR==1? "SAMPLE" : sample) }1' $TSV > tmp
@@ -1005,14 +957,14 @@ fi
 
 
 if [ $STEP -eq 7 ];then
-     cd $RESULTS_DIR/$SCAN2_RESULTS
-        results="${RESULTS_DIR}/${SCAN2_RESULTS}/results"
+     cd $SCRATCH_DIR/$SCAN2_RESULTS
+        results="${SCRATCH_DIR}/${SCAN2_RESULTS}/results"
         mkdir -p $results
-        MERGED_TSV="${results}/01_rescued_all_cells_merged.tsv"
+        MERGED_TSV="${SCRATCH_DIR}/01_rescued_all_cells_merged.tsv"
         count=0
-        MERGED_VCF="${results}/rescued_all_cells_merged.vcf"
+        MERGED_VCF="${SCRATCH_DIR}/rescued_all_cells_merged.vcf"
     ml biology bcftools/1.8 samtools/1.8
-    for dir in $RESULTS_DIR/$SCAN2_RESULTS/call_mutations/*/; do
+    for dir in $SCRATCH_DIR/$SCAN2_RESULTS/call_mutations/*/; do
         #tsv_extract saves the dataframes in the R objects as TSVs
                 SAMPLE_DIR=${dir%*/}
                 SAMPLE_NAME=$(basename ${SAMPLE_DIR})
@@ -1048,7 +1000,7 @@ if [ $STEP -eq 7 ];then
 #	grep "^[^##;]" $MERGED_VCF > $MERGED_TSV
 #        sed '0,/#/{s/#//}' $MERGED_TSV > $MERGED_TSV
 
-    cd $RESULTS_DIR/$SCAN2_RESULTS/results
+    cd $SCRATCH_DIR/$SCAN2_RESULTS/results
     
     #get the candidates, i think this should pull out clonal and non-clonal correctly 
     ## find sites with >1 sample called
@@ -1063,15 +1015,8 @@ if [ $STEP -eq 7 ];then
     ## pull out calls with >1 sample called
     grep -f multiple_cells $MERGED_TSV > 01_rescued_clonal_candidates.tsv
     
-    mkdir -p $FINAL_DIR/$SCAN2_RESULTS
-    rsync -a $RESULTS_DIR/$SCAN2_RESULTS $FINAL_DIR/$SCAN2_RESULTS
-
-    pdfunite ./*SigProfiler_Results/SBS96/Suggested_Solution/COSMIC*/*pdf $RESULTS_DIR/01_somatic_signatures.pdf
+    pdfunite ./*SigProfiler_Results/SBS96/Suggested_Solution/COSMIC*/*pdf $SCRATCH_DIR/01_somatic_signatures.pdf
     mv 01_somatic_signatures.pdf ..
-    
-
-    mkdir -p $FINAL_DIR/$SCAN2_RESULTS
-    rsync -av $RESULTS_DIR/* $FINAL_DIR
 
     echo "end of script"
     #for some reason copying over is not workin

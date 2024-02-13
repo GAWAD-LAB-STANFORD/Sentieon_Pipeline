@@ -17,8 +17,8 @@ while [ "$1" != "" ]; do
         --ref_fasta )       shift
                             REF_FASTA=$1
                             ;;
-        --results_dir )     shift
-                            RESULTS_DIR=$1
+        --scratch_dir )     shift
+                            SCRATCH_DIR=$1
                             ;;
         --targeted )        shift
                             TARGETED=$1
@@ -27,14 +27,14 @@ while [ "$1" != "" ]; do
     shift
 done
 
-if [ -z $SAMPLE_ARRAY ] || [ -z $REF_FASTA ] || [ -z $RESULTS_DIR ] || [ -z $TARGETED ]; then
+if [ -z $SAMPLE_ARRAY ] || [ -z $REF_FASTA ] || [ -z $SCRATCH_DIR ] || [ -z $TARGETED ]; then
     echo "Variables not supplied correctly. Check script for intake parameters. All are required to be specified. Exiting with code 1"
     exit 1
 fi
 
 SAMPLE=${SAMPLE_ARRAY[$(( $SLURM_ARRAY_TASK_ID - 1 ))]}
 echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND\nSample: $SAMPLE"
-cd $RESULTS_DIR
+cd $SCRATCH_DIR
 
 ml purge
 ml system xz/5.2.3
@@ -49,7 +49,7 @@ export manta=/oak/stanford/groups/cgawad/Sequencing_Analysis_Tools/manta-1.6.0.c
 
 #99% sure manta sv calls are just overwriting
 
-cd $RESULTS_DIR
+cd $SCRATCH_DIR
 
 if [ $TARGETED -eq 0 ]; then
     ##Run without exome option if not targeted
@@ -59,30 +59,30 @@ if [ $TARGETED -eq 0 ]; then
         input=$SAMPLE
         echo BAMs = ${input}
         echo running manta
-        $manta/configManta.py --bam $input --referenceFasta $REF_FASTA --runDir $RESULTS_DIR --callRegions $manta/regions.bed.gz --outputContig
+        $manta/configManta.py --bam $input --referenceFasta $REF_FASTA --runDir $SCRATCH_DIR --callRegions $manta/regions.bed.gz --outputContig
         ./runWorkflow.py
         echo manta finished running
         mv Manta_SV_Calls ${SAMPLE%.realigned_deduped_sorted.bam}_Manta_SV_Calls
         mv results ${SAMPLE%.realigned_deduped_sorted.bam}_Manta_SV_Calls
         echo cleaning up and copying back files to oak
     elif [[ ${SAMPLE} == ${NORMAL_SAMPLE_NAME}"*" ]]; then
-        input="${RESULTS_DIR}/${SAMPLE}"
+        input="${SCRATCH_DIR}/${SAMPLE}"
         echo BAMs = ${input}
         echo running manta
-        $manta/configManta.py --bam $input --referenceFasta $REF_FASTA --runDir $RESULTS_DIR --callRegions $manta/regions.bed.gz --outputContig
+        $manta/configManta.py --bam $input --referenceFasta $REF_FASTA --runDir $SCRATCH_DIR --callRegions $manta/regions.bed.gz --outputContig
         ./runWorkflow.py
         echo manta finished running
         mv Manta_SV_Calls ${NORMAL_SAMPLE_NAME}_Manta_SV_Calls
         mv results ${NORMAL_SAMPLE_NAME}_Manta_SV_Calls
         echo cleaning up and copying back files to oak
     else
-        tumorBam="${RESULTS_DIR}/${SAMPLE}"
-        normalBam="${RESULTS_DIR}/${NORMAL_SAMPLE_NAME}.realigned_deduped_sorted.bam"
+        tumorBam="${SCRATCH_DIR}/${SAMPLE}"
+        normalBam="${SCRATCH_DIR}/${NORMAL_SAMPLE_NAME}.realigned_deduped_sorted.bam"
         $manta/configManta.py  \
     --normalBam $normalBam \
     --tumorBam $tumorBam \
     --referenceFasta $REF_FASTA \
-    --runDir $RESULTS_DIR \
+    --runDir $SCRATCH_DIR \
     --callRegions $manta/regions.bed.gz
     fi
     else
@@ -93,30 +93,30 @@ if [ $TARGETED -eq 0 ]; then
         input=$SAMPLE
         echo BAMs = ${input}
         echo running manta
-        $manta/configManta.py --bam $input --referenceFasta $REF_FASTA --runDir $RESULTS_DIR --callRegions $manta/regions.bed.gz --outputContig
+        $manta/configManta.py --bam $input --referenceFasta $REF_FASTA --runDir $SCRATCH_DIR --callRegions $manta/regions.bed.gz --outputContig
         ./runWorkflow.py
         echo manta finished running
         mv Manta_SV_Calls ${SAMPLE%.realigned_deduped_sorted.bam}_Manta_SV_Calls
         mv results ${SAMPLE%.realigned_deduped_sorted.bam}_Manta_SV_Calls
         echo cleaning up and copying back files to oak
     elif [[ ${SAMPLE} == ${NORMAL_SAMPLE_NAME}"*" ]]; then
-        input="${RESULTS_DIR}${SAMPLE}"
+        input="${SCRATCH_DIR}${SAMPLE}"
         echo BAMs = ${input}
         echo running manta
-        $manta/configManta.py --bam $input --referenceFasta $REF_FASTA --runDir $RESULTS_DIR --callRegions $manta/regions.bed.gz --outputContig
+        $manta/configManta.py --bam $input --referenceFasta $REF_FASTA --runDir $SCRATCH_DIR --callRegions $manta/regions.bed.gz --outputContig
         ./runWorkflow.py
         echo manta finished running
         mv Manta_SV_Calls ${NORMAL_SAMPLE_NAME}_Manta_SV_Calls
         mv results ${NORMAL_SAMPLE_NAME}_Manta_SV_Calls
         echo cleaning up and copying back files to oak
     else
-        tumorBam="${RESULTS_DIR}${SAMPLE}"
-        normalBam="${RESULTS_DIR}${NORMAL_SAMPLE_NAME}.realigned_deduped_sorted.bam"
+        tumorBam="${SCRATCH_DIR}${SAMPLE}"
+        normalBam="${SCRATCH_DIR}${NORMAL_SAMPLE_NAME}.realigned_deduped_sorted.bam"
         $manta/configManta.py  \
     --normalBam $normalBam \
     --tumorBam $tumorBam \
     --referenceFasta $REF_FASTA \
-    --runDir $RESULTS_DIR \
+    --runDir $SCRATCH_DIR \
     --exome \
     --callRegions $manta/regions.bed.gz
     fi
@@ -146,7 +146,7 @@ pdfunite `pwd`/*Multiple_Metric_Files/*.pdf `pwd`/01_Combined_Metric_Plots.pdf
 mv ./SigProfiler_Germline_PDFs/01_Combined_Germline_Sigprofiler.pdf `pwd`
 
 #calculate and combine persent of regions covered
-cd $RESULTS_DIR
+cd $SCRATCH_DIR
 
 zcat `pwd`/Mosdepth_Results/*micro*thresholds.bed.gz | head -n1 | cut -f5- | sed "s/^/Sample\tRegion\t/g" > `pwd`/Mosdepth_Results/mos_header
 
@@ -158,7 +158,7 @@ cat mos_header 01.Combined_Mosdepth_Region_Percent_pre.tsv > 01.Combined_Mosdept
 
 mv 01.Combined_Mosdepth_Region_Percent.tsv ..
 
-cd $RESULTS_DIR
+cd $SCRATCH_DIR
 
 # calculate variant class count for germline, somatic, and somatic clonal
 cut -f4,5,115,119 *extract_snp.hg38_multianno.final.tsv | grep -E '0/1|1\|1|1/1|0\|1' | cut -f1-3 | sort | uniq -c | sort -k4,4 -k1,1nr | grep -v "*" > 01.germline.merged.variant_class_count.tsv
@@ -174,12 +174,12 @@ cut -f4,5,115,119 01_final_clonal_somatic_calls.tsv | grep -E '0/1|1\|1|1/1|0\|1
 #mv all_variants* mutation_calls/
 #mv *calls_pre* mutation_calls/
 
-rm -rf $RESULTS_DIR/tmp*
+rm -rf $SCRATCH_DIR/tmp*
 
-rm -rf $RESULTS_DIR/*output
+rm -rf $SCRATCH_DIR/*output
 
 echo "current directory is `pwd`"
-#rm -rf $RESULTS_DIR
+#rm -rf $SCRATCH_DIR
 
 echo "### Manta SV done  ###"
 echo -e "END: $(date)\nRuntime: $(($(date +%s)-$START_TIME)) seconds"
