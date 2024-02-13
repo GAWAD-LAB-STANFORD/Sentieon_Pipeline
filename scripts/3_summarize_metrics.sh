@@ -11,24 +11,27 @@ START_TIME=$(date +%s)
 SCRIPT_COMMAND="$@"
 while [ "$1" != "" ]; do
     case $1 in
-        --scratch_dir )             shift
-                                    SCRATCH_DIR=$1
-                                    ;;
-        --script_dir )              shift
-                                    SCRIPT_DIR=$1
-                                    ;;
-        --project )                 shift
-                                    PROJECT=$1
-                                    ;;
-        --targeted )                shift
-                                    TARGETED=$1
-                                    ;;
-        --run_dir )                 shift
-                                    RUN_DIR=$1
-                                    ;;
-        --sample_sheet )            shift
-                                    SAMPLE_SHEET=$1
-                                    ;;
+        --scratch_dir )     shift
+                            SCRATCH_DIR=$1
+                            ;;
+        --script_dir )      shift
+                            SCRIPT_DIR=$1
+                            ;;
+        --project )         shift
+                            PROJECT=$1
+                            ;;
+        --targeted )        shift
+                            TARGETED=$1
+                            ;;
+        --run_dir )         shift
+                            RUN_DIR=$1
+                            ;;
+        --sample_sheet )    shift
+                            SAMPLE_SHEET=$1
+                            ;;
+        --targeted )        shift
+                            TARGETED=$1
+                            ;;
     esac
     shift
 done
@@ -143,7 +146,7 @@ echo "Merged coverage"
 Rscript ${SCRIPT_DIR}/graph_coverage.R ${PROJECT}.merged_wgs_coverage.tsv $PROJECT "wgs"
 
 DOWN_SAMPLE_COV_FILENAMES=( $(ls *.wgs_5M_read_coverage.tsv) )
-if [ ${#DOWN_SAMPLE_COV_FILENAMES[@]} -ne 0 ]; then
+if [ ${#DOWN_SAMPLE_COV_FILENAMES[@]} -ne 0 ] && [ $TARGETED -eq 0 ]; then
     for i in ${DOWN_SAMPLE_COV_FILENAMES[@]}; do
         SAMPLE=$(echo $i | sed "s/.wgs_5M_read_coverage.tsv//")
         cut -f 4,7 $i | sed "s/covered_features/${SAMPLE}_depth/" | \
@@ -166,15 +169,17 @@ if [ ${#DOWN_SAMPLE_COV_FILENAMES[@]} -ne 0 ]; then
     Rscript ${SCRIPT_DIR}/graph_preseq.R ${PROJECT}.merged_preseq_future_coverage_5M.tsv $PROJECT "5M_reads"
 fi
 
-PRESEQ_FILENAMES=( $(ls *.gc_extrap.future_coverage.tsv) )
-head -n 1 ${PRESEQ_FILENAMES[0]} | sed "s/^/SAMPLE\t/" > ${PROJECT}.merged_preseq_future_coverage.tsv
-#for i in ${PRESEQ_FILENAMES[@]}; do
-#    SAMPLE=$(echo $i | sed "s/.gc_extrap.future_coverage.tsv//")
-#    tail -n +2 $i | sed "s/^/${SAMPLE}\t/" >> ${PROJECT}.merged_preseq_future_coverage.tsv
-#done
-ls *gc_extrap.future_coverage.tsv | parallel "grep 999900000000.0 {} | sed 's/^/{}\t/g'" | sed 's/.gc_extrap.future_coverage.tsv//g' >> ${PROJECT}.merged_preseq_future_coverage.tsv
-echo "Merged preseq future coverage"
-Rscript ${SCRIPT_DIR}/graph_preseq.R ${PROJECT}.merged_preseq_future_coverage.tsv $PROJECT
+if [ $TARGETED -eq 0 ]; then
+    PRESEQ_FILENAMES=( $(ls *.gc_extrap.future_coverage.tsv) )
+    head -n 1 ${PRESEQ_FILENAMES[0]} | sed "s/^/SAMPLE\t/" > ${PROJECT}.merged_preseq_future_coverage.tsv
+    #for i in ${PRESEQ_FILENAMES[@]}; do
+    #    SAMPLE=$(echo $i | sed "s/.gc_extrap.future_coverage.tsv//")
+    #    tail -n +2 $i | sed "s/^/${SAMPLE}\t/" >> ${PROJECT}.merged_preseq_future_coverage.tsv
+    #done
+    ls *gc_extrap.future_coverage.tsv | parallel "grep 999900000000.0 {} | sed 's/^/{}\t/g'" | sed 's/.gc_extrap.future_coverage.tsv//g' >> ${PROJECT}.merged_preseq_future_coverage.tsv
+    echo "Merged preseq future coverage"
+    Rscript ${SCRIPT_DIR}/graph_preseq.R ${PROJECT}.merged_preseq_future_coverage.tsv $PROJECT
+fi
 
 VARIANT_CLASS_COUNTS_FILENAMES=( $(ls *.variant_class_counts.tsv) )
 head -n 1 ${VARIANT_CLASS_COUNTS_FILENAMES[0]} | sed "s/^/sample\t/" > ${PROJECT}.merged_variant_class_counts.tsv

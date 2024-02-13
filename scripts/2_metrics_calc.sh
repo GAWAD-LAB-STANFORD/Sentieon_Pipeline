@@ -62,6 +62,9 @@ while [ "$1" != "" ]; do
         --interval_list )       shift
                                 INTERVAL_LIST=$1
                                 ;;
+        --targeted )            shift
+                                TARGETED=$1
+                                ;;
     esac
     shift
 done
@@ -152,7 +155,7 @@ BAM_5M_SUFFIX=".5M.bam"
 TOTAL_READS=$(samtools view -c ${RECALIBRATED_BAM})
 echo total reads is $TOTAL_READS
 echo "start 5M read coverage stuff: $(date)"
-if [ $TOTAL_READS -ge 5000000 ] && [ $TARGETED -eq 1]; then
+if [ $TOTAL_READS -ge 5000000 ] && [ $TARGETED -eq 1] && [ $TARGETED -eq 0 ]; then
     FRACTION=$(awk -v y="$TOTAL_READS" 'BEGIN {printf "%3f", 5000000 / y}')
     BAM_NAME=${SAMPLE}_subsampled_exome.bam
     gatk --java-options "-XX:+UseParallelGC -XX:ParallelGCThreads=4 -Xmx31g -Xms31G" DownsampleSam \
@@ -183,8 +186,7 @@ else
     echo "Either a WGS BAM or WES Bam is less than 5 million reads, cannot downsample"
 fi
 
-echo "preseq stuff: $(date)"
-if [ $TOTAL_READS -le 5000000 ]; then
+if [ $TOTAL_READS -le 5000000 ] && [ $TARGETED -eq 0 ]; then
     samtools view -b -L $N25CHR_BED ${SAMPLE}.recalibrated_realigned_deduped_sorted.bam > ${SAMPLE}.recalibrated_realigned_deduped_sorted.n25chr.bam
     $PRESEQ_TOOL_DIR/bam2mr -o ${SAMPLE}.recalibrated_realigned_deduped_sorted.n25chr.unsorted.mr ${SAMPLE}.recalibrated_realigned_deduped_sorted.n25chr.bam
     sort -k1,1 -k2,2n -k3,3n ${SAMPLE}.recalibrated_realigned_deduped_sorted.n25chr.unsorted.mr > ${SAMPLE}.recalibrated_realigned_deduped_sorted.n25chr.sorted.mr

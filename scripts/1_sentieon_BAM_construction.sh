@@ -83,7 +83,6 @@ REFERENCE_DIR="/oak/stanford/groups/cgawad/Reference_Files"
 echo "FASTQ_DIR IS "{FASTQ_DIR}
 TOOLS_DIR="/oak/stanford/groups/cgawad/Sequencing_Analysis_Tools"
 QUALIMAP_TOOL="${TOOLS_DIR}/qualimap_v2.2.1/qualimap"
-PRESEQ_TOOL_DIR="${TOOLS_DIR}/preseq"
 REF_GENOME="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38_bedtools.genome"
 
 

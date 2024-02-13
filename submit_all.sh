@@ -455,13 +455,17 @@ elif [ $STEP -eq 2 ]; then
         --scratch_dir $SCRATCH_DIR --skip_trimmomatic $SKIP_TRIMMOMATIC --script_dir $SCRIPT_DIR \
         --tools_dir $TOOLS_DIR --r1_suffix $R1_SUFFIX --r2_suffix $R2_SUFFIX --ref_fasta $REF_FASTA \
         --number_threads $NUMBER_THREADS --sample_string $TEMP_SAMPLES_STRING --fastq_dir $FASTQ_DIR \
-        --dbSNP $DBSNP_VCF --project $PROJECT --skip_bam $SKIP_BAM --targeted $TARGETED --std_err_out_dir $STD_ERR_OUT_DIR --targets_bed $TARGETS_BED --interval_list $INTERVAL_LIST" >> $PIPELINE_STATUS
+        --dbSNP $DBSNP_VCF --project $PROJECT --skip_bam $SKIP_BAM --targeted $TARGETED \
+        --std_err_out_dir $STD_ERR_OUT_DIR --targets_bed $TARGETS_BED --interval_list $INTERVAL_LIST\
+        --targeted $TARGETED" >> $PIPELINE_STATUS
     DEPENDENCY=$(sbatch --parsable -e $STD_ERR_OUT_DIR/%A_%a_%x.err -o $STD_ERR_OUT_DIR/%A_%a_%x.out \
         --array=1-${TEMP_JOB_COUNT} -p cgawad ${SCRIPT_DIR}/2_metrics_calc.sh \
         --scratch_dir $SCRATCH_DIR --skip_trimmomatic $SKIP_TRIMMOMATIC --script_dir $SCRIPT_DIR \
         --tools_dir $TOOLS_DIR --r1_suffix $R1_SUFFIX --r2_suffix $R2_SUFFIX --ref_fasta $REF_FASTA \
         --number_threads $NUMBER_THREADS --sample_string $TEMP_SAMPLES_STRING --fastq_dir $FASTQ_DIR \
-        --dbSNP $DBSNP_VCF --project $PROJECT --skip_bam $SKIP_BAM --targeted $TARGETED --std_err_out_dir $STD_ERR_OUT_DIR --targets_bed $TARGETS_BED --interval_list $INTERVAL_LIST)
+        --dbSNP $DBSNP_VCF --project $PROJECT --skip_bam $SKIP_BAM --targeted $TARGETED \
+        --std_err_out_dir $STD_ERR_OUT_DIR --targets_bed $TARGETS_BED --interval_list $INTERVAL_LIST\
+        --targeted $TARGETED)
     TEMP_ARRAY_START=$(($TEMP_ARRAY_START + $TEMP_ARRAY_INCREMENT))
     echo -e "$(date)\nIncrement: $TEMP_ARRAY_INCREMENT\nNew start: $TEMP_ARRAY_START" >> $PIPELINE_STATUS
     
@@ -532,11 +536,13 @@ elif [ $STEP -eq 3 ] && [ $TEMP_ARRAY_START -eq 0 ]; then
         echo -e "\nsbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
             ${SCRIPT_DIR}/3_summarize_metrics.sh \
             --scratch_dir $SCRATCH_DIR --script_dir $SCRIPT_DIR --project $PROJECT \
-            --targeted $TARGETED --run_dir $RUN_DIR --sample_sheet $SAMPLE_SHEET\n" >> $PIPELINE_STATUS
+            --targeted $TARGETED --run_dir $RUN_DIR --sample_sheet $SAMPLE_SHEET \
+            --targeted $TARGETED\n" >> $PIPELINE_STATUS
         sbatch -J $PROJECT -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
             ${SCRIPT_DIR}/3_summarize_metrics.sh \
             --scratch_dir $SCRATCH_DIR --script_dir $SCRIPT_DIR --project $PROJECT \
-            --targeted $TARGETED --run_dir $RUN_DIR --sample_sheet $SAMPLE_SHEET
+            --targeted $TARGETED --run_dir $RUN_DIR --sample_sheet $SAMPLE_SHEET \
+            --targeted $TARGETED
     else
         echo -e "\nsbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
             ${SCRIPT_DIR}/3_summarize_metrics.sh \
