@@ -168,6 +168,7 @@ TRANCHE="99.9"
 REFERENCE_DIR="/oak/stanford/groups/cgawad/Reference_Files"
 BISMARK_GENOME="/oak/stanford/groups/cgawad/Reference_Files/GATK_Resource_Bundle_hg38/Bismark"
 REF_FASTA="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38.fasta"
+REF_NAME="human"
 REF_GENOME="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38_bedtools.genome"
 N25CHR_INTERVAL_LIST="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38_n25chr.interval_list"
 N25CHR_BED="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38_n25chr.bed"
@@ -248,7 +249,7 @@ fi
 if [ $RNA -eq 1 ]; then
     OPTIONS+=( "--rna" )
     if [ "$BAM_SUFFIX" == ".recalibrated_realigned_deduped_sorted.bam" ]; then
-        BAM_SUFFIX=".rna.bam"
+        BAM_SUFFIX=".rna.recalibrated_realigned_deduped_sorted.bam"
     fi
     SKIP_TRIMMOMATIC=1
 fi
@@ -392,16 +393,14 @@ elif ([ $STEP -eq 0 ] && [ -z $RUN_DIR ] && [ $ONLY_VARIANT_CALL -eq 0 ]) || [ $
         --array=1-${TEMP_JOB_COUNT} -p cgawad ${SCRIPT_DIR}/1_sentieon_BAM_construction.sh \
         --scratch_dir $SCRATCH_DIR --skip_trimmomatic $SKIP_TRIMMOMATIC --script_dir $SCRIPT_DIR \
         --tools_dir $TOOLS_DIR --R1_suffix $R1_SUFFIX --R2_suffix $R2_SUFFIX --ref_fasta $REF_FASTA \
-        --number_threads $NUMBER_THREADS --sample_string $TEMP_SAMPLES_STRING --fastq_dir $FASTQ_DIR \
-        --dbSNP $DBSNP_VCF --project $PROJECT --skip_bam $SKIP_BAM --targeted $TARGETED \
-        --std_err_out_dir $STD_ERR_OUT_DIR --targets_bed $TARGETS_BED\n" >> $PIPELINE_STATUS
+        --ref_name $REF_NAME --sample_string $TEMP_SAMPLES_STRING --fastq_dir $FASTQ_DIR \
+         --targets_bed $TARGETS_BED --rna $RNA --bam_suffix $BAM_SUFFIX\n" >> $PIPELINE_STATUS
     DEPENDENCY=$(sbatch --parsable -e $STD_ERR_OUT_DIR/%A_%a_%x.err -o $STD_ERR_OUT_DIR/%A_%a_%x.out \
         --array=1-${TEMP_JOB_COUNT} -p cgawad ${SCRIPT_DIR}/1_sentieon_BAM_construction.sh \
         --scratch_dir $SCRATCH_DIR --skip_trimmomatic $SKIP_TRIMMOMATIC --script_dir $SCRIPT_DIR \
         --tools_dir $TOOLS_DIR --R1_suffix $R1_SUFFIX --R2_suffix $R2_SUFFIX --ref_fasta $REF_FASTA \
-        --number_threads $NUMBER_THREADS --sample_string $TEMP_SAMPLES_STRING --fastq_dir $FASTQ_DIR \
-        --dbSNP $DBSNP_VCF --project $PROJECT --skip_bam $SKIP_BAM --targeted $TARGETED \
-        --std_err_out_dir $STD_ERR_OUT_DIR --targets_bed $TARGETS_BED)
+        --ref_name $REF_NAME --sample_string $TEMP_SAMPLES_STRING --fastq_dir $FASTQ_DIR \
+         --targets_bed $TARGETS_BED --rna $RNA --bam_suffix $BAM_SUFFIX)
     TEMP_ARRAY_START=$(($TEMP_ARRAY_START + $TEMP_ARRAY_INCREMENT))
     echo -e "$(date)\nIncrement: $TEMP_ARRAY_INCREMENT\nNew start: $TEMP_ARRAY_START" >> $PIPELINE_STATUS
     
