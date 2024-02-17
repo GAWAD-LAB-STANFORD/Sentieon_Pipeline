@@ -1,8 +1,8 @@
 #!/bin/bash
 #
 #SBATCH --job-name=submit_all
-#SBATCH --mem=32G
 #SBATCH --cpus-per-task=2
+#SBATCH --mem=32G
 #SBATCH --time=1-00:00:00
 #SBATCH --partition=cgawad
 

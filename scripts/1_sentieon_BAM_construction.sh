@@ -1,11 +1,11 @@
 #!/bin/bash
 #
 #SBATCH --job-name=1_sentieon_BAM_construction
-#SBATCH --cpus-per-task=12
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=64G
 #SBATCH --time=2-00:00:00
 #SBATCH --partition=cgawad
-#SBATCH --nodes=1
-#SBATCH --mem=180G
 
 START_TIME=$(date +%s)
 SCRIPT_COMMAND="$@"
@@ -51,10 +51,9 @@ while [ "$1" != "" ]; do
     shift
 done
 
-if [ -z $SCRATCH_DIR ] || [ -z $SKIP_TRIMMOMATIC ] || [ -z $SCRIPT_DIR ] || [ -z $TOOLS_DIR ] || \
-    [ -z $R1_SUFFIX ] || [ -z $R2_SUFFIX ] || [ -z $REF_FASTA ] || [ -z $REF_NAME ] || \
-    [ -z $SAMPLE_ARRAY ] || [ -z $FASTQ_DIR ] || [ -z $PROJECT ] || [ -z $TARGETS_BED ] || \
-    [ -z $RNA ] || [ -z $BAM_SUFFIX ]; then
+if [ -z $SCRATCH_DIR ] || [ -z $SKIP_TRIMMOMATIC ] || [ -z $TOOLS_DIR ] || [ -z $R1_SUFFIX ] || \
+    [ -z $R2_SUFFIX ] || [ -z $REF_FASTA ] || [ -z $REF_NAME ] || [ -z $SAMPLE_ARRAY ] || \
+    [ -z $FASTQ_DIR ] || [ -z $TARGETS_BED ] || [ -z $RNA ] || [ -z $BAM_SUFFIX ]; then
     echo "Variables not supplied correctly. Check script for intake parameters. All are required to be specified. Exiting with code 1"
     exit 1
 fi
@@ -138,7 +137,7 @@ if [ $RNA -eq 1 ]; then
     STAR --genomeDir \
         /oak/stanford/groups/cgawad/Reference_Files/GATK_Resource_Bundle_hg38/hg38_STAR_index/ \
         --readFilesIn $UNZIPPED_R1_FASTQ $UNZIPPED_R2_FASTQ \
-        --runThreadN 2 \
+        --runThreadN 4 \
         --outFileNamePrefix $SAMPLE \
         --outSAMtype BAM SortedByCoordinate \
         --outSAMunmapped Within \
@@ -157,7 +156,7 @@ else
     RG="@RG\tID:${SAMPLE}_ID\tSM:$SAMPLE\tPL:ILLUMINA"
 
     # Allocate more memory
-    export bwt_max_mem=110G
+    export bwt_max_mem=62G
 
     (sentieon bwa mem -R "@RG\tID:"$SAMPLE"\tSM:"$SAMPLE"\tPL:ILLUMINA" \
         -t $NUMBER_THREADS $REF_FASTA $R1_FASTQ $R2_FASTQ || echo -n 'error' ) \
