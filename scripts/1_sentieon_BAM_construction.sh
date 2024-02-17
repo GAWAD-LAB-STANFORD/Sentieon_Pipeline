@@ -104,19 +104,19 @@ echo "### Counting fastq read counts Sample: $SAMPLE ### - END: $(date)"
 
 
 if [ $SKIP_TRIMMOMATIC -eq 0 ]; then
-    UNTRIMMED_R1_FASTQ=${SAMPLE}${R1_SUFFIX}
-    UNTRIMMED_R2_FASTQ=${SAMPLE}${R2_SUFFIX}
-    R1_FASTQ=$(echo $UNTRIMMED_R1_FASTQ | sed "s/_R1_/_R1_trimmed_/")
-    R2_FASTQ=$(echo $UNTRIMMED_R2_FASTQ | sed "s/_R2_/_R2_trimmed_/")
-    UNPAIRED_R1_FASTQ=$(echo $UNTRIMMED_R1_FASTQ | sed "s/_R1_/_R1_trimmed_unpaired_/")
-    UNPAIRED_R2_FASTQ=$(echo $UNTRIMMED_R2_FASTQ | sed "s/_R2_/_R2_trimmed_unpaired_/")
+    UNTRIMMED_R1_FASTQ=$R1_FASTQ
+    UNTRIMMED_R2_FASTQ=$R2_FASTQ
+    R1_FASTQ=$(echo $UNTRIMMED_R1_FASTQ | sed "s/_R1/_R1_trimmed/")
+    R2_FASTQ=$(echo $UNTRIMMED_R2_FASTQ | sed "s/_R2/_R2_trimmed/")
+    UNPAIRED_R1_FASTQ=$(echo $UNTRIMMED_R1_FASTQ | sed "s/_R1/_R1_trimmed_unpaired/")
+    UNPAIRED_R2_FASTQ=$(echo $UNTRIMMED_R2_FASTQ | sed "s/_R2/_R2_trimmed_unpaired/")
 
     echo "### Trimming fastqs Sample: $SAMPLE ### - START: $(date)"
     java -jar ${TOOLS_DIR}/Trimmomatic-0.35/trimmomatic-0.35.jar PE -threads 16 -phred33 -trimlog \
         ${SAMPLE}_trimmomatic_log.txt \
-        ${UNTRIMMED_R1_FASTQ} ${UNTRIMMED_R2_FASTQ} \
-        ${R1_FASTQ} ${UNPAIRED_R1_FASTQ} \
-        ${R2_FASTQ} ${UNPAIRED_R2_FASTQ} \
+        $UNTRIMMED_R1_FASTQ $UNTRIMMED_R2_FASTQ \
+        $R1_FASTQ $UNPAIRED_R1_FASTQ \
+        $R2_FASTQ $UNPAIRED_R2_FASTQ \
         ILLUMINACLIP:${TOOLS_DIR}/Trimmomatic-0.35/adapters/TruSeq3-PE-2.fa:2:30:10:2:keepBothReads \
         LEADING:20 TRAILING:20 SLIDINGWINDOW:4:20 MINLEN:36
     echo "### Trimming fastqs Sample: $SAMPLE ### - END: $(date)"
