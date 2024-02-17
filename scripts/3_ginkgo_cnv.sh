@@ -16,7 +16,6 @@ BAM_SUFFIX=".recalibrated_realigned_deduped_sorted.bam"
 KB_BIN_SIZE="500"
 GROUP_SEGMENTATION=0
 GENOME_VERSION="hg38"
-NEW_5M_DIR="0"
 while [ "$1" != "" ]; do
     case $1 in
         --bam_dir )             shift
@@ -36,8 +35,8 @@ while [ "$1" != "" ]; do
                                 ;;
         --group_segmentation )  GROUP_SEGMENTATION=1
                                 ;;
-        --new_5M_folder )       shift
-                                NEW_5M_DIR=$1
+        --mb_size )             shift
+                                MB_SIZE=$1
                                 ;;
     esac
     shift
@@ -53,7 +52,7 @@ if [ -z $SCRATCH_DIR ]; then
     SCRATCH_DIR=$BAM_DIR
 fi
 mkdir -p $FULL_WORK_DIR
-mkdir -p $SCRATCH_DIR/ginkgo_outputs
+mkdir -p $SCRATCH_DIR
 cd $GINKGO_DIR
 
 ml php/7.3.0 ghostscript/9.53.2 java gsl/2.3 R/4.0.2 biology bedtools samtools/1.8
@@ -64,16 +63,49 @@ echo -e "Number of samples: ${#SAMPLE_ARRAY[@]}\nSamples: ${SAMPLE_ARRAY[@]}"
 if [ -z $SCRATCH_DIR ]; then
     SCRATCH_DIR=$BAM_DIR
 fi
-
 > $FULL_WORK_DIR/list
-for SAMPLE in ${SAMPLE_ARRAY[@]}; do
-    echo "Preparing $SAMPLE"
-    ml biology bedtools
-    bedtools bamtobed -i ${BAM_DIR}/${SAMPLE}${BAM_SUFFIX} > ${FULL_WORK_DIR}/${SAMPLE}.bed
-    gzip ${FULL_WORK_DIR}/${SAMPLE}.bed
-    echo "${SAMPLE}.bed.gz" >> ${FULL_WORK_DIR}/list
-    echo "Done preparing $SAMPLE"
-done
+
+if [ ! -z $MB_SIZE ]; then
+    mkdir -p $BAM_DIR/
+    SAMPLE_COUNT=1
+    NUMBER_OF_SAMPLES=${#SAMPLE_ARRAY[@]}
+    for SAMPLE in ${SAMPLE_ARRAY[@]}; do
+        echo "Sample $SAMPLE_COUNT of $NUMBER_OF_SAMPLES - $SAMPLE"
+        
+        TOTAL_READS=$(samtools view -c ${BAM_DIR}/${SAMPLE}${BAM_SUFFIX})
+        FULL_SIZE=${MB_SIZE}000000
+        FRACTION=$(awk -v x="$FULL_SIZE" y="$TOTAL_READS" 'BEGIN {printf "%3f", x / y}')
+        if [ $TOTAL_READS -ge ${MB_SIZE}000000 ] && [ ! -z $FRACTION ] && [ $TARGETED -eq 0 ]; then
+            gatk --java-options "-XX:+UseParallelGC -XX:ParallelGCThreads=4 -Xmx31g -Xms31G" DownsampleSam \
+                -I ${BAM_DIR}/${SAMPLE}${BAM_SUFFIX} -O ${FULL_WORK_DIR}/${SAMPLE}.${MB_SIZE}M.bam \
+                --PROBABILITY $FRACTION --VALIDATION_STRINGENCY SILENT \
+                --MAX_RECORDS_IN_RAM 5500000
+            echo -e "\tDownsampled to $MB_SIZE million reads"
+            samtools index ${FULL_WORK_DIR}/${SAMPLE}.${MB_SIZE}M.bam
+            
+            bedtools bamtobed -i ${FULL_WORK_DIR}/${SAMPLE}.${MB_SIZE}M.bam > ${FULL_WORK_DIR}/${SAMPLE}.bed
+            gzip ${FULL_WORK_DIR}/${SAMPLE}.bed
+            echo "${SAMPLE}.bed.gz" >> ${FULL_WORK_DIR}/list
+            echo -e "\tPrepared for ginkgo"
+            rm ${FULL_WORK_DIR}/${SAMPLE}.${MB_SIZE}M.bam
+            echo -e "\tRemoved downsampled bam"
+        else
+            echo -e "\tBam is less than $MB_SIZE million reads, cannot downsample"
+        fi
+        SAMPLE_COUNT=$((SAMPLE_COUNT+1))
+    done
+else
+    SAMPLE_COUNT=1
+    NUMBER_OF_SAMPLES=${#SAMPLE_ARRAY[@]}
+    for SAMPLE in ${SAMPLE_ARRAY[@]}; do
+        echo "Sample $SAMPLE_COUNT of $NUMBER_OF_SAMPLES - $SAMPLE"
+        bedtools bamtobed -i ${BAM_DIR}/${SAMPLE}${BAM_SUFFIX} > ${FULL_WORK_DIR}/${SAMPLE}.bed
+        gzip ${FULL_WORK_DIR}/${SAMPLE}.bed
+        echo "${SAMPLE}.bed.gz" >> ${FULL_WORK_DIR}/list
+        echo -e "\tPrepared for ginkgo"
+        SAMPLE_COUNT=$((SAMPLE_COUNT+1))
+    done
+fi
 
 cp config.txt ${FULL_WORK_DIR}/config
 sed -i "s/variable_500000_76_bwa/variable_${KB_BIN_SIZE}000_76_bwa/" ${FULL_WORK_DIR}/config
@@ -86,29 +118,11 @@ for SAMPLE in ${SAMPLE_ARRAY[@]}; do
    rm ${FULL_WORK_DIR}/${SAMPLE}.bed.gz
 done
 
-
-if [ "$NEW_5M_DIR" != "0" ]; then
-    mkdir -p $NEW_5M_DIR
-    for SAMPLE in ${SAMPLE_ARRAY[@]}; do
-        cp ${BAM_DIR}/${SAMPLE}${BAM_SUFFIX} ${NEW_5M_DIR}/
-        cp ${BAM_DIR}/${SAMPLE}${BAM_SUFFIX}.bai ${NEW_5M_DIR}/
-    done
-fi
-
-# gs -dNOPAUSE -sDEVICE=pdfwrite -sOUTPUTFILE=01_Combined_CNV_Plots.pdf -dBATCH *CN.pdf
-# cp 01_Combined_CNV_Plots.pdf ..
-
 cd $SCRATCH_DIR
-mkdir -p $SCRATCH_DIR/Ginkgo_CN_Plots
-
-find $SCRATCH_DIR/ginkgo_outputs -name '*CN.pdf' -exec mv {} $SCRATCH_DIR/Ginkgo_CN_Plots \;
-
 if [ -f "01_Combined_Ginkgo_CNV.pdf" ] ; then
     rm 01_Combined_Ginkgo_CNV.pdf
 fi
-
 ml system poppler/0.47.0
-pdfunite $SCRATCH_DIR/Ginkgo_CN_Plots/*CN.pdf $SCRATCH_DIR/01_Combined_Ginkgo_CNV.pdf
+pdfunite $SCRATCH_DIR/*CN.pdf $SCRATCH_DIR/01_Combined_Ginkgo_CNV.pdf
 
-exit
 echo -e "END: $(date)\nRuntime: $(($(date +%s)-$START_TIME)) seconds"

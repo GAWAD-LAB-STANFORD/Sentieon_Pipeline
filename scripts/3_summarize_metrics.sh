@@ -221,16 +221,16 @@ fi
 echo "### Summarizing metrics ### - END: $(date)"
 
 echo "### Deleting intermediate files ### - START: $(date)"
-rm ${READ_COUNT_FILENAMES[@]} ${ALIGNMENT_METRICS_FILENAMES[@]} ${WGS_METRICS_FILENAMES[@]} ${OXOG_METRICS_FILENAMES[@]}
-rm ${CHRM_PROP_FILENAMES[@]} ${COVERAGE_FILENAMES[@]} ${DOWN_SAMPLE_COV_FILENAMES[@]} ${DUPLICATION_METRICS_FILENAMES[@]}
-rm ${PRESEQ_FILENAMES[@]} ${DOWN_SAMPLE_PRESEQ_FILENAMES[@]} ${VARIANT_CLASS_COUNTS_FILENAMES[@]}
+# rm ${READ_COUNT_FILENAMES[@]} ${ALIGNMENT_METRICS_FILENAMES[@]} ${WGS_METRICS_FILENAMES[@]} ${OXOG_METRICS_FILENAMES[@]}
+# rm ${CHRM_PROP_FILENAMES[@]} ${COVERAGE_FILENAMES[@]} ${DOWN_SAMPLE_COV_FILENAMES[@]} ${DUPLICATION_METRICS_FILENAMES[@]}
+# rm ${PRESEQ_FILENAMES[@]} ${DOWN_SAMPLE_PRESEQ_FILENAMES[@]} ${VARIANT_CLASS_COUNTS_FILENAMES[@]}
 mkdir -p ${PROJECT}_Multiple_Metric_Files
 mv *multiple_metrics* ${PROJECT}_Multiple_Metric_Files/
 if [ -f ${PROJECT}.temporary_3_column_bed_interval_file ]; then
-    rm ${PROJECT}.temporary_3_column_bed_interval_file
+    # rm ${PROJECT}.temporary_3_column_bed_interval_file
 fi
 if [ $TARGETED -eq 1 ]; then
-    rm ${TARGETED_COVERAGE_FILENAMES[@]} ${TARGETED_DOWN_SAMPLE_COV_FILENAMES[@]}
+    # rm ${TARGETED_COVERAGE_FILENAMES[@]} ${TARGETED_DOWN_SAMPLE_COV_FILENAMES[@]}
 fi
 
 grep 999900000000.0 ${PROJECT}.merged_preseq_future_coverage.tsv | sort -k1 | awk -F'\t' '$6=$3/1000000000' | sed 's/ /\t/g' | cut -f6 | sed '1i Predicted_Billion_Bases_Covered' > ${PROJECT}.preseq.qual
@@ -270,8 +270,8 @@ tail -n +4 RunCompletionStatus.xml | sed 's/<//g' | sed 's/>/\t/g' | sed 's/ //g
 cat RunCompletionStatus.tsv 01.${PROJECT}.wgs.data.quality.tsv > 01.${PROJECT}.wgs.data.run.quality.tsv
 cat RunCompletionStatus.tsv 01.${PROJECT}.hs.data.quality.tsv > 01.${PROJECT}.hs.data.run.quality.tsv
 
-rm 01.${PROJECT}.wgs.data.quality.tsv
-rm 01.${PROJECT}.hs.data.quality.tsv
+# rm 01.${PROJECT}.wgs.data.quality.tsv
+# rm 01.${PROJECT}.hs.data.quality.tsv
 fi
 
 #if [ -f "RunCompletionStatus.xml" ]; then

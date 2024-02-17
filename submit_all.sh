@@ -19,7 +19,7 @@ Required arguments: -p/--project <arg>, --normal_sample_nam <arg>, and either -f
 Optional arguments: -s/--scratch_dir <arg>, --err_out_dir <arg>, --skip_scratch, -b/--run_dir <arg>, \n\t\
     --sample_sheet <arg>, --skip_variant_call, --only_variant_call, \n\t\
     --R1_suffix <arg>, --R2_suffix <arg>, --element, --skip_trimming, --rna, --number_threads <arg>\n\t\
-    --bam_suffix <arg>, --run_scan2, --skip_bam, --exome, --targeted, --cross_dir <arg>, \n\t\
+    --bam_suffix <arg>, --run_scan2, --exome, --targeted, --cross_dir <arg>, \n\t\
     --test_scan2, --skip_panel <arg>, --version <arg>, --manta, --slurm <arg> \n\\n\
 Defaults: \n\t\
     If no fastq_dir specified, uses results_dir \n\t\
@@ -53,7 +53,6 @@ RNA=0
 BAM_SUFFIX=".recalibrated_realigned_deduped_sorted.bam"
 SCAN2=0
 TARGETED=0
-SKIP_BAM=0
 TEST_SCAN2=0
 SKIP_PANEL=1
 VERSION=1
@@ -119,8 +118,6 @@ while [ "$1" != "" ]; do
         --normal_sample_name )  shift
                                 NORMAL_SAMPLE_NAME=$1
                                 ;;
-        --skip_bam ) 		    SKIP_BAM=1
-                                ;;
         --exome ) 		        TARGETED=1
                                 ;;
         --targeted ) 		    TARGETED=1
@@ -139,6 +136,9 @@ while [ "$1" != "" ]; do
         --manta )               MANTA=1
                                 ;;
         --element )             ELEMENT=1
+                                ;;
+        --ginkgo_mb_sizes ) 	shift
+                                GINKGO_MB_SIZES=( $(echo $1 | sed 's/,/ /g') )
                                 ;;
         --step )		        shift
                                 STEP=$1
@@ -451,20 +451,12 @@ elif [ $STEP -eq 2 ]; then
     TEMP_SAMPLES_STRING=$( IFS=$':'; echo "${TEMP_SAMPLE_ARRAY[*]}" )
     echo -e "\nsbatch --parsable -e $STD_ERR_OUT_DIR/%A_%a_%x.err -o $STD_ERR_OUT_DIR/%A_%a_%x.out \
         --array=1-${TEMP_JOB_COUNT} -p cgawad ${SCRIPT_DIR}/2_metrics_calc.sh \
-        --scratch_dir $SCRATCH_DIR --skip_trimmomatic $SKIP_TRIMMOMATIC --script_dir $SCRIPT_DIR \
-        --tools_dir $TOOLS_DIR --r1_suffix $R1_SUFFIX --r2_suffix $R2_SUFFIX --ref_fasta $REF_FASTA \
-        --number_threads $NUMBER_THREADS --sample_string $TEMP_SAMPLES_STRING --fastq_dir $FASTQ_DIR \
-        --dbSNP $DBSNP_VCF --project $PROJECT --skip_bam $SKIP_BAM --targeted $TARGETED \
-        --std_err_out_dir $STD_ERR_OUT_DIR --targets_bed $TARGETS_BED --interval_list $INTERVAL_LIST\
-        --targeted $TARGETED" >> $PIPELINE_STATUS
+        --scratch_dir $SCRATCH_DIR --script_dir $SCRIPT_DIR --tools_dir $TOOLS_DIR --ref_fasta $REF_FASTA \
+        --sample_string $TEMP_SAMPLES_STRING --targeted $TARGETED --targets_bed $TARGETS_BED --interval_list $INTERVAL_LIST" >> $PIPELINE_STATUS
     DEPENDENCY=$(sbatch --parsable -e $STD_ERR_OUT_DIR/%A_%a_%x.err -o $STD_ERR_OUT_DIR/%A_%a_%x.out \
         --array=1-${TEMP_JOB_COUNT} -p cgawad ${SCRIPT_DIR}/2_metrics_calc.sh \
-        --scratch_dir $SCRATCH_DIR --skip_trimmomatic $SKIP_TRIMMOMATIC --script_dir $SCRIPT_DIR \
-        --tools_dir $TOOLS_DIR --r1_suffix $R1_SUFFIX --r2_suffix $R2_SUFFIX --ref_fasta $REF_FASTA \
-        --number_threads $NUMBER_THREADS --sample_string $TEMP_SAMPLES_STRING --fastq_dir $FASTQ_DIR \
-        --dbSNP $DBSNP_VCF --project $PROJECT --skip_bam $SKIP_BAM --targeted $TARGETED \
-        --std_err_out_dir $STD_ERR_OUT_DIR --targets_bed $TARGETS_BED --interval_list $INTERVAL_LIST\
-        --targeted $TARGETED)
+        --scratch_dir $SCRATCH_DIR --script_dir $SCRIPT_DIR --tools_dir $TOOLS_DIR --ref_fasta $REF_FASTA \
+        --sample_string $TEMP_SAMPLES_STRING --targeted $TARGETED --targets_bed $TARGETS_BED --interval_list $INTERVAL_LIST)
     TEMP_ARRAY_START=$(($TEMP_ARRAY_START + $TEMP_ARRAY_INCREMENT))
     echo -e "$(date)\nIncrement: $TEMP_ARRAY_INCREMENT\nNew start: $TEMP_ARRAY_START" >> $PIPELINE_STATUS
     
@@ -522,15 +514,28 @@ elif [ $STEP -eq 3 ] && [ $TEMP_ARRAY_START -eq 0 ]; then
         echo "### Step 2 - QC metrics ### - END: $(date)" >> $PIPELINE_STATUS
     fi
     echo "### Asynchronous summarize metrics ### - $(date)" >> $PIPELINE_STATUS
-    mkdir -p ${SCRATCH_DIR}/ginkgo_outputs
-    echo -e "\nsbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
-        ${SCRIPT_DIR}/3_ginkgo_cnv.sh \
-        --new_5M_folder $SCRATCH_DIR/${PROJECT}_5M_Read_BAM_Files \
-        --bam_dir $SCRATCH_DIR --scratch_dir $SCRATCH_DIR --bam_regex $BAM_SUFFIX --bam_suffix $BAM_SUFFIX\n" >> $PIPELINE_STATUS
-    sbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
-        ${SCRIPT_DIR}/3_ginkgo_cnv.sh \
-        --new_5M_folder $SCRATCH_DIR/${PROJECT}_5M_Read_BAM_Files \
-        --bam_dir $SCRATCH_DIR --scratch_dir $SCRATCH_DIR --bam_regex $BAM_SUFFIX --bam_suffix $BAM_SUFFIX
+    if [ $TARGETED -eq 0 ]; then
+        echo -e "\nsbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
+            ${SCRIPT_DIR}/3_ginkgo_cnv.sh \
+            --bam_dir $SCRATCH_DIR --scratch_dir ${SCRATCH_DIR}/ginkgo_5M --bam_regex .5M.bam --bam_suffix .5M.bam\n" >> $PIPELINE_STATUS
+        sbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
+            ${SCRIPT_DIR}/3_ginkgo_cnv.sh \
+            --bam_dir $SCRATCH_DIR --scratch_dir ${SCRATCH_DIR}/ginkgo_5M --bam_regex .5M.bam --bam_suffix .5M.bam
+        echo "Asynchronous ginkgo for 5 million reads submitted"
+    fi
+    if [ $TARGETED -eq 0 ] && [ ! -z $GINKGO_MB_SIZES ]; then
+        for MB_SIZE in ${GINKGO_MB_SIZES[@]}; do
+            echo -e "\nsbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
+                ${SCRIPT_DIR}/3_ginkgo_cnv.sh \
+                --bam_dir $SCRATCH_DIR --scratch_dir ${SCRATCH_DIR}/ginkgo_${MB_SIZE}M --bam_regex $BAM_SUFFIX \
+                --bam_suffix $BAM_SUFFIX --mb_size $MB_SIZE\n" >> $PIPELINE_STATUS
+            sbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
+                ${SCRIPT_DIR}/3_ginkgo_cnv.sh \
+                --bam_dir $SCRATCH_DIR --scratch_dir ${SCRATCH_DIR}/ginkgo_${MB_SIZE}M --bam_regex $BAM_SUFFIX \
+                --bam_suffix $BAM_SUFFIX --mb_size $MB_SIZE
+            echo "Asynchronous ginkgo for $MB_SIZE million reads submitted"
+        done
+    fi
     if [ ! -z $RUN_DIR ]; then
         echo -e "\nsbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
             ${SCRIPT_DIR}/3_summarize_metrics.sh \

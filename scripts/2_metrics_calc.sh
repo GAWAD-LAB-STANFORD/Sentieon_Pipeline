@@ -14,47 +14,20 @@ while [ "$1" != "" ]; do
         --scratch_dir )         shift
                                 SCRATCH_DIR=$1
                                 ;;
-        --skip_trimmomatic )    shift
-                                  SKIP_TRIMMOMATIC=$1
-                                ;;
         --script_dir )          shift
                                 SCRIPT_DIR=$1
                                 ;;
         --tools_dir )           shift
                                 TOOLS_DIR=$1
                                 ;;
-        --r1_suffix )           shift
-                                 R1_SUFFIX=$1
-                                ;;
-        --r2_suffix )           shift
-                                R2_SUFFIX=$1
-                                ;;
         --ref_fasta ) 	        shift
-                                     REF_FASTA=$1
-                                ;;
-        --number_threads )      shift
-                                NUMBER_THREADS=$1
+                                REF_FASTA=$1
                                 ;;
         --sample_string )       shift
                                 SAMPLE_ARRAY=( $(echo $1 | sed 's/:/ /g') )
                                 ;;
-        --fastq_dir ) 	        shift
-                                FASTQ_DIR=$1
-                                ;;
-        --dbSNP ) 	            shift
-                                dbSNP=$1
-                                ;;
-        --project ) 	        shift
-                                PROJECT=$1
-                                ;;
-        --skip_bam ) 	        shift
-                                SKIP_BAM=$1
-                                ;;
         --targeted )            shift
                                 TARGETED=$1
-                                ;;
-        --std_err_out_dir )     shift
-                                STD_ERR_OUT_DIR=$1
                                 ;;
         --targets_bed )         shift
                                 TARGETS_BED=$1
@@ -62,170 +35,88 @@ while [ "$1" != "" ]; do
         --interval_list )       shift
                                 INTERVAL_LIST=$1
                                 ;;
-        --targeted )            shift
-                                TARGETED=$1
+        --bam_suffix )          shift
+                                BAM_SUFFIX=$1
                                 ;;
     esac
     shift
 done
 
-if [ -z $SCRATCH_DIR ] || [ -z $SKIP_TRIMMOMATIC ] || [ -z $SCRIPT_DIR ] || [ -z $TOOLS_DIR ] || \
-    [ -z $R1_SUFFIX ] || [ -z $R2_SUFFIX ] || [ -z $REF_FASTA ] || [ -z $NUMBER_THREADS ] || \
-    [ -z $SAMPLE_ARRAY ] || [ -z $FASTQ_DIR ] || [ -z $dbSNP ] || [ -z $PROJECT ] || \
-    [ -z $SKIP_BAM ] || [ -z $TARGETED ] || [ -z $STD_ERR_OUT_DIR ] || [ -z $TARGETS_BED ] || \
-    [ -z $INTERVAL_LIST ]; then
+if [ -z $SCRATCH_DIR ] || [ -z $SCRIPT_DIR ] || [ -z $TOOLS_DIR ] || [ -z $REF_FASTA ] || \
+    [ -z $SAMPLE_ARRAY ] || [ -z $TARGETED ] || [ -z $TARGETS_BED ] || [ -z $INTERVAL_LIST ]; then
     echo "Variables not supplied correctly. Check script for intake parameters. All are required to be specified. Exiting with code 1"
     exit 1
 fi
 
 SAMPLE=${SAMPLE_ARRAY[$(( $SLURM_ARRAY_TASK_ID - 1 ))]}
-SAMPLE_NAME=${SAMPLE%.recalibrated_realigned_deduped_sorted.bam}
-SAMPLE=${SAMPLE_NAME}
 echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND\nSample: $SAMPLE"
-
-SENTIEON_STATUS=${STD_ERR_OUT_DIR}/${PROJECT}_sentieon_status.txt
+cd $SCRATCH_DIR
 
 REFERENCE_DIR="/oak/stanford/groups/cgawad/Reference_Files"
-
 N25CHR_INTERVAL_LIST="/oak/stanford/groups/cgawad/Reference_Files/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38_n25chr.interval_list"
-#N25CHR_BED="/oak/stanford/groups/cgawad/Reference_Files/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38_n25chr_fixed2.bed"
 N25CHR_BED="/oak/stanford/groups/cgawad/Reference_Files/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38_n25chr.bed"
-echo "FASTQ_DIR IS "{FASTQ_DIR}
 TOOLS_DIR="/oak/stanford/groups/cgawad/Sequencing_Analysis_Tools"
 QUALIMAP_TOOL="${TOOLS_DIR}/qualimap_v2.2.1/qualimap"
 PRESEQ_TOOL_DIR="${TOOLS_DIR}/preseq"
 REF_GENOME="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38_bedtools.genome"
-
-
-COUNTER=0
-for i in "${SAMPLE_ARRAY[@]}"
-do
-  echo "Sample number $COUNTER is $i"
-  COUNTER=$((COUNTER+1))
-done
-
-
-echo "TASK_ID is $SLURM_ARRAY_TASK_ID"
-echo "SAMPLE about to be worked on is $SAMPLE"
-
-BAM="${SAMPLE}.bam"
-SORTED_BAM="${SAMPLE}.sorted.bam"
-DEDUPED_BAM="${SAMPLE}.deduped_sorted.bam"
-REALIGNED_BAM="${SAMPLE}.realigned_deduped_sorted.bam"
-RECALIBRATED_BAM="${SAMPLE}.recalibrated_realigned_deduped_sorted.bam"
+EXOME_INTERVAL_LIST="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/xgen-exome-research-panel-targets_grch38_5col.interval_list"
 VARIANT_VCF="${SAMPLE}.g.vcf"
-BAM_SUFFIX=".bqsr.bam"
-BAM_NAME=${RECALIBRATED_BAM}
-echo -e "START: $(date)\nSentieon Pipeline\nResults dir: $SCRATCH_DIR\nSample: $SAMPLE\nRef fasta: $REF_FASTA" >> $SENTIEON_STATUS
-cd $SCRATCH_DIR
-
-#ml gsl/2.3
-#ml java/1.8.0_131
-#ml R/4.0.2 java biology samtools bedtools gatk bcftools
-#ml biology bwa samtools java
 
 ml gcc/12.1.0 gsl/2.3 java/1.8.0_131 biology htslib samtools bedtools gatk
 ml biology bcftools/1.6 sentieon/202112.01
 
-export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/ #your Sentieon package location
-export SENTIEON_LICENSE=license4.stanford.edu:5443 #your license file location
+export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/
+export SENTIEON_LICENSE=license4.stanford.edu:5443
 
-R1_FASTQ=${FASTQ_DIR}"/"${SAMPLE}${R1_SUFFIX}
-R2_FASTQ=${FASTQ_DIR}"/"${SAMPLE}${R2_SUFFIX}
-
-echo "### Aligning fastqs Sample: $SAMPLE ### - START: $(date)" >> $SENTIEON_STATUS
-
-#PLATFORM is the sequencing machine (usually ILLUMINA), sample is the sample name
-#-R "@RG\tID:$id\tPL:ILLUMINA\tLB:$lb\tSM:$sm"
-#'"'"@RG\tID:$SAMPLE\tPL;ILLUMINA\tLB:$SAMPLE\tSM:$SAMPLE"'"'
-
-
-RG="@RG\tID:${SAMPLE}_ID\tSM:$SAMPLE\tPL:ILLUMINA"
-echo "Read group: $RG"
-
-cd ${SCRATCH_DIR}
-echo "### Calculating QC metrics Sample: $SAMPLE ### - START: $(date)" >> $SENTIEON_STATUS
-#	if [ $TARGETED -eq 1 ]; then
-#	    echo "start Hs metrics: $(date)"
-
-EXOME_INTERVAL_LIST="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/xgen-exome-research-panel-targets_grch38_5col.interval_list"
-
-## this block of code is meant to downsample to 5 mil for exomes 500 mil for whole genomes, and compute preseq for miniseq runs
-BAM_5M_SUFFIX=".5M.bam" 
-TOTAL_READS=$(samtools view -c ${RECALIBRATED_BAM})
-echo total reads is $TOTAL_READS
-echo "start 5M read coverage stuff: $(date)"
-if [ $TOTAL_READS -ge 5000000 ] && [ $TARGETED -eq 1] && [ $TARGETED -eq 0 ]; then
-    FRACTION=$(awk -v y="$TOTAL_READS" 'BEGIN {printf "%3f", 5000000 / y}')
-    BAM_NAME=${SAMPLE}_subsampled_exome.bam
+echo "### Calculating QC metrics Sample: $SAMPLE ### - START: $(date)"
+TOTAL_READS=$(samtools view -c ${SAMPLE}${BAM_SUFFIX})
+FRACTION=$(awk -v y="$TOTAL_READS" 'BEGIN {printf "%3f", 5000000 / y}')
+if [ $TOTAL_READS -ge 5000000 ] && [ ! -z $FRACTION ] && [ $TARGETED -eq 0 ]; then
     gatk --java-options "-XX:+UseParallelGC -XX:ParallelGCThreads=4 -Xmx31g -Xms31G" DownsampleSam \
-    -I ${RECALIBRATED_BAM} -O ${BAM_NAME} \
-    --PROBABILITY $FRACTION --VALIDATION_STRINGENCY SILENT \
-    --MAX_RECORDS_IN_RAM 5500000
-    echo "5M downsample done"
-    samtools index ${BAM_NAME}
+        -I ${SAMPLE}${BAM_SUFFIX} -O ${SAMPLE}.5M.bam \
+        --PROBABILITY $FRACTION --VALIDATION_STRINGENCY SILENT \
+        --MAX_RECORDS_IN_RAM 5500000
+    echo "Downsampling for 5 million reads done"
+    samtools index ${SAMPLE}.5M.bam
     echo -e "chr\tstart\tend\tcovered_features\tcovered_bases\tbed_length\tbreadth_coverage_fraction" > ${SAMPLE}.wgs_5M_read_coverage.tsv
-    bedtools coverage -g $REF_GENOME -sorted -a $TARGETS_BED -b ${BAM_NAME} >> ${SAMPLE}.wes_5M_read_coverage.tsv
-    echo "5 million read coverage done"
+    bedtools coverage -g $REF_GENOME -sorted -a $N25CHR_BED -b ${SAMPLE}.5M.bam >> ${SAMPLE}.5M.read_coverage.tsv
+    echo "Coverage for 5 million reads done"
 
-    samtools view -b -L $N25CHR_BED ${SAMPLE}_subsampled_exome.bam > ${SAMPLE}_subsampled_exome.n25chr.bam
-    $PRESEQ_TOOL_DIR/bam2mr -o ${SAMPLE}_subsampled_exome.n25chr.unsorted.mr ${SAMPLE}_subsampled_exome.n25chr.bam
-    sort -k1,1 -k2,2n -k3,3n ${SAMPLE}_subsampled_exome.n25chr.unsorted.mr > ${SAMPLE}_subsampled_exome.n25chr.sorted.mr
-    if [ ! -f ${SAMPLE}_subsampled_exome.n25chr.sorted.mr ]; then
-        echo "Problem making ${SAMPLE}_subsampled_exome.n25chr.sorted.mr, cannot run PreSeq for 5M"
+    samtools view -b -L $N25CHR_BED ${SAMPLE}.5M.bam > ${SAMPLE}.5M.n25chr.bam
+    $PRESEQ_TOOL_DIR/bam2mr -o ${SAMPLE}.5M.n25chr.unsorted.mr ${SAMPLE}.5M.n25chr.bam
+    sort -k1,1 -k2,2n -k3,3n ${SAMPLE}.5M.n25chr.unsorted.mr > ${SAMPLE}.5M.n25chr.sorted.mr
+    if [ ! -f ${SAMPLE}.5M.n25chr.sorted.mr ]; then
+        echo "Problem making ${SAMPLE}.5M.n25chr.sorted.mr, cannot run PreSeq for 5 million reads"
     else
-        $PRESEQ_TOOL_DIR/preseq gc_extrap -o ${SAMPLE}_subsampled_exome.gc_extrap.future_coverage.tsv ${SAMPLE}_subsampled_exome.n25chr.sorted.mr
-        rm ${SAMPLE}_subsampled_exome.n25chr.bam* ${SAMPLE}_subsampled_exome.n25chr.unsorted.mr* ${SAMPLE}_subsampled_exome.n25chr.sorted.mr*
-        if [ ! -f ${SAMPLE}_subsampled_exome.gc_extrap.future_coverage.tsv ]; then
-            echo "Problem making ${SAMPLE}.gc_extrap.future_coverage.tsv, PreSeq for 5M failed"
+        $PRESEQ_TOOL_DIR/preseq gc_extrap -o ${SAMPLE}.5M.preseq_future_coverage.tsv ${SAMPLE}.5M.n25chr.sorted.mr
+        rm ${SAMPLE}.5M.n25chr.bam* ${SAMPLE}.5M.n25chr.unsorted.mr* ${SAMPLE}.5M.n25chr.sorted.mr*
+        if [ ! -f ${SAMPLE}.5M.preseq_future_coverage.tsv ]; then
+            echo "Problem making ${SAMPLE}.5M.preseq_future_coverage.tsv, PreSeq for 5 million reads failed"
         else
-            echo "PreSeq for 5M done"
+            echo "PreSeq for 5 million reads done"
         fi
     fi
 else
-    echo "Either a WGS BAM or WES Bam is less than 5 million reads, cannot downsample"
+    echo "Bam has $TOTAL_READS reads, cannot downsample to 5 million reads"
 fi
 
-if [ $TOTAL_READS -le 5000000 ] && [ $TARGETED -eq 0 ]; then
-    samtools view -b -L $N25CHR_BED ${SAMPLE}.recalibrated_realigned_deduped_sorted.bam > ${SAMPLE}.recalibrated_realigned_deduped_sorted.n25chr.bam
-    $PRESEQ_TOOL_DIR/bam2mr -o ${SAMPLE}.recalibrated_realigned_deduped_sorted.n25chr.unsorted.mr ${SAMPLE}.recalibrated_realigned_deduped_sorted.n25chr.bam
-    sort -k1,1 -k2,2n -k3,3n ${SAMPLE}.recalibrated_realigned_deduped_sorted.n25chr.unsorted.mr > ${SAMPLE}.recalibrated_realigned_deduped_sorted.n25chr.sorted.mr
-    if [ ! -f ${SAMPLE}.recalibrated_realigned_deduped_sorted.n25chr.sorted.mr ]; then
-        echo "Problem making ${SAMPLE}.recalibrated_realigned_deduped_sorted.n25chr.sorted.mr, cannot run PreSeq for 5M"
+if [ $TARGETED -eq 0 ]; then
+    samtools view -b -L $N25CHR_BED ${SAMPLE}${BAM_SUFFIX} > ${SAMPLE}.n25chr.bam
+    $PRESEQ_TOOL_DIR/bam2mr -o ${SAMPLE}.n25chr.unsorted.mr ${SAMPLE}.n25chr.bam
+    sort -k1,1 -k2,2n -k3,3n ${SAMPLE}.n25chr.unsorted.mr > ${SAMPLE}.n25chr.sorted.mr
+    if [ ! -f ${SAMPLE}.n25chr.sorted.mr ]; then
+        echo "Problem making ${SAMPLE}.n25chr.sorted.mr, cannot run PreSeq for whole sample"
     else
-        $PRESEQ_TOOL_DIR/preseq gc_extrap -o ${SAMPLE}.recalibrated_realigned_deduped_sorted.gc_extrap.future_coverage.tsv ${SAMPLE}.recalibrated_realigned_deduped_sorted.n25chr.sorted.mr
-        rm ${SAMPLE}.recalibrated_realigned_deduped_sorted.n25chr.bam* ${SAMPLE}.recalibrated_realigned_deduped_sorted.n25chr.unsorted.mr* ${SAMPLE}.recalibrated_realigned_deduped_sorted.n25chr.sorted.mr*
-        if [ ! -f ${SAMPLE}.recalibrated_realigned_deduped_sorted.gc_extrap.future_coverage.tsv ]; then
-            echo "Problem making ${SAMPLE}.recalibrated_realigned_deduped_sorted.gc_extrap.future_coverage.tsv, PreSeq for 5M failed"
+        $PRESEQ_TOOL_DIR/preseq gc_extrap -o ${SAMPLE}.preseq_future_coverage.tsv ${SAMPLE}.n25chr.sorted.mr
+        rm ${SAMPLE}.n25chr.bam* ${SAMPLE}.n25chr.unsorted.mr* ${SAMPLE}.n25chr.sorted.mr*
+        if [ ! -f ${SAMPLE}.preseq_future_coverage.tsv ]; then
+            echo "Problem making ${SAMPLE}.preseq_future_coverage.tsv, PreSeq for whole sample failed"
         else
-            echo "PreSeq for 5M done"
+            echo "PreSeq for whole sample done"
         fi
-    fi    
-else
-    echo "BAM is larger than 5M reads. Will not compute PreSeq"
+    fi
 fi
-    
-# 	echo "downsample for non miniseq WGS as well (get coverage too)"
-if [ $TOTAL_READS -ge 500000000 ] && [ $TARGETED -eq 0]; then
-    FRACTION=$(awk -v y="$TOTAL_READS" 'BEGIN {printf "%3f", 500000000 / y}')
 
-    BAM_NAME=${SAMPLE}_subsampled_wgs.bam
-    gatk --java-options "-XX:+UseParallelGC -XX:ParallelGCThreads=4 -Xmx31g -Xms31G" DownsampleSam \
-    -I ${RECALIBRATED_BAM} -O ${BAM_NAME} \
-    --PROBABILITY $FRACTION --VALIDATION_STRINGENCY SILENT \
-    --MAX_RECORDS_IN_RAM 5500000
-    echo "500M downsample done"
-    samtools index ${BAM_NAME}
-    echo -e "chr\tstart\tend\tcovered_features\tcovered_bases\tbed_length\tbreadth_coverage_fraction" > ${SAMPLE}.wgs_500M_read_coverage.tsv
-    bedtools coverage -g $REF_GENOME -sorted -a $N25CHR_BED -b ${BAM_NAME} >> ${SAMPLE}.wgs_500M_read_coverage.tsv
-    echo "500 million read coverage done"
-else
-    echo "WGS Bam is less than 500 million reads, cannot downsample"
-fi
-###
-
-#samtools view -b -L $N25CHR_BED ${SAMPLE}${BAM_SUFFIX} > ${SAMPLE}.bqsr.marked.n25chr.bam
-#echo "Bam restriction to canonical 25 chr region done"
 bedtools bamtobed -i ${BAM_NAME} | cut -f 1-3 > ${SAMPLE}.bqsr.marked.n25chr.bed
 echo "Bam to bed conversion done"
 echo -e "chr\tstart\tend\tcovered_features\tcovered_bases\tbed_length\tbreadth_coverage_fraction" > ${SAMPLE}.wgs_coverage.tsv
@@ -233,15 +124,15 @@ bedtools coverage -g $REF_GENOME -sorted -a $N25CHR_BED -b ${SAMPLE}.bqsr.marked
 echo "Coverage done"
 
 gatk --java-options "-XX:+UseParallelGC -XX:ParallelGCThreads=4 -Xmx31G -Xmx31G" CollectHsMetrics \
--I ${BAM_NAME} -O ${SAMPLE}.hs_metrics.tsv -R $REF_FASTA \
--BI $EXOME_INTERVAL_LIST -TI $EXOME_INTERVAL_LIST --VALIDATION_STRINGENCY SILENT \
---MAX_RECORDS_IN_RAM 3500000
+    -I ${BAM_NAME} -O ${SAMPLE}.hs_metrics.tsv -R $REF_FASTA \
+    -BI $EXOME_INTERVAL_LIST -TI $EXOME_INTERVAL_LIST --VALIDATION_STRINGENCY SILENT \
+    --MAX_RECORDS_IN_RAM 3500000
 echo "CollectHsMetrics done"
     
 gatk --java-options "-XX:+UseParallelGC -XX:ParallelGCThreads=4 -Xmx31G -Xmx31G" CollectWgsMetrics \
--I ${BAM_NAME} -O ${SAMPLE}.wgs_metrics.tsv \
--R $REF_FASTA --VALIDATION_STRINGENCY SILENT --INTERVALS $INTERVAL_LIST \
---MAX_RECORDS_IN_RAM 3500000
+    -I ${BAM_NAME} -O ${SAMPLE}.wgs_metrics.tsv \
+    -R $REF_FASTA --VALIDATION_STRINGENCY SILENT --INTERVALS $INTERVAL_LIST \
+    --MAX_RECORDS_IN_RAM 3500000
 echo "CollectWgsMetrics done"
     
 echo "start CollectBaseDist: $(date)"
@@ -259,12 +150,10 @@ gatk --java-options "-XX:+UseParallelGC -XX:ParallelGCThreads=4 -Xmx31G -Xmx31G"
     --MAX_RECORDS_IN_RAM 3500000
 echo "CollectOxoGMetrics done"
 
-    
-
 if [ $TARGETED -eq 1 ]; then
-    if [ -f ${SAMPLE}${BAM_5M_SUFFIX} ]; then
+    if [ -f ${SAMPLE}.5M.bam ]; then
     echo -e "chr\tstart\tend\tcovered_features\tcovered_bases\tbed_length\tbreadth_coverage_fraction" > ${SAMPLE}.targeted_5M_read_coverage.tsv
-    bedtools coverage -sorted -a $TARGETS_BED -b ${SAMPLE}${BAM_5M_SUFFIX} >> ${SAMPLE}.targeted_5M_read_coverage.tsv
+    bedtools coverage -sorted -a $TARGETS_BED -b ${SAMPLE}.5M.bam >> ${SAMPLE}.targeted_5M_read_coverage.tsv
     echo "5 million read targeted coverage done"
     fi
 
@@ -274,36 +163,21 @@ if [ $TARGETED -eq 1 ]; then
 fi
 echo "Calculating QC metric"
 
-
-#	rm -r split_aligning_${SAMPLE}
-#	rm ${SAMPLE}.rg.bam* ${SAMPLE}.bqsr ${SAMPLE}.marked.bam*
-#	rm ${SAMPLE}.bqsr.marked.n25chr.bam* ${SAMPLE}.bqsr.marked.n25chr.bed
-#	rm *pre.bam
-    # rm -rf `pwd`/tmp*
-
-mkdir "${SCRATCH_DIR}/${SAMPLE}_temp_qualimap_output"
-echo "made the qualimap directory"
-echo "${QUALIMAP_TOOL} is the qualimap tool"
-
+mkdir -p ${SAMPLE}_temp_qualimap_output
 $QUALIMAP_TOOL bamqc -nt 4 -nw 3000 --java-mem-size=31G -bam ${BAM_NAME} -gff $N25CHR_BED \
     -c -hm 3 -outdir ${SCRATCH_DIR}/${SAMPLE}_temp_qualimap_output -outformat PDF
-
-#Temporarily removed bed input for testing since its not working with the bed input
-    #$QUALIMAP_TOOL bamqc -nt 4 -nw 3000 --java-mem-size=55G -bam ${BAM_NAME} -gff $N25CHR_BED \
-    #    -c -hm 3 -outdir ${SCRATCH_DIR}/${SAMPLE}_temp_qualimap_output -outformat PDF
 if [ ! -f ${SAMPLE}_temp_qualimap_output/report.pdf ]; then
     echo "QualiMap encountered a problem and did not complete"
 else
     ml system poppler/0.47.0
     pdfseparate -f 1 -l 6 ${SAMPLE}_temp_qualimap_output/report.pdf ${SAMPLE}_temp_qualimap_output/pages1-%d.pdf
     pdfseparate -f 284 -l 296 ${SAMPLE}_temp_qualimap_output/report.pdf ${SAMPLE}_temp_qualimap_output/pages2-%d.pdf
-    pdfunite ${SAMPLE}_temp_qualimap_output/pages*.pdf `pwd`/${SAMPLE}.multiple_metrics.qualimap_report.pdf
+    pdfunite ${SAMPLE}_temp_qualimap_output/pages*.pdf ${SAMPLE}.multiple_metrics.qualimap_report.pdf
     # mv ${SAMPLE}_temp_qualimap_output/report.pdf ${SAMPLE}.multiple_metrics.qualimap_report.pdf
-    mv ${SAMPLE}_temp_qualimap_output/genome_results.txt `pwd`/${SAMPLE}.multiple_metrics.qualimap_genome_results.txt
+    mv ${SAMPLE}_temp_qualimap_output/genome_results.txt ${SAMPLE}.multiple_metrics.qualimap_genome_results.txt
     echo "QualiMap done"
 fi
-
-rm -rf *_temp_qualimap_output
+rm -r ${SAMPLE}_temp_qualimap_output
 
 mkdir Mosdepth_Results
 MOSDEPTH="/oak/stanford/groups/cgawad/Sequencing_Analysis_Tools"
@@ -379,6 +253,6 @@ sed 's/ /\t/g' | awk '{$32=$13/$19; print}' | sed 's/ /\t/g' | awk '{$33=$14/$19
 sed 's/ /\t/g' | awk '{$37=$18/$19; print}'  | sed 's/ /\t/g' | cut -f20- > ${MOS_RESULTS_DIR}/${SAMPLE}.exome.thresholds
 echo "exome done"
 
-echo "###Calculating QC METRICS Done #### Sample: $SAMPLE Time: $(date)" >> $SENTIEON_STATUS
+echo "###Calculating QC METRICS Done #### Sample: $SAMPLE Time: $(date)"
 
 echo -e "END: $(date)\nRuntime: $(($(date +%s) $START_TIME)) seconds"
