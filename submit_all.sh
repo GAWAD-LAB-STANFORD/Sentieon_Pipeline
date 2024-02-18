@@ -19,8 +19,8 @@ Required arguments: -p/--project <arg>, --normal_sample_nam <arg>, and either -f
 Optional arguments: -s/--scratch_dir <arg>, --err_out_dir <arg>, --skip_scratch, -b/--run_dir <arg>, \n\t\
     --sample_sheet <arg>, --skip_variant_call, --only_variant_call, \n\t\
     --R1_suffix <arg>, --R2_suffix <arg>, --element, --skip_trimming, --rna, --number_threads <arg>\n\t\
-    --bam_suffix <arg>, --run_scan2, --exome, --targeted, --cross_dir <arg>, \n\t\
-    --test_scan2, --skip_panel <arg>, --version <arg>, --manta, --slurm <arg> \n\\n\
+    --bam_suffix <arg>, --run_scan2, --exome, --targeted, --cross_dir <arg>, --test_scan2, \n\t\
+    --skip_panel <arg>, --version <arg>, --manta, --ginkgo_mb_sizes <arg>, --slurm <arg> \n\\n\
 Defaults: \n\t\
     If no fastq_dir specified, uses results_dir \n\t\
     If no results_dir specified, makes new directory in fastq_dir \n\t\
