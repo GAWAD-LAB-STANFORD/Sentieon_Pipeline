@@ -613,11 +613,11 @@ if [ $STEP -eq 3 ]; then
         TEMP_SAMPLES_STRING=$( IFS=$':'; echo "${TEMP_SAMPLE_ARRAY[*]}" )
         echo -e "\nsbatch --parsable -e $STD_ERR_OUT_DIR/%A_%a_%x.err -o $STD_ERR_OUT_DIR/%A_%a_%x.out \
             --array=1-${TEMP_JOB_COUNT} ${SCRIPT_DIR}/3_sentieon_germline_variant_calling.sh  \
-            --scratch_dir $SCRATCH_DIR --reference_dir $REFERENCE_DIR --ref_fasta $REF_FASTA \
+            --scratch_dir $SCRATCH_DIR --ref_fasta $REF_FASTA \
             --sample_string $TEMP_SAMPLES_STRING --targets_bed $TARGETS_BED\n" >> $PIPELINE_STATUS
         DEPENDENCY=$(sbatch --parsable -e $STD_ERR_OUT_DIR/%A_%a_%x.err -o $STD_ERR_OUT_DIR/%A_%a_%x.out \
             --array=1-${TEMP_JOB_COUNT} ${SCRIPT_DIR}/3_sentieon_germline_variant_calling.sh  \
-            --scratch_dir $SCRATCH_DIR --reference_dir $REFERENCE_DIR --ref_fasta $REF_FASTA \
+            --scratch_dir $SCRATCH_DIR --ref_fasta $REF_FASTA \
             --sample_string $TEMP_SAMPLES_STRING --targets_bed $TARGETS_BED)
         TEMP_ARRAY_START=$(($TEMP_ARRAY_START + $TEMP_ARRAY_INCREMENT))
         echo -e "$(date)\nIncrement: $TEMP_ARRAY_INCREMENT\nNew start: $TEMP_ARRAY_START" >> $PIPELINE_STATUS
@@ -656,12 +656,12 @@ elif [ $STEP -eq 4 ]; then
         --array=1-${TEMP_JOB_COUNT} ${SCRIPT_DIR}/4_sentieon_somatic_variant_calling.sh  \
         --scratch_dir $SCRATCH_DIR --reference_dir $REFERENCE_DIR --ref_fasta $REF_FASTA \
         --normal_sample_name $NORMAL_SAMPLE_NAME --sample_string $TEMP_SAMPLES_STRING \
-        --dbSNP $DBSNP_VCF --targets_bed $TARGETS_BED\n" >> $PIPELINE_STATUS
+        --dbSNP $DBSNP_VCF --targets_bed $TARGETS_BED --rna $RNA --bam_suffix $BAM_SUFFIX\n" >> $PIPELINE_STATUS
     DEPENDENCY=$(sbatch --parsable -e $STD_ERR_OUT_DIR/%A_%a_%x.err -o $STD_ERR_OUT_DIR/%A_%a_%x.out \
         --array=1-${TEMP_JOB_COUNT} ${SCRIPT_DIR}/4_sentieon_somatic_variant_calling.sh  \
         --scratch_dir $SCRATCH_DIR --reference_dir $REFERENCE_DIR --ref_fasta $REF_FASTA \
         --normal_sample_name $NORMAL_SAMPLE_NAME --sample_string $TEMP_SAMPLES_STRING \
-        --dbSNP $DBSNP_VCF --targets_bed $TARGETS_BED)
+        --dbSNP $DBSNP_VCF --targets_bed $TARGETS_BED --rna $RNA --bam_suffix $BAM_SUFFIX)
     TEMP_ARRAY_START=$(($TEMP_ARRAY_START + $TEMP_ARRAY_INCREMENT))
     echo -e "$(date)\nIncrement: $TEMP_ARRAY_INCREMENT\nNew start: $TEMP_ARRAY_START" >> $PIPELINE_STATUS
     
@@ -705,11 +705,11 @@ elif [ $STEP -eq 5 ]; then
         echo "Joint genotyping - Start: $(date)" >> $PIPELINE_STATUS
         echo -e "\nsbatch --parsable -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
             ${SCRIPT_DIR}/5_sentieon_joint_genotyping.sh \
-            --scratch_dir $SCRATCH_DIR --reference_dir $REFERENCE_DIR --ref_fasta $REF_FASTA \
+            --scratch_dir $SCRATCH_DIR --ref_fasta $REF_FASTA \
             --project $PROJECT --targets_bed $TARGETS_BED\n" >> $PIPELINE_STATUS
         DEPENDENCY="$DEPENDENCY:$(sbatch --parsable -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
             ${SCRIPT_DIR}/5_sentieon_joint_genotyping.sh \
-            --scratch_dir $SCRATCH_DIR --reference_dir $REFERENCE_DIR --ref_fasta $REF_FASTA \
+            --scratch_dir $SCRATCH_DIR --ref_fasta $REF_FASTA \
             --project $PROJECT --targets_bed $TARGETS_BED)"
     fi
     echo -e "\nsbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
