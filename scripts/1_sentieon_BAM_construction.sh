@@ -70,7 +70,6 @@ REF_GENOME="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38_b
 SAMPLE=${SAMPLE%$R1_SUFFIX}
 SAMPLE_NAME=${SAMPLE}
 
-#second check if fastq was undetermined, don't bother trying to align as a BAM
 if [ $RNA -eq 1 ]; then
     BAM="${SAMPLE}.rna.bam"
     SORTED_BAM="${SAMPLE}.rna.sorted.bam"
@@ -219,6 +218,5 @@ if [ $SKIP_TRIMMOMATIC -eq 0 ] && [ -f $SORTED_BAM ]; then
 fi
 rm $BAM $REALIGNED_BAM
 mv ${SAMPLE}_score.gz* Extra_Sentieon_Files/
-mv ${SAMPLE}_recal_* Extra_Sentieon_Files/
 mv ${SAMPLE}_bqsr.pdf Extra_Sentieon_Files/
 echo -e "END: $(date)\nRuntime: $(($(date +%s)-$START_TIME)) seconds"
