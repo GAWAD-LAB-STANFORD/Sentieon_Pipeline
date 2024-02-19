@@ -34,6 +34,8 @@ Defaults: \n\t\
     WGS assumed \n\t\
     Will not run Scan2 \n\t\
     Will skip Scan2 panel \n\t\
+    Will run Ginkgo on 5M read downsampled BAMs for WGS \n\t\
+    Other Ginkgo runs will only be run for WGS \n\t\
     Will not run manta \n\t\
     version: 1 \n\t\
     \n\n\
@@ -387,6 +389,7 @@ elif ([ $STEP -eq 0 ] && [ -z $RUN_DIR ] && [ $ONLY_VARIANT_CALL -eq 0 ]) || [ $
         JOB_COUNT=${#SAMPLE_ARRAY[@]}
         echo -e "Jobs: $JOB_COUNT" >> $PIPELINE_STATUS
         TEMP_ARRAY_START=1
+        mkdir -p Extra_Sentieon_Files
     fi
     
     TEMP_SAMPLE_ARRAY=( ${SAMPLE_ARRAY[@]:$(($TEMP_ARRAY_START - 1)):$TEMP_ARRAY_INCREMENT} )
@@ -517,14 +520,16 @@ elif [ $STEP -eq 3 ] && [ $TEMP_ARRAY_START -eq 0 ]; then
     if [ $SCAN2 -eq 0 ]; then
         echo "### Step 2 - QC metrics ### - END: $(date)" >> $PIPELINE_STATUS
     fi
-    echo "### Asynchronous summarize metrics ### - $(date)" >> $PIPELINE_STATUS
+    echo "### Asynchronous merge metrics ### - $(date)" >> $PIPELINE_STATUS
     if [ $TARGETED -eq 0 ]; then
         echo -e "\nsbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
             ${SCRIPT_DIR}/3_ginkgo_cnv.sh \
-            --bam_dir $SCRATCH_DIR --scratch_dir ${SCRATCH_DIR}/ginkgo_5M --bam_regex .5M.bam --bam_suffix .5M.bam\n" >> $PIPELINE_STATUS
+            --bam_dir $SCRATCH_DIR --scratch_dir ${SCRATCH_DIR}/ginkgo_5M --bam_regex .5M.bam \
+            --bam_suffix .5M.bam --project 5M\n" >> $PIPELINE_STATUS
         sbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
             ${SCRIPT_DIR}/3_ginkgo_cnv.sh \
-            --bam_dir $SCRATCH_DIR --scratch_dir ${SCRATCH_DIR}/ginkgo_5M --bam_regex .5M.bam --bam_suffix .5M.bam
+            --bam_dir $SCRATCH_DIR --scratch_dir ${SCRATCH_DIR}/ginkgo_5M --bam_regex .5M.bam \
+            --bam_suffix .5M.bam --project 5M
         echo "Asynchronous ginkgo for 5 million reads submitted"
     fi
     if [ $TARGETED -eq 0 ] && [ ! -z $GINKGO_MB_ARRAY ]; then
@@ -532,31 +537,31 @@ elif [ $STEP -eq 3 ] && [ $TEMP_ARRAY_START -eq 0 ]; then
             echo -e "\nsbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
                 ${SCRIPT_DIR}/3_ginkgo_cnv.sh \
                 --bam_dir $SCRATCH_DIR --scratch_dir ${SCRATCH_DIR}/ginkgo_${MB_SIZE}M --bam_regex $BAM_SUFFIX \
-                --bam_suffix $BAM_SUFFIX --mb_size $MB_SIZE\n" >> $PIPELINE_STATUS
+                --bam_suffix $BAM_SUFFIX --project ${MB_SIZE}M --mb_size $MB_SIZE\n" >> $PIPELINE_STATUS
             sbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
                 ${SCRIPT_DIR}/3_ginkgo_cnv.sh \
                 --bam_dir $SCRATCH_DIR --scratch_dir ${SCRATCH_DIR}/ginkgo_${MB_SIZE}M --bam_regex $BAM_SUFFIX \
-                --bam_suffix $BAM_SUFFIX --mb_size $MB_SIZE
+                --bam_suffix $BAM_SUFFIX --project ${MB_SIZE}M --mb_size $MB_SIZE
             echo "Asynchronous ginkgo for $MB_SIZE million reads submitted"
         done
     fi
     if [ ! -z $RUN_DIR ]; then
         echo -e "\nsbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
-            ${SCRIPT_DIR}/3_summarize_metrics.sh \
+            ${SCRIPT_DIR}/3_merge_metrics.sh \
             --scratch_dir $SCRATCH_DIR --script_dir $SCRIPT_DIR --project $PROJECT \
             --targeted $TARGETED --run_dir $RUN_DIR --sample_sheet $SAMPLE_SHEET \
             --targeted $TARGETED\n" >> $PIPELINE_STATUS
         sbatch -J $PROJECT -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
-            ${SCRIPT_DIR}/3_summarize_metrics.sh \
+            ${SCRIPT_DIR}/3_merge_metrics.sh \
             --scratch_dir $SCRATCH_DIR --script_dir $SCRIPT_DIR --project $PROJECT \
             --targeted $TARGETED --run_dir $RUN_DIR --sample_sheet $SAMPLE_SHEET \
             --targeted $TARGETED
     else
         echo -e "\nsbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
-            ${SCRIPT_DIR}/3_summarize_metrics.sh \
+            ${SCRIPT_DIR}/3_merge_metrics.sh \
             --scratch_dir $SCRATCH_DIR --script_dir $SCRIPT_DIR --project $PROJECT --targeted $TARGETED\n" >> $PIPELINE_STATUS
         sbatch -J $PROJECT -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
-            ${SCRIPT_DIR}/3_summarize_metrics.sh \
+            ${SCRIPT_DIR}/3_merge_metrics.sh \
             --scratch_dir $SCRATCH_DIR --script_dir $SCRIPT_DIR --project $PROJECT --targeted $TARGETED
     fi
        
