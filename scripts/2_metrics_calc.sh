@@ -125,8 +125,8 @@ fi
 echo "### Coverage ### - START: $(date)"
 bedtools bamtobed -i ${SAMPLE}${BAM_SUFFIX} | cut -f 1-3 > ${SAMPLE}_n25chr.bed
 echo "Bam to bed conversion done"
-echo -e "chr\tstart\tend\tcovered_features\tcovered_bases\tbed_length\tbreadth_coverage_fraction" > ${SAMPLE}.wgs_coverage.tsv
-bedtools coverage -g $REF_GENOME -sorted -a $N25CHR_BED -b ${SAMPLE}_n25chr.bed >> ${SAMPLE}.wgs_coverage.tsv
+echo -e "chr\tstart\tend\tcovered_features\tcovered_bases\tbed_length\tbreadth_coverage_fraction" > ${SAMPLE}_wgs_coverage.tsv
+bedtools coverage -g $REF_GENOME -sorted -a $N25CHR_BED -b ${SAMPLE}_n25chr.bed >> ${SAMPLE}_wgs_coverage.tsv
 echo "Coverage done"
 rm ${SAMPLE}_n25chr.bed
 echo "### Coverage ### - END: $(date)"
@@ -261,4 +261,4 @@ echo "Mosdepth exome done"
 echo "### Mosdepth ### - END: $(date)"
 
 
-echo -e "END: $(date)\nRuntime: $(($(date +%s) $START_TIME)) seconds"
+echo -e "END: $(date)\nRuntime: $(($(date +%s)-$START_TIME)) seconds"
