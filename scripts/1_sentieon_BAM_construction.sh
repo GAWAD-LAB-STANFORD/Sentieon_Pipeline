@@ -185,7 +185,7 @@ sentieon driver -t $NUMBER_THREADS -i $SORTED_BAM \
     --algo LocusCollector --fun score_info ${SAMPLE}_score.gz
 sentieon driver -t $NUMBER_THREADS -i $SORTED_BAM \
     --algo Dedup --score_info ${SAMPLE}_score.gz \
-    --metrics ${SAMPLE}.duplication_metrics.tsv $DEDUPED_BAM
+    --metrics ${SAMPLE}_duplication_metrics.tsv $DEDUPED_BAM
 echo "### Mark duplicates ### - END: $(date)"
 
 
