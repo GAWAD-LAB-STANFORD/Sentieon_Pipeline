@@ -14,9 +14,6 @@ while [ "$1" != "" ]; do
         --scratch_dir )             shift
                                     SCRATCH_DIR=$1
                                     ;;
-        --reference_dir )           shift
-                                    REFERENCE_DIR=$1
-                                    ;;
         --ref_fasta )               shift
                                     REF_FASTA=$1
                                     ;;
@@ -30,8 +27,7 @@ while [ "$1" != "" ]; do
     shift
 done
 
-if [ -z $SCRATCH_DIR ] || [ -z $REFERENCE_DIR ] || [ -z $REF_FASTA ] || [ -z $PROJECT ] || \
-    [ -z $TARGETS_BED ]; then
+if [ -z $SCRATCH_DIR ] || [ -z $REF_FASTA ] || [ -z $PROJECT ] || [ -z $TARGETS_BED ]; then
     echo "Variables not supplied correctly. Check script for required intake parameters. Exiting with code 1"
     exit 1
 fi
@@ -39,31 +35,21 @@ fi
 echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND"
 cd $SCRATCH_DIR
 
-ml purge
-ml biology bwa samtools java
+ml biology bcftools bwa samtools java
 module load biology sentieon/202112.01
 export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/ #your Sentieon package location
 export SENTIEON_LICENSE=license4.stanford.edu:5443 #your license file location
 
-echo "### Variant calling ### - START: $(date)"
-#Trying out joint genotyping, --emit_mode gvcf may cause problems
+echo "### Joint genotyping ### - START: $(date)"
+sentieon driver --interval $TARGETS_BED -r $REF_FASTA --algo GVCFtyper ${PROJECT}.joint_germline_merged.vcf *.g.vcf
+bcftools index ${PROJECT}.joint_germline_merged.vcf
+bgzip -f ${PROJECT}.joint_germline_merged.vcf
+tabix ${PROJECT}.joint_germline_merged.vcf.gz
+echo "### Joint genotyping ### - END: $(date)"
 
-JOINT_VCF="${PROJECT}_joint_germline_merged.vcf"
-sentieon driver --interval $TARGETS_BED -r $REF_FASTA --algo GVCFtyper ${JOINT_VCF} *.g.vcf
 
-echo "### Variant calling ### - END: $(date)"
-
-
-if [ ! -f $OUT_TN_VCF ]; then
-    echo "No $VARIANT_VCF found. Exiting with code 1"
+if [ ! -f ${PROJECT}.joint_germline_merged.vcf ]; then
+    echo "No ${PROJECT}.joint_germline_merged.vcf found. Exiting with code 1"
     exit 1
 fi
-
-ml purge
-ml biology bcftools
-ml biology samtools
-
-bcftools index ${JOINT_VCF}
-bgzip -f ${JOINT_VCF}
-tabix "${JOINT_VCF}.gz"
 echo -e "END: $(date)\nRuntime: $(($(date +%s)-$START_TIME)) seconds"

@@ -14,9 +14,6 @@ while [ "$1" != "" ]; do
         --scratch_dir )             shift
                                     SCRATCH_DIR=$1
                                     ;;
-        --reference_dir )           shift
-                                    REFERENCE_DIR=$1
-                                    ;;
         --ref_fasta )               shift
                                     REF_FASTA=$1
                                     ;;
@@ -42,8 +39,7 @@ while [ "$1" != "" ]; do
     shift
 done
 
-if [ -z $SCRATCH_DIR ] || [ -z $REFERENCE_DIR ] || [ -z $REF_FASTA ] || [ -z $SAMPLE_ARRAY ] || \
-    [ -z $TARGETS_BED ]; then
+if [ -z $SCRATCH_DIR ] || [ -z $REF_FASTA ] || [ -z $SAMPLE_ARRAY ] || [ -z $TARGETS_BED ]; then
     echo "Variables not supplied correctly. Check script for required intake parameters. Exiting with code 1"
     exit 1
 fi
@@ -52,18 +48,18 @@ SAMPLE=${SAMPLE_ARRAY[$(( $SLURM_ARRAY_TASK_ID - 1 ))]}
 echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND\nSample: $SAMPLE"
 cd $SCRATCH_DIR
 
-REALIGNED_BAM="${SAMPLE}"
-SAMPLE_NAME="${REALIGNED_BAM%.realigned_deduped_sorted.bam}"
-VARIANT_VCF="${SAMPLE_NAME}_germline_call.g.vcf"
+VARIANT_VCF="${SAMPLE}_germline_call.g.vcf"
 
-ml purge
 ml biology bwa/0.7.17 samtools/1.8 java/1.8.0_131
 module load biology sentieon/202112.01
 export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/ #your Sentieon package location
 export SENTIEON_LICENSE=license4.stanford.edu:5443 #your license file location
 
-echo "### Variant calling ### - START: $(date)"
-sentieon driver -r $REF_FASTA -i $REALIGNED_BAM --interval $TARGETS_BED \
-    -q ${SAMPLE_NAME}_recal_data.table --algo Haplotyper --emit_mode gvcf $VARIANT_VCF
-echo "### Variant calling ### - END: $(date)"
+
+echo "### Germline variant calling ### - START: $(date)"
+sentieon driver -r $REF_FASTA -i ${SAMPLE}${BAM_SUFFIX} --interval $TARGETS_BED \
+    -q ${SAMPLE}_recal_data.table --algo Haplotyper --emit_mode gvcf $VARIANT_VCF
+echo "### Germline variant calling ### - END: $(date)"
+
+
 echo -e "END: $(date)\nRuntime: $(($(date +%s)-$START_TIME)) seconds"
