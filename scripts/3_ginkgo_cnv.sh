@@ -38,12 +38,15 @@ while [ "$1" != "" ]; do
         --mb_size )             shift
                                 MB_SIZE=$1
                                 ;;
+        --project )             shift
+                                PROJECT=$1
+                                ;;
     esac
     shift
 done
 
-if [ -z $BAM_DIR ]; then
-    echo "Variables not supplied correctly. Check script for intake parameters. All are required to be specified. Exiting with code 1"
+if [ -z $BAM_DIR ] || [ -z $PROJECT ]; then
+    echo "Variables not supplied correctly. Check script for required intake parameters. Exiting with code 1"
     exit 1
 fi
 
@@ -118,11 +121,8 @@ for SAMPLE in ${SAMPLE_ARRAY[@]}; do
    rm ${FULL_WORK_DIR}/${SAMPLE}.bed.gz
 done
 
-cd $SCRATCH_DIR
-if [ -f "01_Combined_Ginkgo_CNV.pdf" ] ; then
-    rm 01_Combined_Ginkgo_CNV.pdf
-fi
+mv ${FULL_WORK_DIR}/* ${SCRATCH_DIR}/
 ml system poppler/0.47.0
-pdfunite $SCRATCH_DIR/*CN.pdf $SCRATCH_DIR/01_Combined_Ginkgo_CNV.pdf
+pdfunite ${SCRATCH_DIR}/*CN.pdf ${SCRATCH_DIR}/${PROJECT}_combined_ginkgo_cnv.pdf
 
 echo -e "END: $(date)\nRuntime: $(($(date +%s)-$START_TIME)) seconds"
