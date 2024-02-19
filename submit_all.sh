@@ -446,7 +446,7 @@ elif [ $STEP -eq 2 ]; then
             echo "$BAM_FILE_COUNT BAM files out of a possible ${#SAMPLE_ARRAY[@]} maximum" >> $PIPELINE_STATUS
         fi
         echo "### Step 1 - BAM construction ### - END: $(date)" >> $PIPELINE_STATUS
-        SAMPLE_ARRAY=( $(find ${SCRATCH_DIR} -maxdepth 1 -name "*${BAM_SUFFIX}" -exec basename {} \;) )
+        SAMPLE_ARRAY=( $(find ${SCRATCH_DIR} -maxdepth 1 -name "*${BAM_SUFFIX}" -exec basename {} \; | sed "s/$BAM_SUFFIX//") )
         echo "### Step 2 - QC metrics ### - START: $(date)" >> $PIPELINE_STATUS
         JOB_COUNT=${#SAMPLE_ARRAY[@]}
         TEMP_ARRAY_START=1
@@ -486,12 +486,12 @@ elif [ $STEP -eq 2 ]; then
 elif [ $STEP -eq 3 ] && [ $SCAN2 -eq 1 ] && [ $TEMP_ARRAY_START -eq 0 ]; then
     echo "### Step 2 - QC metrics ### - END: $(date)" >> $PIPELINE_STATUS
     echo "### Asynchronous Scan2 ### - $(date)" >> $PIPELINE_STATUS
-    SAMPLE_ARRAY=( $(find ${SCRATCH_DIR} -maxdepth 1 -name "*.realigned_deduped_sorted.bam" -exec basename {} \;) )
+    SAMPLE_ARRAY=( $(find ${SCRATCH_DIR} -maxdepth 1 -name "*${BAM_SUFFIX}" -exec basename {} \; | sed "s/$BAM_SUFFIX//") )
     JOB_COUNT=${#SAMPLE_ARRAY[@]}
     echo "Jobs to run: $JOB_COUNT" >> $PIPELINE_STATUS
     SAMPLES_STRING=$( IFS=$':'; echo "${SAMPLE_ARRAY[*]}" )
     VCF_PATH="${SCRATCH_DIR}${PROJECT}_svc_merged.vcf"
-    NORMAL_PATH="${SCRATCH_DIR}/${NORMAL_SAMPLE_NAME}.realigned_deduped_sorted.bam"
+    NORMAL_PATH="${SCRATCH_DIR}/${NORMAL_SAMPLE_NAME}${BAM_SUFFIX}"
     #For SCAN2 should only include autosomal chromosomes for WGS
     if [ $TARGETED -eq 0 ]; then
         INTERVAL_LIST="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38_n22chr.bed"
@@ -691,7 +691,7 @@ elif [ $STEP -eq 5 ]; then
     echo "Normal sample name is: ${NORMAL_SAMPLE_NAME}" >> $PIPELINE_STATUS
     echo "Variant vcf is: $(find -name "*_variant.vcf")" >> $PIPELINE_STATUS
     VCF_PATH="${SCRATCH_DIR}${PROJECT}_svc_merged.vcf"
-    NORMAL_PATH="${SCRATCH_DIR}/${NORMAL_SAMPLE_NAME}.realigned_deduped_sorted.bam"
+    NORMAL_PATH="${SCRATCH_DIR}/${NORMAL_SAMPLE_NAME}${BAM_SUFFIX}"
     if [ ! -z $NORMAL_SAMPLE_NAME ] && [ ! -z "$(find -name "*_variant.vcf")" ]; then
         echo "VCF concatenation" >> $PIPELINE_STATUS
         echo -e "\nsbatch -e ${STD_ERR_OUT_DIR}/%A_%a_%x.err -o ${STD_ERR_OUT_DIR}/%A_%a_%x.out \
