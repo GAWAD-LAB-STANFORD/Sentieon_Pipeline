@@ -45,7 +45,7 @@ done
 
 if [ -z $PROJECT ] || [ -z $SCRATCH_DIR ] || [ -z $PIPELINE_DIR ] || [ -z $STD_ERR_OUT_DIR ] || \
     [ -z $EXOME ]; then
-    echo "Variables not supplied correctly. Check script for intake parameters. All are required to be specified. Exiting with code 1"
+    echo "Variables not supplied correctly. Check script for required intake parameters. Exiting with code 1"
     exit 1
 fi
 

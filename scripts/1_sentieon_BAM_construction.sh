@@ -54,7 +54,7 @@ done
 if [ -z $SCRATCH_DIR ] || [ -z $SKIP_TRIMMOMATIC ] || [ -z $TOOLS_DIR ] || [ -z $R1_SUFFIX ] || \
     [ -z $R2_SUFFIX ] || [ -z $REF_FASTA ] || [ -z $REF_NAME ] || [ -z $SAMPLE_ARRAY ] || \
     [ -z $FASTQ_DIR ] || [ -z $TARGETS_BED ] || [ -z $RNA ] || [ -z $BAM_SUFFIX ]; then
-    echo "Variables not supplied correctly. Check script for intake parameters. All are required to be specified. Exiting with code 1"
+    echo "Variables not supplied correctly. Check script for required intake parameters. Exiting with code 1"
     exit 1
 fi
 
@@ -95,11 +95,12 @@ export SENTIEON_LICENSE=license4.stanford.edu:5443 #your license file location
 R1_FASTQ=${FASTQ_DIR}/${SAMPLE}${R1_SUFFIX}
 R2_FASTQ=${FASTQ_DIR}/${SAMPLE}${R2_SUFFIX}
 
+
 echo "### Counting fastq read counts Sample: $SAMPLE ### - START: $(date)"
 READ_COUNT=$(echo $(zcat $R1_FASTQ | wc -l ) \
     $(zcat $R2_FASTQ | wc -l) | awk '{ print ($1 + $2) / 4 }' )
-echo -e "sample\tread_count" > $SCRATCH_DIR/${SAMPLE}.read_counts.tsv
-echo -e "$SAMPLE\t$READ_COUNT" >> $SCRATCH_DIR/${SAMPLE}.read_counts.tsv
+echo -e "sample\tread_count" > $SCRATCH_DIR/${SAMPLE}_read_counts.tsv
+echo -e "$SAMPLE\t$READ_COUNT" >> $SCRATCH_DIR/${SAMPLE}_read_counts.tsv
 echo "### Counting fastq read counts Sample: $SAMPLE ### - END: $(date)"
 
 
@@ -203,7 +204,7 @@ sentieon driver -t $NUMBER_THREADS -r $REF_FASTA -i $REALIGNED_BAM \
     ${SAMPLE}_recal_data.table.after --algo ReadWriter $RECALIBRATED_BAM
 sentieon driver -t $NUMBER_THREADS --algo QualCal --plot \
     --before ${SAMPLE}_recal_data.table --after ${SAMPLE}_recal_data.table.after ${SAMPLE}_recal_result.csv
-sentieon plot QualCal -o ${SAMPLE}_BQSR_PDF ${SAMPLE}_recal_result.csv
+sentieon plot QualCal -o ${SAMPLE}_bqsr.pdf ${SAMPLE}_recal_result.csv
 echo "### Base quality score recalibration ### - END: $(date)"
 
 
@@ -216,4 +217,8 @@ if [ $SKIP_TRIMMOMATIC -eq 0 ] && [ -f $SORTED_BAM ]; then
     rm $R1_FASTQ $R2_FASTQ
     rm $UNPAIRED_R1_FASTQ $UNPAIRED_R2_FASTQ
 fi
+rm $BAM $REALIGNED_BAM
+mv ${SAMPLE}_score.gz* Extra_Sentieon_Files/
+mv ${SAMPLE}_recal_* Extra_Sentieon_Files/
+mv ${SAMPLE}_bqsr.pdf Extra_Sentieon_Files/
 echo -e "END: $(date)\nRuntime: $(($(date +%s)-$START_TIME)) seconds"

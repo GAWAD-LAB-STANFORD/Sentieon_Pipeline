@@ -159,7 +159,7 @@ if [ -z $PROJECT ] || [ -z $SCRATCH_DIR ] || [ -z $GENOME_VERSION ] || [ -z $SCR
     [ -z $NORMAL_BAM_PATH ] || [ -z $SAMPLE_STRING ] || [ -z $NORMAL_SAMPLE_NAME ] || [ -z $CROSS_SAMPLE_DIR ] || \
     [ -z $STD_ERR_OUT_DIR ] || [ -z $PIPELINE_DIR ] || [ -z $TARGETED ] || [ -z $TARGETS_BED ] || \
     [ -z $INTERVAL_LIST ] || [ -z $ANNOVAR_DIR ]; then
-    echo "Variables not supplied correctly. Check script for intake parameters. All are required to be specified. Exiting with code 1"
+    echo "Variables not supplied correctly. Check script for required intake parameters. Exiting with code 1"
     exit 1
 fi
 
