@@ -45,7 +45,7 @@ while [ "$1" != "" ]; do
 done
 
 if [ -z $SCRATCH_DIR ] || [ -z $REFERENCE_DIR ] || [ -z $REF_FASTA ] || [ -z $NORMAL_SAMPLE_NAME ] || \
-    [ -z $SAMPLE_ARRAY ] || [ -z $dbSNP ] || [ -z $TARGETS_BED ] || [ -z $RNA ] || [ $BAM_SUFFIX ]; then
+    [ -z $SAMPLE_ARRAY ] || [ -z $dbSNP ] || [ -z $TARGETS_BED ] || [ -z $RNA ] || [ -z $BAM_SUFFIX ]; then
     echo "Variables not supplied correctly. Check script for required intake parameters. Exiting with code 1"
     exit 1
 fi
