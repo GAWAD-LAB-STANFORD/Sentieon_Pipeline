@@ -299,7 +299,7 @@ if [ -z $NORMAL_SAMPLE_NAME ]; then
     echo "Normal sample name not found, necessary for germline variant calling. Please specify using --normal_sample_name. Exiting with code 1"
     exit 1
 fi
-if [ ! -z $GINKGO_MB_ARRAY -eq 1 ]; then
+if [ ${#GINKGO_MB_ARRAY[@]} -ne 0 ]; then
     GINKGO_MB_STRING=$( IFS=$':'; echo "${GINKGO_MB_ARRAY[*]}" )
     OPTIONS+=( "--ginkgo_mb_sizes $GINKGO_MB_STRING" ) 
 fi
