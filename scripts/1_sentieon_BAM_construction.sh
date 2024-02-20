@@ -216,7 +216,7 @@ if [ $SKIP_TRIMMOMATIC -eq 0 ] && [ -f $SORTED_BAM ]; then
     rm $R1_FASTQ $R2_FASTQ
     rm $UNPAIRED_R1_FASTQ $UNPAIRED_R2_FASTQ
 fi
-rm $BAM $REALIGNED_BAM
+rm $BAM ${BAM}.bai $REALIGNED_BAM ${REALIGNED_BAM}.bai
 mv ${SAMPLE}_score.gz* Extra_Sentieon_Files/
 mv ${SAMPLE}_bqsr.pdf Extra_Sentieon_Files/
 echo -e "END: $(date)\nRuntime: $(($(date +%s)-$START_TIME)) seconds"
