@@ -55,9 +55,9 @@ echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND\nSam
 cd $SCRATCH_DIR
 
 ml biology bwa/0.7.17 samtools/1.8 java/1.8.0_131 bcftools/1.16
-module load biology sentieon/202112.01
-export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/ #your Sentieon package location
-export SENTIEON_LICENSE=license4.stanford.edu:5443 #your license file location
+ml biology sentieon/202112.01
+export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/
+export SENTIEON_LICENSE=license4.stanford.edu:5443
 
 if [ $RNA -eq 1 ]; then
     REALIGNED_BAM="${SAMPLE}.rna.realigned_deduped_sorted.bam"

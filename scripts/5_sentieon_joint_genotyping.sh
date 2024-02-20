@@ -37,8 +37,8 @@ cd $SCRATCH_DIR
 
 ml biology bcftools bwa samtools java
 module load biology sentieon/202112.01
-export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/ #your Sentieon package location
-export SENTIEON_LICENSE=license4.stanford.edu:5443 #your license file location
+export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/
+export SENTIEON_LICENSE=license4.stanford.edu:5443
 
 echo "### Joint genotyping ### - START: $(date)"
 sentieon driver --interval $TARGETS_BED -r $REF_FASTA --algo GVCFtyper ${PROJECT}.joint_germline_merged.vcf *.g.vcf
