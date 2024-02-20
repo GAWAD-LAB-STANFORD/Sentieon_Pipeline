@@ -92,12 +92,12 @@ echo "Alignment metrics merged"
 
 WGS_METRICS_FILENAMES=( $(ls *_wgs_metrics.tsv) )
 echo -e sample"\t"$(sed -n 7p ${WGS_METRICS_FILENAMES[0]}) | sed 's/ /\t/g' > ${PROJECT}.wgs_metrics_merged.tsv
-for i in ${WGS_METRICS_FILENAMES[@]}; do echo -e $(echo $i | sed "s/_wgs_metrics.tsv//")"\t"$(sed -n 8p); done | sed 's/ /\t/g' >> ${PROJECT}.wgs_metrics_merged.tsv
+for i in ${WGS_METRICS_FILENAMES[@]}; do echo -e $(echo $i | sed "s/_wgs_metrics.tsv//")"\t"$(sed -n 8p $i); done | sed 's/ /\t/g' >> ${PROJECT}.wgs_metrics_merged.tsv
 echo "WGS metrics merged"
 
 HS_METRICS_FILENAMES=( $(ls *_hs_metrics.tsv) )
 echo -e sample"\t"$(sed -n 7p ${HS_METRICS_FILENAMES[0]}) | sed 's/ /\t/g' > ${PROJECT}.hs_metrics_merged.tsv
-for i in ${HS_METRICS_FILENAMES[@]}; do echo -e $(echo $i | sed "s/_hs_metrics.tsv//")"\t"$(sed -n 8p); done | sed 's/ /\t/g' >> ${PROJECT}.hs_metrics_merged.tsv
+for i in ${HS_METRICS_FILENAMES[@]}; do echo -e $(echo $i | sed "s/_hs_metrics.tsv//")"\t"$(sed -n 8p $i); done | sed 's/ /\t/g' >> ${PROJECT}.hs_metrics_merged.tsv
 echo "HS metrics merged"
 
 OXOG_METRICS_FILENAMES=( $(ls *_oxog_metrics.tsv) )
@@ -106,8 +106,8 @@ for i in ${OXOG_METRICS_FILENAMES[@]}; do tail -n +8 $i | awk NF >> ${PROJECT}.o
 echo "Oxog metrics merged"
 
 DUPLICATION_METRICS_FILENAMES=( $(ls *_duplication_metrics.tsv) )
-sed -n 2p ${DUPLICATION_METRICS_FILENAMES[0]} > ${PROJECT}.duplication_metrics_merged.tsv
-for i in ${DUPLICATION_METRICS_FILENAMES[@]}; do sed -n 3p $i >> ${PROJECT}.duplication_metrics_merged.tsv; done
+echo -e sample"\t"$(sed -n 2p ${DUPLICATION_METRICS_FILENAMES[0]}) | sed 's/ /\t/g' > ${PROJECT}.duplication_metrics_merged.tsv
+for i in ${DUPLICATION_METRICS_FILENAMES[@]}; do echo -e $(echo $i | sed "s/_duplication_metrics.tsv//")"\t"$(sed -n 3p $i); done | sed 's/ /\t/g' >> ${PROJECT}.duplication_metrics_merged.tsv
 echo "Duplication metrics merged"
 
 COVERAGE_FILENAMES=$(ls *_wgs_coverage.tsv)
