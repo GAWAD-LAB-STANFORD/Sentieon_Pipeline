@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#SBATCH --job-name=3_summarize_metrics
+#SBATCH --job-name=3_merge_metrics
 #SBATCH --cpus-per-task=2
 #SBATCH --nodes=1
 #SBATCH --time=1-23:00:00
@@ -50,9 +50,10 @@ ml java/11.0.11 R/4.2.0 biology samtools/1.8
 export R_LIBS="/home/groups/cgawad/R_LIBS"
 
 echo "### Merging metrics ### - START: $(date)"
+SAMPLE_READ_COUNTS=${PROJECT}.sample_read_counts_merged.tsv
 READ_COUNT_FILENAMES=( $(ls *_read_counts.tsv) )
-sed -n 1p ${READ_COUNT_FILENAMES[0]} > ${PROJECT}.sample_read_counts_merged.tsv
-for i in ${READ_COUNT_FILENAMES[@]}; do tail -n +2 $i; done >> ${PROJECT}.sample_read_counts_merged.tsv
+sed -n 1p ${READ_COUNT_FILENAMES[0]} > $SAMPLE_READ_COUNTS
+for i in ${READ_COUNT_FILENAMES[@]}; do tail -n +2 $i; done >> $SAMPLE_READ_COUNTS
 echo "Read counts merged"
 
 if [ ! -z $RUN_DIR ]; then
