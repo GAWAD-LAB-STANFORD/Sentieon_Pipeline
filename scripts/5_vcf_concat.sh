@@ -48,16 +48,16 @@ for VCF in ${VCF_ARRAY[@]}; do
     VCF_COUNT=$((VCF_COUNT+1))
 done
 echo "VCF filtering done"
-bcftools merge --force-samples -o ${PROJECT}_svc_merged.vcf *_variant_filtered.vcf.gz
+bcftools merge --force-samples -o ${PROJECT}somatic_merged.vcf *_variant_filtered.vcf.gz
 # Attempt to filter out still remaining problematic <INS> record that was still in vcf, possible this won't remove all of the junk, causing the run to still fail
-bgzip -f ${PROJECT}.svc_merged.vcf
-tabix ${PROJECT}.svc_merged.vcf.gz
+bgzip -f ${PROJECT}.somatic_merged.vcf
+tabix ${PROJECT}.somatic_merged.vcf.gz
 echo "VCFs merged"
 echo "### Merging VCFs ### - END: $(date)"
 
 
-if [ ! -f ${PROJECT}.svc_merged.vcf.gz ]; then
-    echo "Final file ${PROJECT}.svc_merged.vcf.gz not found. Exiting with code 1"
+if [ ! -f ${PROJECT}.somatic_merged.vcf.gz ]; then
+    echo "Final file ${PROJECT}.somatic_merged.vcf.gz not found. Exiting with code 1"
     exit 1
 fi
 echo -e "END: $(date)\nRuntime: $(($(date +%s)-$START_TIME)) seconds"
