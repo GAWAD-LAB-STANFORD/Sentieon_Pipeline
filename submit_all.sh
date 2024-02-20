@@ -340,7 +340,7 @@ if ([ $STEP -eq 0 ] && [ -z $RUN_DIR ] && [ $ONLY_VARIANT_CALL -eq 0 ]) || [ $ST
         fi
     fi
     # TODO Does this remove unassigned and undetermined?
-    SAMPLE_ARRAY=( $(find ${FASTQ_DIR} -maxdepth 1 -name "*${R1_SUFFIX}" -exec basename {} \; | \
+    SAMPLE_ARRAY=( $(find $FASTQ_DIR -maxdepth 1 -name "*${R1_SUFFIX}" -exec basename {} \; | \
         grep -v "Unassigned" | grep -v "Undetermined" | sed "s/${R1_SUFFIX}//") )
     if [ ${#SAMPLE_ARRAY[@]} -eq 0 ]; then
         echo "No fastq.gz files found in the fastq directory. Exiting with code 1" >> $PIPELINE_STATUS
@@ -446,7 +446,7 @@ elif [ $STEP -eq 2 ]; then
             echo "$BAM_FILE_COUNT BAM files out of a possible ${#SAMPLE_ARRAY[@]} maximum" >> $PIPELINE_STATUS
         fi
         echo "### Step 1 - BAM construction ### - END: $(date)" >> $PIPELINE_STATUS
-        SAMPLE_ARRAY=( $(find ${SCRATCH_DIR} -maxdepth 1 -name "*${BAM_SUFFIX}" -exec basename {} \; | sed "s/$BAM_SUFFIX//") )
+        SAMPLE_ARRAY=( $(find $SCRATCH_DIR -maxdepth 1 -name "*${BAM_SUFFIX}" -exec basename {} \; | sed "s/$BAM_SUFFIX//") )
         echo "### Step 2 - QC metrics ### - START: $(date)" >> $PIPELINE_STATUS
         JOB_COUNT=${#SAMPLE_ARRAY[@]}
         TEMP_ARRAY_START=1
@@ -488,7 +488,7 @@ elif [ $STEP -eq 2 ]; then
 elif [ $STEP -eq 3 ] && [ $SCAN2 -eq 1 ] && [ $TEMP_ARRAY_START -eq 0 ]; then
     echo "### Step 2 - QC metrics ### - END: $(date)" >> $PIPELINE_STATUS
     echo "### Asynchronous Scan2 ### - $(date)" >> $PIPELINE_STATUS
-    SAMPLE_ARRAY=( $(find ${SCRATCH_DIR} -maxdepth 1 -name "*${BAM_SUFFIX}" -exec basename {} \; | sed "s/$BAM_SUFFIX//") )
+    SAMPLE_ARRAY=( $(find $SCRATCH_DIR -maxdepth 1 -name "*${BAM_SUFFIX}" -exec basename {} \; | sed "s/$BAM_SUFFIX//") )
     JOB_COUNT=${#SAMPLE_ARRAY[@]}
     echo "Jobs to run: $JOB_COUNT" >> $PIPELINE_STATUS
     SAMPLES_STRING=$( IFS=$':'; echo "${SAMPLE_ARRAY[*]}" )
@@ -552,7 +552,7 @@ elif [ $STEP -eq 3 ] && [ $TEMP_ARRAY_START -eq 0 ]; then
             --scratch_dir $SCRATCH_DIR --script_dir $SCRIPT_DIR --project $PROJECT \
             --targeted $TARGETED --run_dir $RUN_DIR --sample_sheet $SAMPLE_SHEET \
             --targeted $TARGETED\n" >> $PIPELINE_STATUS
-        sbatch -J $PROJECT -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
+        sbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
             ${SCRIPT_DIR}/3_merge_metrics.sh \
             --scratch_dir $SCRATCH_DIR --script_dir $SCRIPT_DIR --project $PROJECT \
             --targeted $TARGETED --run_dir $RUN_DIR --sample_sheet $SAMPLE_SHEET \
@@ -561,7 +561,7 @@ elif [ $STEP -eq 3 ] && [ $TEMP_ARRAY_START -eq 0 ]; then
         echo -e "\nsbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
             ${SCRIPT_DIR}/3_merge_metrics.sh \
             --scratch_dir $SCRATCH_DIR --script_dir $SCRIPT_DIR --project $PROJECT --targeted $TARGETED\n" >> $PIPELINE_STATUS
-        sbatch -J $PROJECT -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
+        sbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
             ${SCRIPT_DIR}/3_merge_metrics.sh \
             --scratch_dir $SCRATCH_DIR --script_dir $SCRIPT_DIR --project $PROJECT --targeted $TARGETED
     fi
@@ -580,7 +580,7 @@ fi
 
 
 if ([ $STEP -eq 0 ] && [ $ONLY_VARIANT_CALL -eq 1 ]) || [ $STEP -ge 3 ]; then
-    SAMPLE_ARRAY=( $(ls *${BAM_SUFFIX} | sed "s/${BAM_SUFFIX}//") )
+    SAMPLE_ARRAY=( $(find $SCRATCH_DIR -maxdepth 1 -name "*${BAM_SUFFIX}" -exec basename {} \; | sed "s/$BAM_SUFFIX//") )
     if [ ${#SAMPLE_ARRAY[@]} -eq 0 ]; then
         echo "No files ending with bam suffix $BAM_SUFFIX found in the results directory. Exiting with code 1" >> $PIPELINE_STATUS
         echo "END: $(date)" >> $PIPELINE_STATUS
@@ -614,21 +614,14 @@ if [ $STEP -eq 3 ]; then
     TEMP_ARRAY_START=$(($TEMP_ARRAY_START + $TEMP_ARRAY_INCREMENT))
     echo -e "$(date)\nIncrement: $TEMP_ARRAY_INCREMENT\nNew start: $TEMP_ARRAY_START" >> $PIPELINE_STATUS
 
-    if [ $TEMP_ARRAY_START -le ${#SAMPLE_ARRAY[@]} ] && [ ! -z $NORMAL_SAMPLE_NAME ]; then
+    if [ $TEMP_ARRAY_START -le ${#SAMPLE_ARRAY[@]} ]; then
         echo -e "\nsbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
             -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
             ${PIPELINE_DIR}/submit_all.sh --step 3 --temp_array_start $TEMP_ARRAY_START ${OPTIONS[@]}\n" >> $PIPELINE_STATUS
         DEPENDER=$(sbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
             -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
             ${PIPELINE_DIR}/submit_all.sh --step 3 --temp_array_start $TEMP_ARRAY_START ${OPTIONS[@]})
-    elif [ ! -z $NORMAL_SAMPLE_NAME ]; then
-        echo -e "\nsbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
-            -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
-            ${PIPELINE_DIR}/submit_all.sh --step 4 ${OPTIONS[@]}\n" >> $PIPELINE_STATUS
-        DEPENDER=$(sbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
-            -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
-            ${PIPELINE_DIR}/submit_all.sh --step 4 ${OPTIONS[@]})
-    else
+    elif [ -z $NORMAL_SAMPLE_NAME ]; then
         echo "Skipping Step 4 Somatic variant calling, going directly to Step 5 Joint genotyping" >> $PIPELINE_STATUS
         echo -e "\nsbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
             -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
@@ -636,6 +629,13 @@ if [ $STEP -eq 3 ]; then
         DEPENDER=$(sbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
             -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
             ${PIPELINE_DIR}/submit_all.sh --step 5 ${OPTIONS[@]})
+    else
+        echo -e "\nsbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
+            -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
+            ${PIPELINE_DIR}/submit_all.sh --step 4 ${OPTIONS[@]}\n" >> $PIPELINE_STATUS
+        DEPENDER=$(sbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
+            -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
+            ${PIPELINE_DIR}/submit_all.sh --step 4 ${OPTIONS[@]})
     fi
     echo -e "Dependency job array number: $DEPENDENCY\nDepender job number: $DEPENDER" >> $PIPELINE_STATUS
 elif [ $STEP -eq 4 ]; then
