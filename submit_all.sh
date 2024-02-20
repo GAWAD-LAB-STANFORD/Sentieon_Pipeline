@@ -459,11 +459,13 @@ elif [ $STEP -eq 2 ]; then
     echo -e "\nsbatch --parsable -e $STD_ERR_OUT_DIR/%A_%a_%x.err -o $STD_ERR_OUT_DIR/%A_%a_%x.out \
         --array=1-${TEMP_JOB_COUNT} -p cgawad ${SCRIPT_DIR}/2_metrics_calc.sh \
         --scratch_dir $SCRATCH_DIR --script_dir $SCRIPT_DIR --tools_dir $TOOLS_DIR --ref_fasta $REF_FASTA \
-        --sample_string $TEMP_SAMPLES_STRING --targeted $TARGETED --targets_bed $TARGETS_BED --interval_list $INTERVAL_LIST" >> $PIPELINE_STATUS
+        --sample_string $TEMP_SAMPLES_STRING --targeted $TARGETED --targets_bed $TARGETS_BED \
+        --interval_list $INTERVAL_LIST --bam_suffix $BAM_SUFFIX" >> $PIPELINE_STATUS
     DEPENDENCY=$(sbatch --parsable -e $STD_ERR_OUT_DIR/%A_%a_%x.err -o $STD_ERR_OUT_DIR/%A_%a_%x.out \
         --array=1-${TEMP_JOB_COUNT} -p cgawad ${SCRIPT_DIR}/2_metrics_calc.sh \
         --scratch_dir $SCRATCH_DIR --script_dir $SCRIPT_DIR --tools_dir $TOOLS_DIR --ref_fasta $REF_FASTA \
-        --sample_string $TEMP_SAMPLES_STRING --targeted $TARGETED --targets_bed $TARGETS_BED --interval_list $INTERVAL_LIST)
+        --sample_string $TEMP_SAMPLES_STRING --targeted $TARGETED --targets_bed $TARGETS_BED \
+        --interval_list $INTERVAL_LIST --bam_suffix $BAM_SUFFIX)
     TEMP_ARRAY_START=$(($TEMP_ARRAY_START + $TEMP_ARRAY_INCREMENT))
     echo -e "$(date)\nIncrement: $TEMP_ARRAY_INCREMENT\nNew start: $TEMP_ARRAY_START" >> $PIPELINE_STATUS
     
