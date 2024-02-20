@@ -8,7 +8,7 @@
 #SBATCH --mem=31G
 
 START_TIME=$(date +%s)
-GINKGO_DIR="/oak/stanford/groups/cgawad/Sequencing_Analysis_Tools/ginkgo/"
+GINKGO_DIR="/oak/stanford/groups/cgawad/Sequencing_Analysis_Tools/ginkgo"
 WORK_DIR=$(date '+%Y-%m-%d_%H-%M-%S')
 FULL_WORK_DIR="${GINKGO_DIR}/uploads/${WORK_DIR}"
 BAM_REGEX=".*.recalibrated_realigned_deduped_sorted.bam"
