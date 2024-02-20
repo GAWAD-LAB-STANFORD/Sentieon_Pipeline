@@ -41,15 +41,14 @@ export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/
 export SENTIEON_LICENSE=license4.stanford.edu:5443
 
 echo "### Joint genotyping ### - START: $(date)"
-sentieon driver --interval $TARGETS_BED -r $REF_FASTA --algo GVCFtyper ${PROJECT}.joint_germline_merged.vcf *.g.vcf
-bcftools index ${PROJECT}.joint_germline_merged.vcf
+sentieon driver --interval $TARGETS_BED -r $REF_FASTA --algo GVCFtyper ${PROJECT}.joint_germline_merged.vcf *_germline_call.g.vcf
 bgzip -f ${PROJECT}.joint_germline_merged.vcf
 tabix ${PROJECT}.joint_germline_merged.vcf.gz
 echo "### Joint genotyping ### - END: $(date)"
 
 
 if [ ! -f ${PROJECT}.joint_germline_merged.vcf ]; then
-    echo "No ${PROJECT}.joint_germline_merged.vcf found. Exiting with code 1"
+    echo "Final file ${PROJECT}.joint_germline_merged.vcf not found. Exiting with code 1"
     exit 1
 fi
 echo -e "END: $(date)\nRuntime: $(($(date +%s)-$START_TIME)) seconds"

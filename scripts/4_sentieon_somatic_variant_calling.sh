@@ -102,7 +102,7 @@ echo "### Somatic variant calling ### - END: $(date)"
 
 
 if [ ! -f ${SAMPLE}_variant.vcf ]; then
-    echo "No ${SAMPLE}_variant.vcf found. Exiting with code 1"
+    echo "Final file ${SAMPLE}_variant.vcf not found. Exiting with code 1"
     exit 1
 fi
 mv ${SAMPLE}_recal_* Extra_Sentieon_Files/

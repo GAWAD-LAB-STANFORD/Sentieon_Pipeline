@@ -36,21 +36,28 @@ export SENTIEON_LICENSE=license4.stanford.edu:5443
 
 
 echo "### Merging VCFs ### - START: $(date)"
-VCF_ARRAY=( $(find ${SCRATCH_DIR} -maxdepth 1 -name "*variant.vcf" ) )
-for vcf in ${VCF_ARRAY[@]}; do
-    FILTERED_VCF_FN=$(echo $vcf | sed "s/.vcf/_filtered.vcf/")
-    bcftools view -e "ALT[*] == '<INS>'" $vcf | bcftools view -e "REF == 'M'" | \
-        bcftools view -e "ALT[*] == 'M'" | sentieon util vcfconvert - $FILTERED_VCF_FN
-    bcftools index $FILTERED_VCF_FN
-    bgzip -f $FILTERED_VCF_FN
-    tabix ${FILTERED_VCF_FN}.gz
+VCF_ARRAY=( $(find ${SCRATCH_DIR} -maxdepth 1 -name "*_variant.vcf" | sed "s/_variant.vcf//") )
+VCF_NUMBER=${#VCF_ARRAY[@]}
+VCF_COUNT=1
+for VCF in ${VCF_ARRAY[@]}; do
+    echo "VCF filtering $VCF_COUNT of $VCF_NUMBER - ${VCF}.vcf"
+    bcftools view -e "ALT[*] == '<INS>'" $VCF | bcftools view -e "REF == 'M'" | \
+        bcftools view -e "ALT[*] == 'M'" | sentieon util vcfconvert - ${VCF}_variant_filtered.vcf
+    bgzip -f ${VCF}_variant_filtered.vcf
+    tabix ${VCF}_variant_filtered.vcf.gz
+    VCF_COUNT=$((VCF_COUNT+1))
 done
-bcftools merge --force-samples -o ${SCRATCH_DIR}/${PROJECT}_svc_merged.vcf *_filtered.vcf.gz
+echo "VCF filtering done"
+bcftools merge --force-samples -o ${PROJECT}_svc_merged.vcf *_variant_filtered.vcf.gz
 # Attempt to filter out still remaining problematic <INS> record that was still in vcf, possible this won't remove all of the junk, causing the run to still fail
-bcftools index ${PROJECT}.svc_merged.vcf
 bgzip -f ${PROJECT}.svc_merged.vcf
 tabix ${PROJECT}.svc_merged.vcf.gz
+echo "VCFs merged"
 echo "### Merging VCFs ### - END: $(date)"
 
 
+if [ ! -f ${PROJECT}.svc_merged.vcf.gz ]; then
+    echo "Final file ${PROJECT}.svc_merged.vcf.gz not found. Exiting with code 1"
+    exit 1
+fi
 echo -e "END: $(date)\nRuntime: $(($(date +%s)-$START_TIME)) seconds"
