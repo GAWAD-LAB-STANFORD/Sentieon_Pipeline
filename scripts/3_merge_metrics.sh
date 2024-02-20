@@ -110,7 +110,7 @@ echo "Oxog metrics merged"
 
 DUPLICATION_METRICS_FILENAMES=( $(ls *_duplication_metrics.tsv) )
 sed -n 2p ${DUPLICATION_METRICS_FILENAMES[0]} > ${PROJECT}.merged_duplication_metrics.tsv
-for i in ${DUPLICATION_METRICS_FILENAMES[@]}; do sed -n 3p >> ${PROJECT}.merged_duplication_metrics.tsv; done
+for i in ${DUPLICATION_METRICS_FILENAMES[@]}; do sed -n 3p $i >> ${PROJECT}.merged_duplication_metrics.tsv; done
 echo "Duplication metrics merged"
 
 COVERAGE_FILENAMES=$(ls *_wgs_coverage.tsv)
