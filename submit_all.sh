@@ -492,7 +492,6 @@ elif [ $STEP -eq 3 ] && [ $SCAN2 -eq 1 ] && [ $TEMP_ARRAY_START -eq 0 ]; then
     JOB_COUNT=${#SAMPLE_ARRAY[@]}
     echo "Jobs to run: $JOB_COUNT" >> $PIPELINE_STATUS
     SAMPLES_STRING=$( IFS=$':'; echo "${SAMPLE_ARRAY[*]}" )
-    VCF_PATH="${SCRATCH_DIR}${PROJECT}_svc_merged.vcf"
     NORMAL_PATH="${SCRATCH_DIR}/${NORMAL_SAMPLE_NAME}${BAM_SUFFIX}"
     #For SCAN2 should only include autosomal chromosomes for WGS
     if [ $TARGETED -eq 0 ]; then
@@ -505,14 +504,14 @@ elif [ $STEP -eq 3 ] && [ $SCAN2 -eq 1 ] && [ $TEMP_ARRAY_START -eq 0 ]; then
         ${SCRIPT_DIR}/3_scan2.sh \
         --project $PROJECT --scratch_dir $SCRATCH_DIR --genome_version $ANNOVAR_GENOME_VERSION \
         --script_dir $SCRIPT_DIR --normal_path $NORMAL_PATH --sample_string $SAMPLES_STRING \
-        --vcf_path $VCF_PATH --std_err_out $STD_ERR_OUT_DIR --normal_name $NORMAL_SAMPLE_NAME  --pipeline_dir $PIPELINE_DIR \
+        --std_err_out $STD_ERR_OUT_DIR --normal_name $NORMAL_SAMPLE_NAME  --pipeline_dir $PIPELINE_DIR \
         --targeted $TARGETED --targets_bed $TARGETS_BED --interval_list $INTERVAL_LIST \
         --annovar_dir $ANNOVAR_DIR --skip_panel $SKIP_PANEL --cross_dir $CROSS_SAMPLE_DIR\n" >> $PIPELINE_STATUS
     sbatch --time=7-00:00:00 -e $STD_ERR_OUT_DIR/%A_%x.err -o $STD_ERR_OUT_DIR/%A_%x.out \
         ${SCRIPT_DIR}/3_scan2.sh \
         --project $PROJECT --scratch_dir $SCRATCH_DIR --genome_version $ANNOVAR_GENOME_VERSION \
         --script_dir $SCRIPT_DIR --normal_path $NORMAL_PATH --sample_string $SAMPLES_STRING \
-        --vcf_path $VCF_PATH --std_err_out $STD_ERR_OUT_DIR --normal_name $NORMAL_SAMPLE_NAME  --pipeline_dir $PIPELINE_DIR \
+        --std_err_out $STD_ERR_OUT_DIR --normal_name $NORMAL_SAMPLE_NAME  --pipeline_dir $PIPELINE_DIR \
         --targeted $TARGETED --targets_bed $TARGETS_BED --interval_list $INTERVAL_LIST \
         --annovar_dir $ANNOVAR_DIR --skip_panel $SKIP_PANEL --cross_dir $CROSS_SAMPLE_DIR
     sbatch -J $PROJECT \
@@ -600,7 +599,36 @@ if [ $STEP -eq 3 ]; then
         TEMP_ARRAY_START=1
     fi
 
-    if [ -z $NORMAL_SAMPLE_NAME ]; then
+    TEMP_SAMPLE_ARRAY=( ${SAMPLE_ARRAY[@]:$(($TEMP_ARRAY_START - 1)):$TEMP_ARRAY_INCREMENT} )
+    TEMP_JOB_COUNT=${#TEMP_SAMPLE_ARRAY[@]}
+    echo "Submitting $TEMP_JOB_COUNT jobs for samples $TEMP_ARRAY_START to $(($TEMP_ARRAY_START + ${#TEMP_SAMPLE_ARRAY[@]} - 1))" >> $PIPELINE_STATUS
+    TEMP_SAMPLES_STRING=$( IFS=$':'; echo "${TEMP_SAMPLE_ARRAY[*]}" )
+    echo -e "\nsbatch --parsable -e $STD_ERR_OUT_DIR/%A_%a_%x.err -o $STD_ERR_OUT_DIR/%A_%a_%x.out \
+        --array=1-${TEMP_JOB_COUNT} ${SCRIPT_DIR}/3_sentieon_germline_variant_calling.sh  \
+        --scratch_dir $SCRATCH_DIR --ref_fasta $REF_FASTA \
+        --sample_string $TEMP_SAMPLES_STRING --targets_bed $TARGETS_BED\n" >> $PIPELINE_STATUS
+    DEPENDENCY=$(sbatch --parsable -e $STD_ERR_OUT_DIR/%A_%a_%x.err -o $STD_ERR_OUT_DIR/%A_%a_%x.out \
+        --array=1-${TEMP_JOB_COUNT} ${SCRIPT_DIR}/3_sentieon_germline_variant_calling.sh  \
+        --scratch_dir $SCRATCH_DIR --ref_fasta $REF_FASTA \
+        --sample_string $TEMP_SAMPLES_STRING --targets_bed $TARGETS_BED)
+    TEMP_ARRAY_START=$(($TEMP_ARRAY_START + $TEMP_ARRAY_INCREMENT))
+    echo -e "$(date)\nIncrement: $TEMP_ARRAY_INCREMENT\nNew start: $TEMP_ARRAY_START" >> $PIPELINE_STATUS
+
+    if [ $TEMP_ARRAY_START -le ${#SAMPLE_ARRAY[@]} ] && [ ! -z $NORMAL_SAMPLE_NAME ]; then
+        echo -e "\nsbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
+            -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
+            ${PIPELINE_DIR}/submit_all.sh --step 3 --temp_array_start $TEMP_ARRAY_START ${OPTIONS[@]}\n" >> $PIPELINE_STATUS
+        DEPENDER=$(sbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
+            -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
+            ${PIPELINE_DIR}/submit_all.sh --step 3 --temp_array_start $TEMP_ARRAY_START ${OPTIONS[@]})
+    elif [ ! -z $NORMAL_SAMPLE_NAME ]; then
+        echo -e "\nsbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
+            -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
+            ${PIPELINE_DIR}/submit_all.sh --step 4 ${OPTIONS[@]}\n" >> $PIPELINE_STATUS
+        DEPENDER=$(sbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
+            -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
+            ${PIPELINE_DIR}/submit_all.sh --step 4 ${OPTIONS[@]})
+    else
         echo "Skipping Step 4 Somatic variant calling, going directly to Step 5 Joint genotyping" >> $PIPELINE_STATUS
         echo -e "\nsbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
             -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
@@ -608,41 +636,25 @@ if [ $STEP -eq 3 ]; then
         DEPENDER=$(sbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
             -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
             ${PIPELINE_DIR}/submit_all.sh --step 5 ${OPTIONS[@]})
-    else
-        TEMP_SAMPLE_ARRAY=( ${SAMPLE_ARRAY[@]:$(($TEMP_ARRAY_START - 1)):$TEMP_ARRAY_INCREMENT} )
-        TEMP_JOB_COUNT=${#TEMP_SAMPLE_ARRAY[@]}
-        echo "Submitting $TEMP_JOB_COUNT jobs for samples $TEMP_ARRAY_START to $(($TEMP_ARRAY_START + ${#TEMP_SAMPLE_ARRAY[@]} - 1))" >> $PIPELINE_STATUS
-        TEMP_SAMPLES_STRING=$( IFS=$':'; echo "${TEMP_SAMPLE_ARRAY[*]}" )
-        echo -e "\nsbatch --parsable -e $STD_ERR_OUT_DIR/%A_%a_%x.err -o $STD_ERR_OUT_DIR/%A_%a_%x.out \
-            --array=1-${TEMP_JOB_COUNT} ${SCRIPT_DIR}/3_sentieon_germline_variant_calling.sh  \
-            --scratch_dir $SCRATCH_DIR --ref_fasta $REF_FASTA \
-            --sample_string $TEMP_SAMPLES_STRING --targets_bed $TARGETS_BED\n" >> $PIPELINE_STATUS
-        DEPENDENCY=$(sbatch --parsable -e $STD_ERR_OUT_DIR/%A_%a_%x.err -o $STD_ERR_OUT_DIR/%A_%a_%x.out \
-            --array=1-${TEMP_JOB_COUNT} ${SCRIPT_DIR}/3_sentieon_germline_variant_calling.sh  \
-            --scratch_dir $SCRATCH_DIR --ref_fasta $REF_FASTA \
-            --sample_string $TEMP_SAMPLES_STRING --targets_bed $TARGETS_BED)
-        TEMP_ARRAY_START=$(($TEMP_ARRAY_START + $TEMP_ARRAY_INCREMENT))
-        echo -e "$(date)\nIncrement: $TEMP_ARRAY_INCREMENT\nNew start: $TEMP_ARRAY_START" >> $PIPELINE_STATUS
-    
-        if [ $TEMP_ARRAY_START -le ${#SAMPLE_ARRAY[@]} ] && [ ! -z $NORMAL_SAMPLE_NAME ]; then
-            echo -e "\nsbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
-                -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
-                ${PIPELINE_DIR}/submit_all.sh --step 3 --temp_array_start $TEMP_ARRAY_START ${OPTIONS[@]}\n" >> $PIPELINE_STATUS
-            DEPENDER=$(sbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
-                -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
-                ${PIPELINE_DIR}/submit_all.sh --step 3 --temp_array_start $TEMP_ARRAY_START ${OPTIONS[@]})
-        elif [ ! -z $NORMAL_SAMPLE_NAME ]; then
-            echo -e "\nsbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
-                -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
-                ${PIPELINE_DIR}/submit_all.sh --step 4 ${OPTIONS[@]}\n" >> $PIPELINE_STATUS
-            DEPENDER=$(sbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
-                -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
-                ${PIPELINE_DIR}/submit_all.sh --step 4 ${OPTIONS[@]})  
-        fi
     fi
     echo -e "Dependency job array number: $DEPENDENCY\nDepender job number: $DEPENDER" >> $PIPELINE_STATUS
 elif [ $STEP -eq 4 ]; then
     if [ $TEMP_ARRAY_START -eq 0 ]; then
+        SAMPLE_COUNT=1
+        for SAMPLE in ${SAMPLE_ARRAY[@]}; do
+            if [ ! -f ${SAMPLE}_germline_call.g.vcf ]; then
+                echo -e "\tSample number $SAMPLE_COUNT - ${SAMPLE}_germline_call.g.vcf file not found" >> $PIPELINE_STATUS
+            fi
+            SAMPLE_COUNT=$((SAMPLE_COUNT+1))
+        done
+        VCF_FILE_COUNT=$(ls *_germline_call.g.vcf | wc -l)
+        if [ $VCF_FILE_COUNT -eq 0 ]; then
+            echo "No VCFs found. Exiting with code 1" >> $PIPELINE_STATUS
+            echo "END: $(date)" >> $PIPELINE_STATUS
+            exit 1
+        else
+            echo "$VCF_FILE_COUNT VCF files out of a possible ${#SAMPLE_ARRAY[@]} maximum" >> $PIPELINE_STATUS
+        fi
         echo "### Step 3 - Germline variant calling ### - END: $(date)" >> $PIPELINE_STATUS
         echo "### Step 4 - Somatic variant calling ### - START: $(date)" >> $PIPELINE_STATUS
         JOB_COUNT=${#SAMPLE_ARRAY[@]}
@@ -685,34 +697,58 @@ elif [ $STEP -eq 4 ]; then
     echo -e "Dependency job array number: $DEPENDENCY\nDepender job number: $DEPENDER" >> $PIPELINE_STATUS
 elif [ $STEP -eq 5 ]; then
     if [ ! -z $NORMAL_SAMPLE_NAME ]; then
+        SAMPLE_COUNT=1
+        for SAMPLE in ${SAMPLE_ARRAY[@]}; do
+            if [ ! -f ${SAMPLE}_variant.vcf ]; then
+                echo -e "\tSample number $SAMPLE_COUNT - ${SAMPLE}_variant.vcf file not found" >> $PIPELINE_STATUS
+            fi
+            SAMPLE_COUNT=$((SAMPLE_COUNT+1))
+        done
+        VCF_FILE_COUNT=$(ls *_variant.vcf | wc -l)
+        if [ $VCF_FILE_COUNT -eq 0 ]; then
+            echo "No VCFs found. Exiting with code 1" >> $PIPELINE_STATUS
+            echo "END: $(date)" >> $PIPELINE_STATUS
+            exit 1
+        else
+            echo "$VCF_FILE_COUNT VCF files out of a possible ${#SAMPLE_ARRAY[@]} maximum" >> $PIPELINE_STATUS
+        fi
         echo "### Step 4 - Somatic variant calling ### - END: $(date)" >> $PIPELINE_STATUS
+    else
+        SAMPLE_COUNT=1
+        for SAMPLE in ${SAMPLE_ARRAY[@]}; do
+            if [ ! -f ${SAMPLE}_germline_call.g.vcf ]; then
+                echo -e "\tSample number $SAMPLE_COUNT - ${SAMPLE}_germline_call.g.vcf file not found" >> $PIPELINE_STATUS
+            fi
+            SAMPLE_COUNT=$((SAMPLE_COUNT+1))
+        done
+        VCF_FILE_COUNT=$(ls *_germline_call.g.vcf | wc -l)
+        if [ $VCF_FILE_COUNT -eq 0 ]; then
+            echo "No VCFs found. Exiting with code 1" >> $PIPELINE_STATUS
+            echo "END: $(date)" >> $PIPELINE_STATUS
+            exit 1
+        else
+            echo "$VCF_FILE_COUNT VCF files out of a possible ${#SAMPLE_ARRAY[@]} maximum" >> $PIPELINE_STATUS
+        fi
+        echo "### Step 3 - Germline variant calling ### - END: $(date)" >> $PIPELINE_STATUS
     fi
-    echo "### Step 5 - Merge somatic variant files and perform joint genotyping ### - START: $(date)" >> $PIPELINE_STATUS
-    ######TODO########
-    # Do joint calling and merge somatic variant files if they exist
-    echo "Normal sample name is: ${NORMAL_SAMPLE_NAME}" >> $PIPELINE_STATUS
-    echo "Variant vcf is: $(find -name "*_variant.vcf")" >> $PIPELINE_STATUS
-    VCF_PATH="${SCRATCH_DIR}${PROJECT}_svc_merged.vcf"
-    NORMAL_PATH="${SCRATCH_DIR}/${NORMAL_SAMPLE_NAME}${BAM_SUFFIX}"
-    if [ ! -z $NORMAL_SAMPLE_NAME ] && [ ! -z "$(find -name "*_variant.vcf")" ]; then
-        echo "### VCF concatenation ### - $(date)" >> $PIPELINE_STATUS
+    echo "### Step 5 - Germline joint genotyping and merge somatic variant VCFs  ### - START: $(date)" >> $PIPELINE_STATUS
+    echo "### Germline joint genotyping ### - $(date)" >> $PIPELINE_STATUS
+    echo -e "\nsbatch --parsable -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
+        ${SCRIPT_DIR}/5_sentieon_joint_genotyping.sh \
+        --scratch_dir $SCRATCH_DIR --ref_fasta $REF_FASTA \
+        --project $PROJECT --targets_bed $TARGETS_BED\n" >> $PIPELINE_STATUS
+    DEPENDENCY=$(sbatch --parsable -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
+        ${SCRIPT_DIR}/5_sentieon_joint_genotyping.sh \
+        --scratch_dir $SCRATCH_DIR --ref_fasta $REF_FASTA \
+        --project $PROJECT --targets_bed $TARGETS_BED)
+    if [ ! -z $NORMAL_SAMPLE_NAME ]; then
+        echo "### Merge somatic variant VCFs ### - $(date)" >> $PIPELINE_STATUS
         echo -e "\nsbatch -e ${STD_ERR_OUT_DIR}/%A_%a_%x.err -o ${STD_ERR_OUT_DIR}/%A_%a_%x.out \
             --parsable ${SCRIPT_DIR}/5_vcf_concat.sh \
             --scratch_dir $SCRATCH_DIR --project $PROJECT\n" >> $PIPELINE_STATUS
-        DEPENDENCY=$(sbatch -e ${STD_ERR_OUT_DIR}/%A_%a_%x.err -o ${STD_ERR_OUT_DIR}/%A_%a_%x.out \
+        DEPENDENCY="$DEPENDENCY:$(sbatch -e ${STD_ERR_OUT_DIR}/%A_%a_%x.err -o ${STD_ERR_OUT_DIR}/%A_%a_%x.out \
             --parsable ${SCRIPT_DIR}/5_vcf_concat.sh \
-            --scratch_dir $SCRATCH_DIR --project $PROJECT)
-    fi
-    if [ ! -z "$(find -name "*.g.vcf")" ]; then
-        echo "### Joint genotyping ### - $(date)" >> $PIPELINE_STATUS
-        echo -e "\nsbatch --parsable -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
-            ${SCRIPT_DIR}/5_sentieon_joint_genotyping.sh \
-            --scratch_dir $SCRATCH_DIR --ref_fasta $REF_FASTA \
-            --project $PROJECT --targets_bed $TARGETS_BED\n" >> $PIPELINE_STATUS
-        DEPENDENCY="$DEPENDENCY:$(sbatch --parsable -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
-            ${SCRIPT_DIR}/5_sentieon_joint_genotyping.sh \
-            --scratch_dir $SCRATCH_DIR --ref_fasta $REF_FASTA \
-            --project $PROJECT --targets_bed $TARGETS_BED)"
+            --scratch_dir $SCRATCH_DIR --project $PROJECT)"
     fi
     echo -e "\nsbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
         -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
@@ -722,37 +758,50 @@ elif [ $STEP -eq 5 ]; then
         ${PIPELINE_DIR}/submit_all.sh --step 6 ${OPTIONS[@]})
     echo -e "Dependency job array number: $DEPENDENCY\nDepender job number: $DEPENDER" >> $PIPELINE_STATUS
 elif [ $STEP -eq 6 ]; then
-    if [ $TEMP_ARRAY_START -eq 0 ]; then
-        echo "### Step 5 - Merge somatic variant files and perform joint genotyping ### - END: $(date)" >> $PIPELINE_STATUS
-        SAMPLE_ARRAY=( $(find ${SCRATCH_DIR} -maxdepth 1 -name "*merged.vcf.gz" ! -name "*multianno*" -exec basename {} \;) )
-        echo "### Step 6 - Annotation ### - START: $(date)" >> $PIPELINE_STATUS
-        JOB_COUNT=${#SAMPLE_ARRAY[@]}
-        echo "Jobs to run: $JOB_COUNT" >> $PIPELINE_STATUS
-        TEMP_ARRAY_START=1
+    if [ ! -z $NORMAL_SAMPLE_NAME ]; then
+        if [ ! -f ${PROJECT}.somatic_merged.vcf.gz ]; then
+            echo "Final file ${PROJECT}.somatic_merged.vcf.gz not found. Exiting with code 1"
+            exit 1
+        fi
     fi
+    if [ ! -f ${PROJECT}.germline_merged.vcf ]; then
+        echo "Final file ${PROJECT}.germline_merged.vcf not found. Exiting with code 1"
+        exit 1
+    fi
+    echo "### Step 5 - Germline joint genotyping and merge somatic variant VCFs  ### - END: $(date)" >> $PIPELINE_STATUS
+    echo "### Step 6 - Annotation ### - START: $(date)" >> $PIPELINE_STATUS
     ####TODO#####
     # TODO: Should make a script that deletes the rows with normal sample name in them, might just do it in python but could use shell script to and itd be faster
     # TODO: Get sigprofiler to work (it doesn't now), get other stuff from annotation thing to work
-    TEMP_SAMPLE_ARRAY=( ${SAMPLE_ARRAY[@]:$(($TEMP_ARRAY_START - 1)):$TEMP_ARRAY_INCREMENT} )
-    TEMP_JOB_COUNT=${#TEMP_SAMPLE_ARRAY[@]}
-    echo "Submitting $TEMP_JOB_COUNT jobs for samples $TEMP_ARRAY_START to $(($TEMP_ARRAY_START + ${#TEMP_SAMPLE_ARRAY[@]} - 1))" >> $PIPELINE_STATUS
-    TEMP_SAMPLES_STRING=$( IFS=$':'; echo "${TEMP_SAMPLE_ARRAY[*]}" ) 
-    echo -e "\nsbatch --array=1-${TEMP_JOB_COUNT} --parsable -e $STD_ERR_OUT_DIR/%A_%a_%x.err \
+    echo -e "\nsbatch --parsable -e $STD_ERR_OUT_DIR/%A_%a_%x.err \
         -o $STD_ERR_OUT_DIR/%A_%a_%x.out ${SCRIPT_DIR}/6_annovar.sh \
-        --sample_string $TEMP_SAMPLES_STRING --tranche $TRANCHE --pipeline_dir $PIPELINE_DIR \
+        --somatic_germline germline --tranche $TRANCHE --script_dir $SCRIPT_DIR \
         --annovar_genome_version $ANNOVAR_GENOME_VERSION --annovar_dir $ANNOVAR_DIR \
         --tools_dir $TOOLS_DIR --scratch_dir $SCRATCH_DIR --std_err_out_dir $STD_ERR_OUT_DIR \
         --reference_dir $REFERENCE_DIR --targeted $TARGETED --ref_fasta $REF_FASTA \
-        --normal_sample_name $NORMAL_SAMPLE_NAME\n" >> $PIPELINE_STATUS
-    DEPENDENCY=$(sbatch --array=1-${TEMP_JOB_COUNT} --parsable -e $STD_ERR_OUT_DIR/%A_%a_%x.err \
+        --normal_sample_name $NORMAL_SAMPLE_NAME --project $PROJECT\n" >> $PIPELINE_STATUS
+    DEPENDENCY=$(sbatch --parsable -e $STD_ERR_OUT_DIR/%A_%a_%x.err \
         -o $STD_ERR_OUT_DIR/%A_%a_%x.out ${SCRIPT_DIR}/6_annovar.sh \
-        --sample_string $TEMP_SAMPLES_STRING --tranche $TRANCHE --pipeline_dir $PIPELINE_DIR \
+        --somatic_germline germline --tranche $TRANCHE --script_dir $SCRIPT_DIR \
         --annovar_genome_version $ANNOVAR_GENOME_VERSION --annovar_dir $ANNOVAR_DIR \
         --tools_dir $TOOLS_DIR --scratch_dir $SCRATCH_DIR --std_err_out_dir $STD_ERR_OUT_DIR \
         --reference_dir $REFERENCE_DIR --targeted $TARGETED --ref_fasta $REF_FASTA \
-        --normal_sample_name $NORMAL_SAMPLE_NAME)
-    TEMP_ARRAY_START=$(($TEMP_ARRAY_START + $TEMP_ARRAY_INCREMENT))
-    echo -e "$(date)\nIncrement: $TEMP_ARRAY_INCREMENT\nNew start: $TEMP_ARRAY_START" >> $PIPELINE_STATUS
+        --normal_sample_name $NORMAL_SAMPLE_NAME --project $PROJECT)
+    if [ ! -z $NORMAL_SAMPLE_NAME ]; then
+        echo -e "\nsbatch --parsable -e $STD_ERR_OUT_DIR/%A_%a_%x.err \
+            -o $STD_ERR_OUT_DIR/%A_%a_%x.out ${SCRIPT_DIR}/6_annovar.sh \
+            --somatic_germline somatic --tranche $TRANCHE --script_dir $SCRIPT_DIR \
+            --annovar_genome_version $ANNOVAR_GENOME_VERSION --annovar_dir $ANNOVAR_DIR \
+            --tools_dir $TOOLS_DIR --scratch_dir $SCRATCH_DIR --std_err_out_dir $STD_ERR_OUT_DIR \
+            --reference_dir $REFERENCE_DIR --targeted $TARGETED --ref_fasta $REF_FASTA \
+            --normal_sample_name $NORMAL_SAMPLE_NAME --project $PROJECT\n" >> $PIPELINE_STATUS
+        DEPENDENCY="$DEPENDENCY:$(sbatch --parsable -e $STD_ERR_OUT_DIR/%A_%a_%x.err \
+            -o $STD_ERR_OUT_DIR/%A_%a_%x.out ${SCRIPT_DIR}/6_annovar.sh \
+            --somatic_germline somatic --tranche $TRANCHE --script_dir $SCRIPT_DIR \
+            --annovar_genome_version $ANNOVAR_GENOME_VERSION --annovar_dir $ANNOVAR_DIR \
+            --tools_dir $TOOLS_DIR --scratch_dir $SCRATCH_DIR --std_err_out_dir $STD_ERR_OUT_DIR \
+            --reference_dir $REFERENCE_DIR --targeted $TARGETED --ref_fasta $REF_FASTA \
+            --normal_sample_name $NORMAL_SAMPLE_NAME --project $PROJECT)"
         
     if [ $TEMP_ARRAY_START -le ${#SAMPLE_ARRAY[@]} ]; then
         echo -e "\nsbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
