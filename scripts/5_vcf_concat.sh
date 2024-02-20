@@ -30,6 +30,9 @@ echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND"
 cd $SCRATCH_DIR
 
 ml biology bwa/0.7.17 samtools/1.8 java/1.8.0_131 bcftools/1.16
+ml biology sentieon/202112.01
+export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/
+export SENTIEON_LICENSE=license4.stanford.edu:5443
 
 
 echo "### Merging VCFs ### - START: $(date)"
@@ -37,9 +40,9 @@ VCF_ARRAY=( $(find ${SCRATCH_DIR} -maxdepth 1 -name "*variant.vcf" ) )
 for vcf in ${VCF_ARRAY[@]}; do
     FILTERED_VCF_FN=$(echo $vcf | sed "s/.vcf/_filtered.vcf/")
     bcftools view -e "ALT[*] == '<INS>'" $vcf | bcftools view -e "REF == 'M'" | \
-        bcftools view -e "ALT[*] == 'M'" | sentieon util vcfconvert - ${FILTERED_VCF_FN}
-    bcftools index ${FILTERED_VCF_FN}
-    bgzip -f ${FILTERED_VCF_FN}
+        bcftools view -e "ALT[*] == 'M'" | sentieon util vcfconvert - $FILTERED_VCF_FN
+    bcftools index $FILTERED_VCF_FN
+    bgzip -f $FILTERED_VCF_FN
     tabix ${FILTERED_VCF_FN}.gz
 done
 bcftools merge --force-samples -o ${SCRATCH_DIR}/${PROJECT}_svc_merged.vcf *_filtered.vcf.gz
