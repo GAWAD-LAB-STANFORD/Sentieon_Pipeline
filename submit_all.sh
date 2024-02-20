@@ -695,7 +695,7 @@ elif [ $STEP -eq 5 ]; then
     VCF_PATH="${SCRATCH_DIR}${PROJECT}_svc_merged.vcf"
     NORMAL_PATH="${SCRATCH_DIR}/${NORMAL_SAMPLE_NAME}${BAM_SUFFIX}"
     if [ ! -z $NORMAL_SAMPLE_NAME ] && [ ! -z "$(find -name "*_variant.vcf")" ]; then
-        echo "VCF concatenation" >> $PIPELINE_STATUS
+        echo "### VCF concatenation ### - $(date)" >> $PIPELINE_STATUS
         echo -e "\nsbatch -e ${STD_ERR_OUT_DIR}/%A_%a_%x.err -o ${STD_ERR_OUT_DIR}/%A_%a_%x.out \
             --parsable ${SCRIPT_DIR}/5_vcf_concat.sh \
             --scratch_dir $SCRATCH_DIR --project $PROJECT\n" >> $PIPELINE_STATUS
@@ -704,7 +704,7 @@ elif [ $STEP -eq 5 ]; then
             --scratch_dir $SCRATCH_DIR --project $PROJECT)
     fi
     if [ ! -z "$(find -name "*.g.vcf")" ]; then
-        echo "Joint genotyping - Start: $(date)" >> $PIPELINE_STATUS
+        echo "### Joint genotyping ### - $(date)" >> $PIPELINE_STATUS
         echo -e "\nsbatch --parsable -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
             ${SCRIPT_DIR}/5_sentieon_joint_genotyping.sh \
             --scratch_dir $SCRATCH_DIR --ref_fasta $REF_FASTA \
