@@ -81,45 +81,43 @@ if [ ! -z $RUN_DIR ]; then
 fi
 
 ALIGNMENT_METRICS_FILENAMES=( $(ls *_extra_metrics.alignment_summary_metrics.tsv) )
-echo -e sample"\t"$(sed -n 7p ${ALIGNMENT_METRICS_FILENAMES[0]}) | sed 's/ /\t/g' > ${PROJECT}.merged_alignment_metrics.tsv
+echo -e sample"\t"$(sed -n 7p ${ALIGNMENT_METRICS_FILENAMES[0]}) | sed 's/ /\t/g' > ${PROJECT}.alignment_metrics_merged.tsv
 for i in ${ALIGNMENT_METRICS_FILENAMES[@]}; do
     SAMPLE=$(echo $i | sed "s/_extra_metrics.alignment_summary_metrics.tsv//")
     R1=$(sed -n 8p $i)
     R2=$(sed -n 9p $i)
     PAIR=$(sed -n 10p $i)
     echo -e "$SAMPLE\t$R1\n$SAMPLE\t$R2\n$SAMPLE\t$PAIR"
-done | sed 's/ /\t/g' >> ${PROJECT}.merged_alignment_metrics.tsv
+done | sed 's/ /\t/g' >> ${PROJECT}.alignment_metrics_merged.tsv
 echo "Alignment metrics merged"
 
-WGS_METRICS_MERGED="${PROJECT}.merged_wgs_metrics.tsv"
 WGS_METRICS_FILENAMES=( $(ls *_wgs_metrics.tsv) )
-echo -e sample"\t"$(sed -n 7p ${WGS_METRICS_FILENAMES[0]}) | sed 's/ /\t/g' > $WGS_METRICS_MERGED
-for i in ${WGS_METRICS_FILENAMES[@]}; do echo -e $(echo $i | sed "s/_wgs_metrics.tsv//")"\t"$(sed -n 8p); done | sed 's/ /\t/g' >> $WGS_METRICS_MERGED
+echo -e sample"\t"$(sed -n 7p ${WGS_METRICS_FILENAMES[0]}) | sed 's/ /\t/g' > ${PROJECT}.wgs_metrics_merged.tsv
+for i in ${WGS_METRICS_FILENAMES[@]}; do echo -e $(echo $i | sed "s/_wgs_metrics.tsv//")"\t"$(sed -n 8p); done | sed 's/ /\t/g' >> ${PROJECT}.wgs_metrics_merged.tsv
 echo "WGS metrics merged"
 
-HS_METRICS_MERGED="${PROJECT}.merged_hs_metrics.tsv"
 HS_METRICS_FILENAMES=( $(ls *_hs_metrics.tsv) )
-echo -e sample"\t"$(sed -n 7p ${HS_METRICS_FILENAMES[0]}) | sed 's/ /\t/g' > $HS_METRICS_MERGED
-for i in ${HS_METRICS_FILENAMES[@]}; do echo -e $(echo $i | sed "s/_hs_metrics.tsv//")"\t"$(sed -n 8p); done | sed 's/ /\t/g' >> $HS_METRICS_MERGED
+echo -e sample"\t"$(sed -n 7p ${HS_METRICS_FILENAMES[0]}) | sed 's/ /\t/g' > ${PROJECT}.hs_metrics_merged.tsv
+for i in ${HS_METRICS_FILENAMES[@]}; do echo -e $(echo $i | sed "s/_hs_metrics.tsv//")"\t"$(sed -n 8p); done | sed 's/ /\t/g' >> ${PROJECT}.hs_metrics_merged.tsv
 echo "HS metrics merged"
 
 OXOG_METRICS_FILENAMES=( $(ls *_oxog_metrics.tsv) )
-sed -n 7p ${OXOG_METRICS_FILENAMES[0]} > ${PROJECT}.merged_oxog_metrics.tsv
-for i in ${OXOG_METRICS_FILENAMES[@]}; do tail -n +8 $i | awk NF >> ${PROJECT}.merged_oxog_metrics.tsv; done
+sed -n 7p ${OXOG_METRICS_FILENAMES[0]} > ${PROJECT}.oxog_metrics_merged.tsv
+for i in ${OXOG_METRICS_FILENAMES[@]}; do tail -n +8 $i | awk NF >> ${PROJECT}.oxog_metrics_merged.tsv; done
 echo "Oxog metrics merged"
 
 DUPLICATION_METRICS_FILENAMES=( $(ls *_duplication_metrics.tsv) )
-sed -n 2p ${DUPLICATION_METRICS_FILENAMES[0]} > ${PROJECT}.merged_duplication_metrics.tsv
-for i in ${DUPLICATION_METRICS_FILENAMES[@]}; do sed -n 3p $i >> ${PROJECT}.merged_duplication_metrics.tsv; done
+sed -n 2p ${DUPLICATION_METRICS_FILENAMES[0]} > ${PROJECT}.duplication_metrics_merged.tsv
+for i in ${DUPLICATION_METRICS_FILENAMES[@]}; do sed -n 3p $i >> ${PROJECT}.duplication_metrics_merged.tsv; done
 echo "Duplication metrics merged"
 
 COVERAGE_FILENAMES=$(ls *_wgs_coverage.tsv)
-echo -e "sample\tchrM_proportion" > ${PROJECT}.merged_chrM_proportions.tsv
+echo -e "sample\tchrM_proportion" > ${PROJECT}.chrM_proportions_merged.tsv
 for i in ${COVERAGE_FILENAMES[@]}; do
     MAIN_CHR_COUNTS=$(tail -n +2 $i | cut -f 4 | paste -sd+ | bc)
     CHRM_COUNTS=$(grep -P "chrM\t" $i | cut -f 4)
     echo -e $(echo $i | sed "s/_wgs_coverage.tsv//")"\t"$(awk 'BEGIN {print('$CHRM_COUNTS'/'$MAIN_CHR_COUNTS')}')
-done >> ${PROJECT}.merged_chrM_proportions.tsv
+done >> ${PROJECT}.chrM_proportions_merged.tsv
 echo "chrM proportions merged"
 
 COVERAGE_FILENAMES=( $(ls *_wgs_coverage.tsv) )
@@ -130,10 +128,10 @@ for i in ${COVERAGE_FILENAMES[@]}; do
 done
 TEMP_COVERAGE_FILENAMES=( $(ls *_temp_coverage.tsv) )
 cut -f 1,2,3,6 ${COVERAGE_FILENAMES[0]} | \
-    paste - ${TEMP_COVERAGE_FILENAMES[@]} > ${PROJECT}.merged_wgs_coverage.tsv
+    paste - ${TEMP_COVERAGE_FILENAMES[@]} > ${PROJECT}.wgs_coverage_merged.tsv
 rm ${TEMP_COVERAGE_FILENAMES[@]}
 echo "Coverage merged"
-Rscript ${SCRIPT_DIR}/graph_coverage.R ${PROJECT}.merged_wgs_coverage.tsv $PROJECT "wgs"
+Rscript ${SCRIPT_DIR}/graph_coverage.R ${PROJECT}.wgs_coverage_merged.tsv $PROJECT "wgs"
 
 DOWN_SAMPLE_COV_FILENAMES=( $(ls *_wgs_5M_read_coverage.tsv) )
 if [ ${#DOWN_SAMPLE_COV_FILENAMES[@]} -ne 0 ] && [ $TARGETED -eq 0 ]; then
@@ -144,31 +142,31 @@ if [ ${#DOWN_SAMPLE_COV_FILENAMES[@]} -ne 0 ] && [ $TARGETED -eq 0 ]; then
     done
     TEMP_COVERAGE_FILENAMES=( $(ls *_temp_coverage.tsv) )
     cut -f 1,2,3,6 ${DOWN_SAMPLE_COV_FILENAMES[0]} | \
-        paste - ${TEMP_COVERAGE_FILENAMES[@]} > ${PROJECT}.merged_wgs_5M_coverage.tsv
+        paste - ${TEMP_COVERAGE_FILENAMES[@]} > ${PROJECT}.wgs_5M_coverage_merged.tsv
     rm ${TEMP_COVERAGE_FILENAMES[@]}
     echo "5M coverage merged"
-    Rscript ${SCRIPT_DIR}/graph_coverage.R ${PROJECT}.merged_wgs_5M_coverage.tsv $PROJECT "wgs_5M"
+    Rscript ${SCRIPT_DIR}/graph_coverage.R ${PROJECT}.wgs_5M_coverage_merged.tsv $PROJECT "wgs_5M"
 
     DOWN_SAMPLE_PRESEQ_FILENAMES=( $(ls *_5M_preseq_future_coverage.tsv) )
-    sed -n 1p ${DOWN_SAMPLE_PRESEQ_FILENAMES[0]} | sed "s/^/SAMPLE\t/" > ${PROJECT}.merged_5M_preseq_future_coverageM.tsv
+    sed -n 1p ${DOWN_SAMPLE_PRESEQ_FILENAMES[0]} | sed "s/^/SAMPLE\t/" > ${PROJECT}.5M_preseq_future_coverage_merged.tsv
     for i in ${DOWN_SAMPLE_PRESEQ_FILENAMES[@]}; do
         SAMPLE=$(echo $i | sed "s/_5M_preseq_future_coverage.tsv//")
-        tail -n +2 $i | sed "s/^/${SAMPLE}\t/" >> ${PROJECT}.merged_5M_preseq_future_coverage.tsv
+        tail -n +2 $i | sed "s/^/${SAMPLE}\t/" >> ${PROJECT}.5M_preseq_future_coverage_merged.tsv
     done
     echo "Preseq future coverage merged"
-    Rscript ${SCRIPT_DIR}/graph_preseq.R ${PROJECT}.merged_5M_preseq_future_coverage.tsv $PROJECT "5M_reads"
+    Rscript ${SCRIPT_DIR}/graph_preseq.R ${PROJECT}.5M_preseq_future_coverage_merged.tsv $PROJECT "wgs_5M"
 fi
 
 if [ $TARGETED -eq 0 ]; then
     PRESEQ_FILENAMES=( $(ls *_wgs_preseq_future_coverage.tsv) )
-    sed -n 1p ${PRESEQ_FILENAMES[0]} | sed "s/^/SAMPLE\t/" > ${PROJECT}.merged_preseq_future_coverage.tsv
+    sed -n 1p ${PRESEQ_FILENAMES[0]} | sed "s/^/SAMPLE\t/" > ${PROJECT}.preseq_future_coverage_merged.tsv
     #for i in ${PRESEQ_FILENAMES[@]}; do
     #    SAMPLE=$(echo $i | sed "s/_wgs_preseq_future_coverage.tsv//")
-    #    tail -n +2 $i | sed "s/^/${SAMPLE}\t/" >> ${PROJECT}.merged_preseq_future_coverage.tsv
+    #    tail -n +2 $i | sed "s/^/${SAMPLE}\t/" >> ${PROJECT}.preseq_future_coverage_merged.tsv
     #done
-    ls *_wgs_preseq_future_coverage.tsv | parallel "grep 999900000000.0 {} | sed 's/^/{}\t/g'" | sed 's/_wgs_preseq_future_coverage.tsv//g' >> ${PROJECT}.merged_preseq_future_coverage.tsv
+    ls *_wgs_preseq_future_coverage.tsv | parallel "grep 999900000000.0 {} | sed 's/^/{}\t/g'" | sed 's/_wgs_preseq_future_coverage.tsv//g' >> ${PROJECT}.preseq_future_coverage_merged.tsv
     echo "Preseq future coverage merged"
-    Rscript ${SCRIPT_DIR}/graph_preseq.R ${PROJECT}.merged_preseq_future_coverage.tsv $PROJECT
+    Rscript ${SCRIPT_DIR}/graph_preseq.R ${PROJECT}.preseq_future_coverage_merged.tsv $PROJECT
 fi
 
 if [ $TARGETED -eq 1 ]; then
@@ -180,10 +178,10 @@ if [ $TARGETED -eq 1 ]; then
     done
     TEMP_COVERAGE_FILENAMES=( $(ls *_temp_coverage.tsv) )
     cut -f 1,2,3,6 ${TARGETED_COVERAGE_FILENAMES[0]} | \
-        paste - ${TEMP_COVERAGE_FILENAMES[@]} > ${PROJECT}.merged_targeted_coverage.tsv
+        paste - ${TEMP_COVERAGE_FILENAMES[@]} > ${PROJECT}.targeted_coverage_merged.tsv
     rm ${TEMP_COVERAGE_FILENAMES[@]}
     echo "Targeted coverage merged"
-    Rscript ${SCRIPT_DIR}/graph_coverage.R ${PROJECT}.merged_targeted_coverage.tsv $PROJECT "targeted"
+    Rscript ${SCRIPT_DIR}/graph_coverage.R ${PROJECT}.targeted_coverage_merged.tsv $PROJECT "targeted"
 
     TARGETED_DOWN_SAMPLE_COV_FILENAMES=( $(ls *_targeted_5M_read_coverage.tsv) )
     if [ ${#TARGETED_DOWN_SAMPLE_COV_FILENAMES[@]} -ne 0 ]; then
@@ -194,10 +192,10 @@ if [ $TARGETED -eq 1 ]; then
         done
         TEMP_COVERAGE_FILENAMES=( $(ls *_temp_coverage.tsv) )
         cut -f 1,2,3,6 ${TARGETED_DOWN_SAMPLE_COV_FILENAMES[0]} | \
-            paste - ${TEMP_COVERAGE_FILENAMES[@]} > ${PROJECT}.merged_targeted_coverage_5M_reads.tsv
+            paste - ${TEMP_COVERAGE_FILENAMES[@]} > ${PROJECT}.targeted_5M_coverage_merged.tsv
         rm ${TEMP_COVERAGE_FILENAMES[@]}
         echo "5M targeted coverage merged"
-        Rscript ${SCRIPT_DIR}/graph_coverage.R ${PROJECT}.merged_targeted_coverage_5M_reads.tsv $PROJECT "5M_reads_targeted"
+        Rscript ${SCRIPT_DIR}/graph_coverage.R ${PROJECT}.targeted_5M_coverage_merged.tsv $PROJECT "targeted_5M"
     fi
 fi
 echo "### Merging metrics ### - END: $(date)"
@@ -215,14 +213,14 @@ mv *extra_metrics* ${PROJECT}_extra_metrics/
 #     rm ${TARGETED_COVERAGE_FILENAMES[@]} ${TARGETED_DOWN_SAMPLE_COV_FILENAMES[@]}
 # fi
 
-grep 999900000000.0 ${PROJECT}.merged_preseq_future_coverage.tsv | sort -k1 | awk -F'\t' '$6=$3/1000000000' | sed 's/ /\t/g' | cut -f6 | sed '1i Predicted_Billion_Bases_Covered' > ${PROJECT}.preseq.qual
+grep 999900000000.0 ${PROJECT}.preseq_future_coverage_merged.tsv | sort -k1 | awk -F'\t' '$6=$3/1000000000' | sed 's/ /\t/g' | cut -f6 | sed '1i Predicted_Billion_Bases_Covered' > ${PROJECT}.preseq.qual
 cat ${PROJECT}.sample_read_counts.tsv | (sed -u 1q; sort -k1) | cut -f1,2 | awk -F'\t' '$3=$2/1000000' | sed 's/ /\t/g' | cut -f1,3 | sed '1i Sample_Name\tMillion_Reads' > ${PROJECT}.read.qual
-cat ${PROJECT}.merged_duplication_metrics.tsv | (sed -u 1q; sort -k1) | cut -f9 > ${PROJECT}.dup.qual
-cat ${PROJECT}.merged_chrM_proportions.tsv | (sed -u 1q; sort -k1) | cut -f2 > ${PROJECT}.mito.qual
-grep -v FIRST_OF_PAIR ${PROJECT}.merged_alignment_metrics.tsv | grep -v SECOND_OF_PAIR |  (sed -u 1q; sort -k1) | cut -f8,14,15,16,17,19,23,24 > ${PROJECT}.align.qual
-grep CCG ${PROJECT}.merged_oxog_metrics.tsv | sort -k1 | cut -f11,12,19,20 |  sed '1i OXIDATION_ERROR_RATE\tOXIDATION_Q\tG_REF_OXO_ERROR_RATE\tG_REF_OXO_Q' > ${PROJECT}.oxo.qual
-cat ${PROJECT}.merged_hs_metrics.tsv | (sed -u 1q; sort -k1) | cut -f2,3,8,14,35,39,40,42,43,47-58 > ${PROJECT}.hs.cover.qual
-cat ${PROJECT}.merged_wgs_metrics.tsv | (sed -u 1q; sort -k1) | cut -f2-4,8,9,11,15-30 > ${PROJECT}.wgs.cover.qual
+cat ${PROJECT}.duplication_metrics_merged.tsv | (sed -u 1q; sort -k1) | cut -f9 > ${PROJECT}.dup.qual
+cat ${PROJECT}.chrM_proportions_merged.tsv | (sed -u 1q; sort -k1) | cut -f2 > ${PROJECT}.mito.qual
+grep -v FIRST_OF_PAIR ${PROJECT}.alignment_metrics_merged.tsv | grep -v SECOND_OF_PAIR |  (sed -u 1q; sort -k1) | cut -f8,14,15,16,17,19,23,24 > ${PROJECT}.align.qual
+grep CCG ${PROJECT}.oxog_metrics_merged.tsv | sort -k1 | cut -f11,12,19,20 |  sed '1i OXIDATION_ERROR_RATE\tOXIDATION_Q\tG_REF_OXO_ERROR_RATE\tG_REF_OXO_Q' > ${PROJECT}.oxo.qual
+cat ${PROJECT}.hs_metrics_merged.tsv | (sed -u 1q; sort -k1) | cut -f2,3,8,14,35,39,40,42,43,47-58 > ${PROJECT}.hs.cover.qual
+cat ${PROJECT}.wgs_metrics_merged.tsv | (sed -u 1q; sort -k1) | cut -f2-4,8,9,11,15-30 > ${PROJECT}.wgs.cover.qual
 paste ${PROJECT}.read.qual ${PROJECT}.preseq.qual ${PROJECT}.mito.qual ${PROJECT}.dup.qual ${PROJECT}.wgs.cover.qual ${PROJECT}.align.qual ${PROJECT}.oxo.qual > 01.${PROJECT}.wgs.data.quality.tsv
 paste ${PROJECT}.read.qual ${PROJECT}.preseq.qual ${PROJECT}.mito.qual ${PROJECT}.dup.qual ${PROJECT}.hs.cover.qual ${PROJECT}.align.qual ${PROJECT}.oxo.qual > 01.${PROJECT}.hs.data.quality.tsv
 
