@@ -56,15 +56,14 @@ cd $SCRATCH_DIR
 REFERENCE_DIR="/oak/stanford/groups/cgawad/Reference_Files"
 N25CHR_INTERVAL_LIST="/oak/stanford/groups/cgawad/Reference_Files/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38_n25chr.interval_list"
 N25CHR_BED="/oak/stanford/groups/cgawad/Reference_Files/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38_n25chr.bed"
-TOOLS_DIR="/oak/stanford/groups/cgawad/Sequencing_Analysis_Tools"
 QUALIMAP_TOOL="${TOOLS_DIR}/qualimap_v2.2.1/qualimap"
 PRESEQ_TOOL_DIR="${TOOLS_DIR}/preseq"
 REF_GENOME="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38_bedtools.genome"
 EXOME_INTERVAL_LIST="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/xgen-exome-research-panel-targets_grch38_5col.interval_list"
 VARIANT_VCF="${SAMPLE}.g.vcf"
 
-ml gcc/12.1.0 gsl/2.3 java/1.8.0_131 biology htslib samtools bedtools gatk
-ml biology bcftools/1.6 sentieon/202112.01
+ml gcc/12.1.0 gsl/2.3 java/1.8.0_131 biology htslib samtools bedtools gatk bcftools
+ml biology sentieon/202112.01
 export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/
 export SENTIEON_LICENSE=license4.stanford.edu:5443
 
@@ -84,6 +83,7 @@ if [ $TOTAL_READS -ge 5000000 ] && [ ! -z $FRACTION ] && [ $TARGETED -eq 0 ]; th
     echo "Coverage for 5 million reads done"
 
     samtools view -b -L $N25CHR_BED ${SAMPLE}.5M.bam > ${SAMPLE}_5M_n25chr.bam
+    ml gsl/2.3
     $PRESEQ_TOOL_DIR/bam2mr -o ${SAMPLE}_5M_n25chr_unsorted.mr ${SAMPLE}_5M_n25chr.bam
     sort -k1,1 -k2,2n -k3,3n ${SAMPLE}_5M_n25chr_unsorted.mr > ${SAMPLE}_5M_n25chr_sorted.mr
     if [ ! -f ${SAMPLE}_5M_n25chr_sorted.mr ]; then
@@ -97,6 +97,7 @@ if [ $TOTAL_READS -ge 5000000 ] && [ ! -z $FRACTION ] && [ $TARGETED -eq 0 ]; th
             echo "PreSeq for 5 million reads done"
         fi
     fi
+    ml gsl/2.7
 else
     echo "Bam has $TOTAL_READS reads, cannot downsample to 5 million reads"
 fi
@@ -106,6 +107,7 @@ echo "### 5M read downsample with Preseq ### - END: $(date)"
 if [ $TARGETED -eq 0 ]; then
     echo "### WGS Preseq ### - START: $(date)"
     samtools view -b -L $N25CHR_BED ${SAMPLE}${BAM_SUFFIX} > ${SAMPLE}_n25chr.bam
+    ml gsl/2.3
     $PRESEQ_TOOL_DIR/bam2mr -o ${SAMPLE}_n25chr_unsorted.mr ${SAMPLE}_n25chr.bam
     sort -k1,1 -k2,2n -k3,3n ${SAMPLE}_n25chr_unsorted.mr > ${SAMPLE}_n25chr_sorted.mr
     if [ ! -f ${SAMPLE}_n25chr_sorted.mr ]; then
@@ -120,6 +122,7 @@ if [ $TARGETED -eq 0 ]; then
         fi
     fi
     echo "### WGS Preseq ### - END: $(date)"
+    ml gsl/2.7
 fi
 
 
