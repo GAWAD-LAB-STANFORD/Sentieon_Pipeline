@@ -550,13 +550,11 @@ elif [ $STEP -eq 3 ] && [ $TEMP_ARRAY_START -eq 0 ]; then
         echo -e "\nsbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
             ${SCRIPT_DIR}/3_merge_metrics.sh \
             --scratch_dir $SCRATCH_DIR --script_dir $SCRIPT_DIR --project $PROJECT \
-            --targeted $TARGETED --run_dir $RUN_DIR --sample_sheet $SAMPLE_SHEET \
-            --targeted $TARGETED\n" >> $PIPELINE_STATUS
+            --targeted $TARGETED --run_dir $RUN_DIR --sample_sheet $SAMPLE_SHEET\n" >> $PIPELINE_STATUS
         sbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
             ${SCRIPT_DIR}/3_merge_metrics.sh \
             --scratch_dir $SCRATCH_DIR --script_dir $SCRIPT_DIR --project $PROJECT \
-            --targeted $TARGETED --run_dir $RUN_DIR --sample_sheet $SAMPLE_SHEET \
-            --targeted $TARGETED
+            --targeted $TARGETED --run_dir $RUN_DIR --sample_sheet $SAMPLE_SHEET
     else
         echo -e "\nsbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
             ${SCRIPT_DIR}/3_merge_metrics.sh \
@@ -802,7 +800,7 @@ elif [ $STEP -eq 6 ]; then
             --tools_dir $TOOLS_DIR --scratch_dir $SCRATCH_DIR --std_err_out_dir $STD_ERR_OUT_DIR \
             --reference_dir $REFERENCE_DIR --targeted $TARGETED --ref_fasta $REF_FASTA \
             --normal_sample_name $NORMAL_SAMPLE_NAME --project $PROJECT)"
-        
+    fi
     if [ $TEMP_ARRAY_START -le ${#SAMPLE_ARRAY[@]} ]; then
         echo -e "\nsbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
             -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
