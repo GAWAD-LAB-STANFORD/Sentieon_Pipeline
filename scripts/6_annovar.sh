@@ -1,11 +1,11 @@
 #!/bin/bash
 
 #SBATCH --job-name=6_annvoar
-#SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
-#SBATCH --time=1-00:00:00
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=64G
+#SBATCH --time=2-00:00:00
 #SBATCH --partition=cgawad
-#SBATCH --mem=180G
 
 TARGETED=0
 PYTHON_LIBS="/home/groups/cgawad/python_libs/bin"

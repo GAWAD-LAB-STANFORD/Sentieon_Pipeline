@@ -2,10 +2,10 @@
 #
 #SBATCH --job-name=5_vcf_merge
 #SBATCH --nodes=1
-#SBATCH --time=1-00:00:00
-#SBATCH --partition=cgawad
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=31G
+#SBATCH --time=1-00:00:00
+#SBATCH --partition=cgawad
 
 START_TIME=$(date +%s)
 SCRIPT_COMMAND="$@"

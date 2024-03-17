@@ -1,11 +1,11 @@
 #!/bin/bash
 #
 #SBATCH --job-name=3_scan2
-#SBATCH --time=1-23:00:00
-#SBATCH --partition=cgawad
-#SBATCH --cpus-per-task=4
 #SBATCH --nodes=1
+#SBATCH --cpus-per-task=4
 #SBATCH --mem=200G
+#SBATCH --time=2-00:00:00
+#SBATCH --partition=cgawad
 
 set -x
 

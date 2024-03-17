@@ -1,11 +1,11 @@
 #!/bin/bash
 #
 #SBATCH --job-name=7_manta_sv
-#SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
-#SBATCH --time=1-00:00:00
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=64G
+#SBATCH --time=2-00:00:00
 #SBATCH --partition=cgawad
-#SBATCH --mem=120G
 
 START_TIME=$(date +%s)
 SCRIPT_COMMAND="$@"

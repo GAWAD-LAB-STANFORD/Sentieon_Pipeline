@@ -2,10 +2,10 @@
 #
 #SBATCH --job-name=5_sentieon_joint_genotyping
 #SBATCH --nodes=1
-#SBATCH --time=1-00:00:00
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=64G
+#SBATCH --time=2-00:00:00
 #SBATCH --partition=cgawad
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=200G
 
 START_TIME=$(date +%s)
 SCRIPT_COMMAND="$@"

@@ -1,12 +1,11 @@
 #!/bin/bash
 #
 #SBATCH --job-name=4_sentieon_somatic_variant_calling
-#SBATCH --time=1-00:00:00
-#SBATCH --partition=cgawad
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=115G
-#SBATCH --nice=[-20]
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=64G
+#SBATCH --time=2-00:00:00
+#SBATCH --partition=cgawad
 
 NUMBER_THREADS=16
 START_TIME=$(date +%s)

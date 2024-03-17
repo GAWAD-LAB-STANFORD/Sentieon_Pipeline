@@ -1,11 +1,11 @@
 #!/bin/bash
 #
 #SBATCH --job-name=2_metrics_calc
-#SBATCH --cpus-per-task=2
-#SBATCH --time=1-23:00:00
-#SBATCH --partition=cgawad
-#SBATCH --mem=31G
 #SBATCH --nodes=1
+#SBATCH --cpus-per-task=2
+#SBATCH --mem=31G
+#SBATCH --time=1-00:00:00
+#SBATCH --partition=cgawad
 
 START_TIME=$(date +%s)
 SCRIPT_COMMAND="$@"

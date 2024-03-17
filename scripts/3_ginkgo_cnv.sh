@@ -1,11 +1,11 @@
 #!/bin/bash
 #
 #SBATCH --job-name=3_ginkgo_cnv
-#SBATCH --cpus-per-task=2
 #SBATCH --nodes=1
-#SBATCH --time=1-23:00:00
-#SBATCH --partition=cgawad
+#SBATCH --cpus-per-task=2
 #SBATCH --mem=31G
+#SBATCH --time=1-00:00:00
+#SBATCH --partition=cgawad
 
 START_TIME=$(date +%s)
 GINKGO_DIR="/oak/stanford/groups/cgawad/Sequencing_Analysis_Tools/ginkgo"

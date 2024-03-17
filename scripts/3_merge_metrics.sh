@@ -1,11 +1,11 @@
 #!/bin/bash
 #
 #SBATCH --job-name=3_merge_metrics
-#SBATCH --cpus-per-task=2
 #SBATCH --nodes=1
-#SBATCH --time=1-23:00:00
+#SBATCH --cpus-per-task=2
+#SBATCH --mem=31G
+#SBATCH --time=1-00:00:00
 #SBATCH --partition=cgawad
-#SBATCH --mem=30G
 
 START_TIME=$(date +%s)
 SCRIPT_COMMAND="$@"

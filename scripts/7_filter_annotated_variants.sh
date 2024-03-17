@@ -1,11 +1,11 @@
 #!/bin/bash
 
 #SBATCH --job-name=7_filter_annotated_variants
-#SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
-#SBATCH --time=6-23:00:00
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=64G
+#SBATCH --time=2-00:00:00
 #SBATCH --partition=cgawad
-#SBATCH --mem=200G
 
 # i split up the files to test if splitting up the scripts would fix a problem where multianno tsv file was truncated,
 #   but i just realized that it probably shouldn't solve the problem

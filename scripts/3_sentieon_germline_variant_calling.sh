@@ -1,11 +1,11 @@
 #!/bin/bash
 
 #SBATCH --job-name=3_sentieon_germline_calling
-#SBATCH --time=1-23:00:00
-#SBATCH --partition=cgawad
 #SBATCH --nodes=1
-#SBATCH --mem=300G
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=64G
+#SBATCH --time=2-00:00:00
+#SBATCH --partition=cgawad
 
 START_TIME=$(date +%s)
 SCRIPT_COMMAND="$@"
