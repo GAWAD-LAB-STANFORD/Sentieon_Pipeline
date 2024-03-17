@@ -41,7 +41,7 @@ VCF_NUMBER=${#VCF_ARRAY[@]}
 VCF_COUNT=1
 for VCF in ${VCF_ARRAY[@]}; do
     echo "VCF filtering $VCF_COUNT of $VCF_NUMBER - ${VCF}.vcf"
-    bcftools view -e "ALT[*] == '<INS>'" $VCF | bcftools view -e "REF == 'M'" | \
+    bcftools view -e "ALT[*] == '<INS>'" ${VCF}_variant.vcf | bcftools view -e "REF == 'M'" | \
         bcftools view -e "ALT[*] == 'M'" | sentieon util vcfconvert - ${VCF}_variant_filtered.vcf
     bgzip -f ${VCF}_variant_filtered.vcf
     tabix ${VCF}_variant_filtered.vcf.gz
