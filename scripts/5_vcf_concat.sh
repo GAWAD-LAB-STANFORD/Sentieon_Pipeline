@@ -48,7 +48,7 @@ for VCF in ${VCF_ARRAY[@]}; do
     VCF_COUNT=$((VCF_COUNT+1))
 done
 echo "VCF filtering done"
-bcftools merge --force-samples -o ${PROJECT}somatic_merged.vcf *_variant_filtered.vcf.gz
+bcftools merge --force-samples -o ${PROJECT}.somatic_merged.vcf *_variant_filtered.vcf.gz
 # Attempt to filter out still remaining problematic <INS> record that was still in vcf, possible this won't remove all of the junk, causing the run to still fail
 bgzip -f ${PROJECT}.somatic_merged.vcf
 tabix ${PROJECT}.somatic_merged.vcf.gz
