@@ -47,8 +47,8 @@ tabix ${PROJECT}.germline_merged.vcf.gz
 echo "### Joint genotyping ### - END: $(date)"
 
 
-if [ ! -f ${PROJECT}.germline_merged.vcf ]; then
-    echo "Final file ${PROJECT}.germline_merged.vcf not found. Exiting with code 1"
+if [ ! -f ${PROJECT}.germline_merged.vcf.gz ]; then
+    echo "Final file ${PROJECT}.germline_merged.vcf.gz not found. Exiting with code 1"
     exit 1
 fi
 echo -e "END: $(date)\nRuntime: $(($(date +%s)-$START_TIME)) seconds"

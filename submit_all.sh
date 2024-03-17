@@ -762,8 +762,8 @@ elif [ $STEP -eq 6 ]; then
             exit 1
         fi
     fi
-    if [ ! -f ${PROJECT}.germline_merged.vcf ]; then
-        echo "Final file ${PROJECT}.germline_merged.vcf not found. Exiting with code 1"
+    if [ ! -f ${PROJECT}.germline_merged.vcf.gz ]; then
+        echo "Final file ${PROJECT}.germline_merged.vcf.gz not found. Exiting with code 1"
         exit 1
     fi
     echo "### Step 5 - Germline joint genotyping and merge somatic variant VCFs  ### - END: $(date)" >> $PIPELINE_STATUS
