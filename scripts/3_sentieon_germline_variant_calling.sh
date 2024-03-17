@@ -35,11 +35,15 @@ while [ "$1" != "" ]; do
         --targets_bed )             shift
                                     TARGETS_BED=$1
                                     ;;
+        --bam_suffix )              shift
+                                    BAM_SUFFIX=$1
+                                    ;;
     esac
     shift
 done
 
-if [ -z $SCRATCH_DIR ] || [ -z $REF_FASTA ] || [ -z $SAMPLE_ARRAY ] || [ -z $TARGETS_BED ]; then
+if [ -z $SCRATCH_DIR ] || [ -z $REF_FASTA ] || [ -z $SAMPLE_ARRAY ] || [ -z $TARGETS_BED ] || \
+    [ -z $TARGETS_BED ]; then
     echo "Variables not supplied correctly. Check script for required intake parameters. Exiting with code 1"
     exit 1
 fi
