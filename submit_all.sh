@@ -801,28 +801,26 @@ elif [ $STEP -eq 6 ]; then
             --reference_dir $REFERENCE_DIR --targeted $TARGETED --ref_fasta $REF_FASTA \
             --normal_sample_name $NORMAL_SAMPLE_NAME --project $PROJECT)"
     fi
-    if [ $TEMP_ARRAY_START -le ${#SAMPLE_ARRAY[@]} ]; then
-        echo -e "\nsbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
-            -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
-            ${PIPELINE_DIR}/submit_all.sh --step 6 --temp_array_start $TEMP_ARRAY_START ${OPTIONS[@]}\n" >> $PIPELINE_STATUS
-        DEPENDER=$(sbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
-            -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
-            ${PIPELINE_DIR}/submit_all.sh --step 6 --temp_array_start $TEMP_ARRAY_START ${OPTIONS[@]})
-    else
-        echo -e "\nsbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
-            -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
-            ${PIPELINE_DIR}/submit_all.sh --step 7 ${OPTIONS[@]}\n" >> $PIPELINE_STATUS
-        DEPENDER=$(sbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
-            -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
-            ${PIPELINE_DIR}/submit_all.sh --step 7 ${OPTIONS[@]})
-    fi
+    echo -e "\nsbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
+        -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
+        ${PIPELINE_DIR}/submit_all.sh --step 7 ${OPTIONS[@]}\n" >> $PIPELINE_STATUS
+    DEPENDER=$(sbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
+        -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
+        ${PIPELINE_DIR}/submit_all.sh --step 7 ${OPTIONS[@]})
     echo -e "Dependency job array number: $DEPENDENCY\nDepender job number: $DEPENDER" >> $PIPELINE_STATUS
 elif [ $STEP -eq 7 ]; then
+    if [ ! -z $NORMAL_SAMPLE_NAME ]; then
+        if [ ! -f ${PROJECT}.somatic_extract_snp.vcf.gz ]; then
+            echo "Final file ${PROJECT}.somatic_extract_snp.vcf.gz not found. Exiting with code 1"
+            exit 1
+        fi
+    fi
+    if [ ! -f ${PROJECT}.germline_extract_snp.vcf.gz ]; then
+        echo "Final file ${PROJECT}.germline_extract_snp.vcf.gz not found. Exiting with code 1"
+        exit 1
+    fi
     echo "### Step 6 - Annotation ### - END: $(date)" >> $PIPELINE_STATUS
     echo "### Step 7 - Structural variant call ### - START: $(date)" >> $PIPELINE_STATUS
-    JOB_COUNT=${#SAMPLE_ARRAY[@]}
-    echo "Jobs to run: $JOB_COUNT" >> $PIPELINE_STATUS
-    SAMPLES_STRING=$( IFS=$':'; echo "${TEMP_SAMPLE_ARRAY[*]}" )
 
     echo -e "\nsbatch --parsable -e $STD_ERR_OUT_DIR/%A_%x.err -o $STD_ERR_OUT_DIR/%A_%x.err \
         ${SCRIPT_DIR}/7_filter_annotated_variants.sh \
@@ -833,6 +831,9 @@ elif [ $STEP -eq 7 ]; then
         --project $PROJECT --scratch_dir $SCRATCH_DIR --pipeline_dir $PIPELINE_DIR \
         --std_err_out_dir $STD_ERR_OUT_DIR --targeted $TARGETED)
     if [ $MANTA -eq 1 ]; then
+        JOB_COUNT=${#SAMPLE_ARRAY[@]}
+        echo "Jobs to run: $JOB_COUNT" >> $PIPELINE_STATUS
+        SAMPLES_STRING=$( IFS=$':'; echo "${TEMP_SAMPLE_ARRAY[*]}" )
         echo "\nsbatch --parsable -e $STD_ERR_OUT_DIR/%A_%a_%x.err -o $STD_ERR_OUT_DIR/%A_%a_%x.out \
             --array=1-${TEMP_JOB_COUNT} ${SCRIPT_DIR}/7_manta_sv.sh \
             --sample_string $SAMPLES_STRING --ref_fasta $REF_FASTA --scratch_dir $SCRATCH_DIR \
@@ -841,6 +842,7 @@ elif [ $STEP -eq 7 ]; then
             --array=1-${TEMP_JOB_COUNT} ${SCRIPT_DIR}/7_manta_sv.sh \
             --sample_string $SAMPLES_STRING --ref_fasta $REF_FASTA --scratch_dir $SCRATCH_DIR \
             --scratch_dir $SCRATCH_DIR --targeted $TARGETED)"
+        echo "Asynchronous manta jobs submitted"
     fi
     DEPENDER=$(sbatch --parsable --dependency=afterany:$DEPENDENCY -J $PROJECT \
         -e ${STD_ERR_OUT_DIR}/%A_submit_all_%x.err -o ${STD_ERR_OUT_DIR}/%A_submit_all_%x.out \
