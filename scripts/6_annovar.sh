@@ -25,8 +25,8 @@ while [ "$1" != "" ]; do
                                         ;;
         --annovar_dir )                 shift
                                         ANNOVAR_DIR=$1
-                                        ;;;
-        --script_dir )                 shift
+                                        ;;
+        --script_dir )                  shift
                                         SCRIPT_DIR=$1
                                         ;;
         --reference_dir )               shift
