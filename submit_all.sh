@@ -15,7 +15,7 @@ PIPELINE_COMMAND="$@"
 HELP="\
 Purpose: \n\t\
     To run Sentieon for GATK and other analyses of paired-end DNA or RNA sequences \n\n\
-Required arguments: -p/--project <arg>, --normal_sample_nam <arg>, and either -f/--fastq_dir <arg> or -r/--results_dir <arg> \n\
+Required arguments: -p/--project <arg>, --normal_sample_name <arg>, and either -f/--fastq_dir <arg> or -r/--results_dir <arg> \n\
 Optional arguments: -s/--scratch_dir <arg>, --err_out_dir <arg>, --skip_scratch, -b/--run_dir <arg>, \n\t\
     --sample_sheet <arg>, --skip_variant_call, --only_variant_call, \n\t\
     --R1_suffix <arg>, --R2_suffix <arg>, --element, --skip_trimming, --rna, --number_threads <arg>\n\t\
@@ -39,11 +39,17 @@ Defaults: \n\t\
     Will not run manta \n\t\
     version: 1 \n\t\
     \n\n\
-Run after demultiplexing: \n\t\
-    sh ${PIPELINE_DIR}/submit_all.sh --fastq_dir /oak/stanford/groups/cgawad/MRD_project/ --project MRD_project \n\n\
-Run with demultiplexing: \n\t\
-    sh ${PIPELINE_DIR}/submit_all.sh --run_dir /oak/stanford/groups/cgawad/Illumina_Data/MiniSeq/191126_MN01236_0003_A000H2WWHT --fastq_dir /oak/stanford/groups/cgawad/MRD_project/ --project MRD_project \n\n\
-For more information, read the README.md"
+Run after demultiplexing and with fastq directory: \n\t\
+    sh ${PIPELINE_DIR}/submit_all.sh --fastq_dir /oak/stanford/groups/cgawad/2020-01-01_Fastqs/ --project 2020-01-01_Project --normal_sample_name IL7RLow-430-scIndex-Plate1-gDNA-TargetCapture-sc-430-A06\n\n\
+Run after demultiplexing and with results directory: \n\t\
+    sh ${PIPELINE_DIR}/submit_all.sh --fastq_dir /oak/stanford/groups/cgawad/2020-01-01_Fastqs/ --results_dir /oak/stanford/groups/cgawad/2020-01-01_Results/ --project 2020-01-01_Project --normal_sample_name IL7RLow-430-scIndex-Plate1-gDNA-TargetCapture-sc-430-A06\n\n\
+Run with demultiplexing and fastq directory: \n\t\
+    sh ${PIPELINE_DIR}/submit_all.sh --run_dir /oak/stanford/groups/cgawad/Illumina_Data/MiniSeq/2020-01-01_BCLs --fastq_dir /oak/stanford/groups/cgawad/2020-01-01_Fastqs/ --project 2020-01-01_Project --normal_sample_name IL7RLow-430-scIndex-Plate1-gDNA-TargetCapture-sc-430-A06\n\n\
+Run with demultiplexing and results directory: \n\t\
+    sh ${PIPELINE_DIR}/submit_all.sh --run_dir /oak/stanford/groups/cgawad/Illumina_Data/MiniSeq/2020-01-01_BCLs --results_dir /oak/stanford/groups/cgawad/2020-01-01_Results/ --project 2020-01-01_Project --normal_sample_name IL7RLow-430-scIndex-Plate1-gDNA-TargetCapture-sc-430-A06\n\n\
+Run with demultiplexing, fastq directory, and results directory: \n\t\
+    sh ${PIPELINE_DIR}/submit_all.sh --run_dir /oak/stanford/groups/cgawad/Illumina_Data/MiniSeq/2020-01-01_BCLs --fastq_dir /oak/stanford/groups/cgawad/2020-01-01_Fastqs/ --results_dir /oak/stanford/groups/cgawad/2020-01-01_Results/ --project 2020-01-01_Project --normal_sample_name IL7RLow-430-scIndex-Plate1-gDNA-TargetCapture-sc-430-A06\n\n\
+README.md is pending updates"
 
 # Reads in command line option arguments and assigns them to variables
 NUMBER_THREADS=4
