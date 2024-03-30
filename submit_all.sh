@@ -15,12 +15,13 @@ PIPELINE_COMMAND="$@"
 HELP="\
 Purpose: \n\t\
     To run Sentieon for GATK and other analyses of paired-end DNA or RNA sequences \n\n\
-Required arguments: -p/--project <arg>, --normal_sample_name <arg>, and either -f/--fastq_dir <arg> or -r/--results_dir <arg> \n\
+Required arguments: -p/--project <arg>, and either -f/--fastq_dir <arg> or -r/--results_dir <arg> \n\
 Optional arguments: -s/--scratch_dir <arg>, --err_out_dir <arg>, --skip_scratch, -b/--run_dir <arg>, \n\t\
     --sample_sheet <arg>, --skip_variant_call, --only_variant_call, \n\t\
-    --R1_suffix <arg>, --R2_suffix <arg>, --element, --skip_trimming, --rna, --number_threads <arg>\n\t\
-    --bam_suffix <arg>, --run_scan2, --exome, --targeted, --cross_dir <arg>, --test_scan2, \n\t\
-    --skip_panel <arg>, --version <arg>, --manta, --ginkgo_mb_sizes <arg>, --slurm <arg> \n\\n\
+    --R1_suffix <arg>, --R2_suffix <arg>, --element, --skip_trimming, --rna, \n\t\
+    --bam_suffix <arg>, --normal_sample_name <arg>, --scan2, --cross_dir <arg>, --skip_panel <arg>, \n\t\
+    --exome, --targeted, --exome_bed_version <arg>, --panel_bed <arg>, --panel_interval_list <arg>, \n\t
+    --manta, --ginkgo_mb_sizes <arg>, --slurm <arg> \n\n\
 Defaults: \n\t\
     If no fastq_dir specified, uses results_dir \n\t\
     If no results_dir specified, makes new directory in fastq_dir \n\t\
@@ -29,15 +30,15 @@ Defaults: \n\t\
     R1_suffix: _L001_R1_001.fastq.gz or _R1_001.fastq.gz or _R1.fastq.gz \n\t\
     R2_suffix: _L001_R2_001.fastq.gz or _R2_001.fastq.gz or _R2.fastq.gz \n\t\
     Will not assume element BCL/fastq data \n\t\
-    number_threads: 4 \n\t\
     Will run trimmomatic \n\t\
     WGS assumed \n\t\
     Will not run Scan2 \n\t\
     Will skip Scan2 panel \n\t\
     Will run Ginkgo on 5M read downsampled BAMs for WGS \n\t\
     Other Ginkgo runs will only be run for WGS \n\t\
+    Will not call germline variants unless normal sample name specified \n\t\
     Will not run manta \n\t\
-    version: 1 \n\t\
+    Exome BED version: 1 \n\t\
     \n\n\
 Run after demultiplexing and with fastq directory: \n\t\
     sh ${PIPELINE_DIR}/submit_all.sh --fastq_dir /oak/stanford/groups/cgawad/2020-01-01_Fastqs/ --project 2020-01-01_Project --normal_sample_name IL7RLow-430-scIndex-Plate1-gDNA-TargetCapture-sc-430-A06\n\n\
@@ -52,7 +53,6 @@ Run with demultiplexing, fastq directory, and results directory: \n\t\
 README.md is pending updates"
 
 # Reads in command line option arguments and assigns them to variables
-NUMBER_THREADS=4
 SKIP_SCRATCH=0
 SKIP_VARIANT_CALL=0
 ONLY_VARIANT_CALL=0
@@ -61,9 +61,8 @@ RNA=0
 BAM_SUFFIX=".recalibrated_realigned_deduped_sorted.bam"
 SCAN2=0
 TARGETED=0
-TEST_SCAN2=0
 SKIP_PANEL=1
-VERSION=1
+EXOME_BED_VERSION=1
 MANTA=0
 ELEMENT=0
 STEP=0
@@ -72,91 +71,92 @@ DEPENDENCY=""
 DEPENDER=""
 while [ "$1" != "" ]; do
     case $1 in
-        -h | --help )           echo -e $HELP
-                                exit 0
-                                ;;
-        -f | --fastq_dir )      shift
-                                FASTQ_DIR=$1
-                                ;;
-        -r | --results_dir )    shift
-                                RESULTS_DIR=$1
-                                ;;
-        -p | --project )        shift
-                                PROJECT=$1
-                                ;;
-        -d | --pipeline_dir )   shift
-                                PIPELINE_DIR=$1
-                                ;;
-        -s | --scratch_dir )    shift
-                                SCRATCH_DIR=$1
-                                ;;
-        --err_out_dir )         shift
-                                STD_ERR_OUT_DIR=$1
-                                ;;
-        --skip_scratch )        SKIP_SCRATCH=1
-                                ;;
-        -b | --run_dir )        shift
-                                RUN_DIR=$1
-                                ;;
-        --sample_sheet )        shift
-                                SAMPLE_SHEET=$1
-                                ;;
-        --R1_suffix )           shift
-                                R1_SUFFIX=$1
-                                ;;
-        --R2_suffix )           shift
-                                R2_SUFFIX=$1
-                                ;;
-        --skip_variant_call )	SKIP_VARIANT_CALL=0
-                                ;;
-        --only_variant_call )	ONLY_VARIANT_CALL=0
-                                ;;
-        --skip_trimming )       SKIP_TRIMMOMATIC=1
-                                ;;
-        --rna )                 RNA=1
-                                ;;
-        --number_threads )      shift
-                                NUMBER_THREADS=$1
-                                ;;
-        --bam_suffix )          shift
-                                BAM_SUFFIX=$1
-                                ;;
-        --run_scan2 )           SCAN2=1
-                                ;;
-        --normal_sample_name )  shift
-                                NORMAL_SAMPLE_NAME=$1
-                                ;;
-        --exome ) 		        TARGETED=1
-                                ;;
-        --targeted ) 		    TARGETED=1
-                                ;;
-        --cross_dir )           shift
-                                CROSS_SAMPLE_DIR=$1
-                                ;;
-        --test_scan2 ) 		    TEST_SCAN2=1
-                                ;;
-        --skip_panel ) 		    shift
-                                SKIP_PANEL=$1
-                                ;;
-        --version ) 		    shift
-                                VERSION=$1
-                                ;;
-        --manta )               MANTA=1
-                                ;;
-        --element )             ELEMENT=1
-                                ;;
-        --ginkgo_mb_sizes ) 	shift
-                                GINKGO_MB_ARRAY=( $(echo $1 | sed 's/,/ /g') )
-                                ;;
-        --step )		        shift
-                                STEP=$1
-                                ;;
-        --temp_array_start )    shift
-                                TEMP_ARRAY_START=$1
-                                ;;
-        --slurm )               shift
-                                SLURM_OPTIONS=${@:1}
-                                ;;
+        -h | --help )               echo -e $HELP
+                                    exit 0
+                                    ;;
+        -f | --fastq_dir )          shift
+                                    FASTQ_DIR=$1
+                                    ;;
+        -r | --results_dir )        shift
+                                    RESULTS_DIR=$1
+                                    ;;
+        -p | --project )            shift
+                                    PROJECT=$1
+                                    ;;
+        -d | --pipeline_dir )       shift
+                                    PIPELINE_DIR=$1
+                                    ;;
+        -s | --scratch_dir )        shift
+                                    SCRATCH_DIR=$1
+                                    ;;
+        --err_out_dir )             shift
+                                    STD_ERR_OUT_DIR=$1
+                                    ;;
+        --skip_scratch )            SKIP_SCRATCH=1
+                                    ;;
+        -b | --run_dir )            shift
+                                    RUN_DIR=$1
+                                    ;;
+        --sample_sheet )            shift
+                                    SAMPLE_SHEET=$1
+                                    ;;
+        --R1_suffix )               shift
+                                    R1_SUFFIX=$1
+                                    ;;
+        --R2_suffix )               shift
+                                    R2_SUFFIX=$1
+                                    ;;
+        --skip_variant_call )	    SKIP_VARIANT_CALL=0
+                                    ;;
+        --only_variant_call )	    ONLY_VARIANT_CALL=0
+                                    ;;
+        --skip_trimming )           SKIP_TRIMMOMATIC=1
+                                    ;;
+        --rna )                     RNA=1
+                                    ;;
+        --bam_suffix )              shift
+                                    BAM_SUFFIX=$1
+                                    ;;
+        --scan2 )                   SCAN2=1
+                                    ;;
+        --cross_dir )               shift
+                                    CROSS_SAMPLE_DIR=$1
+                                    ;;
+        --normal_sample_name )      shift
+                                    NORMAL_SAMPLE_NAME=$1
+                                    ;;
+        --exome ) 		            TARGETED=1
+                                    ;;
+        --targeted ) 		        TARGETED=1
+                                    ;;
+        --skip_panel ) 		        shift
+                                    SKIP_PANEL=$1
+                                    ;;
+        --exome_bed_version )       shift
+                                    EXOME_BED_VERSION=$1
+                                    ;;
+        --panel_bed )               shift
+                                    PANEL_BED=$1
+                                    ;;
+        --panel_interval_list )     shift
+                                    PANEL_INTERVAL_LIST=$1
+                                    ;;
+        --manta )                   MANTA=1
+                                    ;;
+        --element )                 ELEMENT=1
+                                    ;;
+        --ginkgo_mb_sizes ) 	    shift
+                                    GINKGO_MB_ARRAY=( $(echo $1 | sed 's/,/ /g') )
+                                    ;;
+        --step )		            shift
+                                    STEP=$1
+                                    ;;
+        --temp_array_start )        shift
+                                    TEMP_ARRAY_START=$1
+                                    ;;
+        --slurm )                   shift
+                                    SLURM_OPTIONS=${@:1}
+                                    ;;
     esac
     shift
 done
@@ -254,6 +254,12 @@ fi
 if [ ! -z $R2_SUFFIX ]; then
     OPTIONS+=( "--R2_suffix $R2_SUFFIX" )
 fi
+if [ $ELEMENT -eq 1 ]; then
+    OPTIONS+=( "--element" ) 
+fi
+if [ $SKIP_TRIMMOMATIC -eq 1 ]; then
+    OPTIONS+=( "--skip_trimming" )
+fi
 if [ $RNA -eq 1 ]; then
     OPTIONS+=( "--rna" )
     if [ "$BAM_SUFFIX" == ".recalibrated_realigned_deduped_sorted.bam" ]; then
@@ -261,49 +267,47 @@ if [ $RNA -eq 1 ]; then
     fi
     SKIP_TRIMMOMATIC=1
 fi
-if [ $SKIP_TRIMMOMATIC -eq 1 ]; then
-    OPTIONS+=( "--skip_trimming" )
-fi
-if [ $NUMBER_THREADS -ne 4 ]; then
-    OPTIONS+=( "--number_threads $NUMBER_THREADS" )
-fi
 if [ $BAM_SUFFIX != ".recalibrated_realigned_deduped_sorted.bam" ]; then
     OPTIONS+=( "--bam_suffix $BAM_SUFFIX" )
 fi
 if [ ! -z $NORMAL_SAMPLE_NAME ]; then
     OPTIONS+=( "--normal_sample_name $NORMAL_SAMPLE_NAME" ) 
 fi
+if [ $SCAN2 -eq 1 ]; then
+    OPTIONS+=( "--scan2" )
+fi
 if [ ! -z $CROSS_SAMPLE_DIR ]; then
     OPTIONS+=( "--cross_dir $CROSS_SAMPLE_DIR" )
-fi
-if [ $TEST_SCAN2 -eq 1 ]; then
-    OPTIONS+=( "--test_scan2" )
 fi
 if [ $SKIP_PANEL -eq 0 ]; then
     OPTIONS+=( "--skip_panel 0" )
 fi
-if [ $MANTA -eq 1 ]; then
-    OPTIONS+=( "--manta" )
+if ([ $SCAN2 -eq 1 ] && [ -z $NORMAL_SAMPLE_NAME ]); then
+    echo "Normal sample name not found, but required for Scan2. Please specify using --normal_sample_name. Exiting with code 1"
+    exit 1
 fi
-if [ $ELEMENT -eq 1 ]; then
-    OPTIONS+=( "--element" ) 
-fi
-# Change targets_bed and interval_list for exome sequencing if --exome flag is used
 if [ $TARGETED -eq 1 ]; then
-    OPTIONS+=( "--exome" )
+    OPTIONS+=( "--targeted" )
     TARGETS_BED=$EXOME_TARGETS_BED
     INTERVAL_LIST=$EXOME_INTERVAL_LIST
-    if [ $VERSION -eq 2 ]; then
+    if [ $EXOME_BED_VERSION -eq 2 ]; then
+        OPTIONS+=( "--exome_bed_version 2" )
         TARGETS_BED=$EXOME_TARGETS_BED_VER2
+    fi
+    if [ ! -z $PANEL_BED ]; then
+        OPTIONS+=( "--panel_bed $PANEL_BED" )
+        TARGETS_BED=$PANEL_BED
+    fi
+    if [ ! -z $PANEL_BED ]; then
+        OPTIONS+=( "--panel_interval_list $PANEL_INTERVAL_LIST" )
+        INTERVAL_LIST=$PANEL_INTERVAL_LIST
     fi
 else
     TARGETS_BED=$N25CHR_BED
     INTERVAL_LIST=$N25CHR_INTERVAL_LIST
 fi
-# Ensure we have normal sample name (stuff breaks if not)
-if [ -z $NORMAL_SAMPLE_NAME ]; then
-    echo "Normal sample name not found, necessary for germline variant calling. Please specify using --normal_sample_name. Exiting with code 1"
-    exit 1
+if [ $MANTA -eq 1 ]; then
+    OPTIONS+=( "--manta" )
 fi
 if [ ${#GINKGO_MB_ARRAY[@]} -ne 0 ]; then
     GINKGO_MB_STRING=$( IFS=$':'; echo "${GINKGO_MB_ARRAY[*]}" )
