@@ -225,7 +225,11 @@ if [ ! -z $RUN_DIR ] && [ $ONLY_VARIANT_CALL -eq 1 ]; then
     exit 1
 fi
 if [ ! -z $RUN_DIR ] && [ -z $SAMPLE_SHEET ]; then
-    SAMPLE_SHEET="${RUN_DIR}/SampleSheet.csv"
+    if [ $ELEMENT -eq 1 ]; then
+        SAMPLE_SHEET="${RUN_DIR}/RunManifest.csv"
+    else
+        SAMPLE_SHEET="${RUN_DIR}/SampleSheet.csv"
+    fi
 elif [ -z $RUN_DIR ] && [ ! -z $SAMPLE_SHEET ]; then
     echo "Variables not supplied correctly. Please specify a run diretory for demultiplexing with --run_dir. Exiting with code 1"
     exit 1

@@ -33,7 +33,7 @@ echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND"
 
 source /home/groups/cgawad/element_python_environment/bin/activate
 
-BASE2FASTQ_DIR="/oak/stanford/projects/onc-seq/AV230702/"
+BASE2FASTQ_DIR="/oak/stanford/groups/cgawad/Sequencing_Analysis_Tools"
 
 $BASE2FASTQ_DIR/bases2fastq $RUN_DIR $FASTQ_DIR
 
