@@ -103,12 +103,6 @@ INDEL_PREFIX=${SNP_PREFIX}"_indel"
 #Pretty sure somatic mutations are being labeled as coming from normal sample, despite normal sample not having mutations in its file
 #hopefully can just remove the rows labeled as normal sample and should be all good
 
-mkdir -p `pwd`/tmp7
-mkdir -p `pwd`/tmp8
-mkdir -p `pwd`/tmp9
-mkdir -p `pwd`/tmp10
-
-
 if [ $TARGETED -eq 1 ]; then
     echo "### Running VQSR on SNPs and Indels ### - START: $(date)"
     # the USER ERROR that is raised here is perplexing but doesn't seem to stop from generating an output vcf file 
