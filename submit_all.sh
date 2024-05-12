@@ -446,12 +446,12 @@ elif [ $STEP -eq 2 ]; then
     if [ $TEMP_ARRAY_START -eq 0 ]; then
         SAMPLE_COUNT=1
         for SAMPLE in ${SAMPLE_ARRAY[@]}; do
-            if [ ! -f ${SAMPLE}${BAM_SUFFIX} ]; then
+            if [ ! -f ${SCRATCH_DIR}/${SAMPLE}${BAM_SUFFIX} ]; then
                 echo -e "\tSample number $SAMPLE_COUNT - ${SAMPLE}${BAM_SUFFIX} file not found" >> $PIPELINE_STATUS
             fi
             SAMPLE_COUNT=$((SAMPLE_COUNT+1))
         done
-        BAM_FILE_COUNT=$(ls *${BAM_SUFFIX} | wc -l)
+        BAM_FILE_COUNT=$(ls *${SCRATCH_DIR}/${BAM_SUFFIX} | wc -l)
         if [ $BAM_FILE_COUNT -eq 0 ]; then
             echo "No BAMs found. Exiting with code 1" >> $PIPELINE_STATUS
             echo "END: $(date)" >> $PIPELINE_STATUS
@@ -654,12 +654,12 @@ elif [ $STEP -eq 4 ]; then
     if [ $TEMP_ARRAY_START -eq 0 ]; then
         SAMPLE_COUNT=1
         for SAMPLE in ${SAMPLE_ARRAY[@]}; do
-            if [ ! -f ${SAMPLE}_germline_call.g.vcf ]; then
+            if [ ! -f ${SCRATCH_DIR}/${SAMPLE}_germline_call.g.vcf ]; then
                 echo -e "\tSample number $SAMPLE_COUNT - ${SAMPLE}_germline_call.g.vcf file not found" >> $PIPELINE_STATUS
             fi
             SAMPLE_COUNT=$((SAMPLE_COUNT+1))
         done
-        VCF_FILE_COUNT=$(ls *_germline_call.g.vcf | wc -l)
+        VCF_FILE_COUNT=$(ls ${SCRATCH_DIR}/*_germline_call.g.vcf | wc -l)
         if [ $VCF_FILE_COUNT -eq 0 ]; then
             echo "No VCFs found. Exiting with code 1" >> $PIPELINE_STATUS
             echo "END: $(date)" >> $PIPELINE_STATUS
@@ -711,12 +711,12 @@ elif [ $STEP -eq 5 ]; then
     if [ ! -z $NORMAL_SAMPLE_NAME ]; then
         SAMPLE_COUNT=1
         for SAMPLE in ${SAMPLE_ARRAY[@]}; do
-            if [ ! -f ${SAMPLE}_variant.vcf ]; then
+            if [ ! -f ${SCRATCH_DIR}/${SAMPLE}_variant.vcf ]; then
                 echo -e "\tSample number $SAMPLE_COUNT - ${SAMPLE}_variant.vcf file not found" >> $PIPELINE_STATUS
             fi
             SAMPLE_COUNT=$((SAMPLE_COUNT+1))
         done
-        VCF_FILE_COUNT=$(ls *_variant.vcf | wc -l)
+        VCF_FILE_COUNT=$(ls ${SCRATCH_DIR}/*_variant.vcf | wc -l)
         if [ $VCF_FILE_COUNT -eq 0 ]; then
             echo "No VCFs found. Exiting with code 1" >> $PIPELINE_STATUS
             echo "END: $(date)" >> $PIPELINE_STATUS
@@ -728,12 +728,12 @@ elif [ $STEP -eq 5 ]; then
     else
         SAMPLE_COUNT=1
         for SAMPLE in ${SAMPLE_ARRAY[@]}; do
-            if [ ! -f ${SAMPLE}_germline_call.g.vcf ]; then
+            if [ ! -f ${SCRATCH_DIR}/${SAMPLE}_germline_call.g.vcf ]; then
                 echo -e "\tSample number $SAMPLE_COUNT - ${SAMPLE}_germline_call.g.vcf file not found" >> $PIPELINE_STATUS
             fi
             SAMPLE_COUNT=$((SAMPLE_COUNT+1))
         done
-        VCF_FILE_COUNT=$(ls *_germline_call.g.vcf | wc -l)
+        VCF_FILE_COUNT=$(ls ${SCRATCH_DIR}/*_germline_call.g.vcf | wc -l)
         if [ $VCF_FILE_COUNT -eq 0 ]; then
             echo "No VCFs found. Exiting with code 1" >> $PIPELINE_STATUS
             echo "END: $(date)" >> $PIPELINE_STATUS
