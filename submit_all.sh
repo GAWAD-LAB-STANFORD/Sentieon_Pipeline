@@ -451,7 +451,7 @@ elif [ $STEP -eq 2 ]; then
             fi
             SAMPLE_COUNT=$((SAMPLE_COUNT+1))
         done
-        BAM_FILE_COUNT=$(ls *${SCRATCH_DIR}/${BAM_SUFFIX} | wc -l)
+        BAM_FILE_COUNT=$(ls ${SCRATCH_DIR}/*${BAM_SUFFIX} | wc -l)
         if [ $BAM_FILE_COUNT -eq 0 ]; then
             echo "No BAMs found. Exiting with code 1" >> $PIPELINE_STATUS
             echo "END: $(date)" >> $PIPELINE_STATUS
