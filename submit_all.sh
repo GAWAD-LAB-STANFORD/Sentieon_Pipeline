@@ -403,7 +403,7 @@ elif ([ $STEP -eq 0 ] && [ -z $RUN_DIR ] && [ $ONLY_VARIANT_CALL -eq 0 ]) || [ $
         JOB_COUNT=${#SAMPLE_ARRAY[@]}
         echo -e "Jobs: $JOB_COUNT" >> $PIPELINE_STATUS
         TEMP_ARRAY_START=1
-        mkdir -p Extra_Sentieon_Files
+        mkdir -p ${SCRATCH_DIR}/Extra_Sentieon_Files
     fi
     
     TEMP_SAMPLE_ARRAY=( ${SAMPLE_ARRAY[@]:$(($TEMP_ARRAY_START - 1)):$TEMP_ARRAY_INCREMENT} )
