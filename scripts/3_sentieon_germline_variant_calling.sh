@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#
 #SBATCH --job-name=3_sentieon_germline_calling
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=4
@@ -59,7 +59,7 @@ export SENTIEON_LICENSE=license4.stanford.edu:5443
 
 
 echo "### Germline variant calling ### - START: $(date)"
-sentieon driver -r $REF_FASTA -i ${SAMPLE}${BAM_SUFFIX} --interval $TARGETS_BED \
+sentieon driver -t $SLURM_CPUS_ON_NODE -r $REF_FASTA -i ${SAMPLE}${BAM_SUFFIX} --interval $TARGETS_BED \
     -q ${SAMPLE}_recal_data.table --algo Haplotyper --emit_mode gvcf ${SAMPLE}_germline_call.g.vcf
 echo "### Germline variant calling ### - END: $(date)"
 

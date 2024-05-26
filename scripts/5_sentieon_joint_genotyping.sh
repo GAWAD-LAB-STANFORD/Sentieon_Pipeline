@@ -41,7 +41,7 @@ export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/
 export SENTIEON_LICENSE=license4.stanford.edu:5443
 
 echo "### Joint genotyping ### - START: $(date)"
-sentieon driver --interval $TARGETS_BED -r $REF_FASTA --algo GVCFtyper ${PROJECT}.germline_merged.vcf *_germline_call.g.vcf
+sentieon driver -t $SLURM_CPUS_ON_NODE --interval $TARGETS_BED -r $REF_FASTA --algo GVCFtyper ${PROJECT}.germline_merged.vcf *_germline_call.g.vcf
 bgzip -f ${PROJECT}.germline_merged.vcf
 tabix ${PROJECT}.germline_merged.vcf.gz
 echo "### Joint genotyping ### - END: $(date)"

@@ -159,14 +159,14 @@ else
     export bwt_max_mem=62G
 
     (sentieon bwa mem -R "@RG\tID:"$SAMPLE"\tSM:"$SAMPLE"\tPL:ILLUMINA" \
-        -t $NUMBER_THREADS $REF_FASTA $R1_FASTQ $R2_FASTQ || echo -n 'error' ) \
-        | sentieon util sort -r $REF_FASTA -o $SORTED_BAM -t $NUMBER_THREADS --sam2bam -i -
+        -t $SLURM_CPUS_ON_NODE $REF_FASTA $R1_FASTQ $R2_FASTQ || echo -n 'error' ) \
+        | sentieon util sort -r $REF_FASTA -o $SORTED_BAM -t $SLURM_CPUS_ON_NODE --sam2bam -i -
     echo "### Aligning DNA fastqs to $REF_NAME ### - END: $(date)"
 fi
 
 
 # echo "### Calculate and plot data metrics ### - START: $(date)"
-# sentieon driver -t $NUMBER_THREADS -r $REF_FASTA -i $SORTED_BAM \
+# sentieon driver -t $SLURM_CPUS_ON_NODE -r $REF_FASTA -i $SORTED_BAM \
 #     --algo GCBias --summary ${SAMPLE}_GC_summary.txt ${SAMPLE}_GC_metric.txt \
 #     --algo MeanQualityByCycle ${SAMPLE}_MQ_metric.txt \
 #     --algo QualDistribution ${SAMPLE}_QD_metric.txt \
@@ -181,27 +181,27 @@ fi
 
 
 echo "### Mark duplicates ### - START: $(date)"
-sentieon driver -t $NUMBER_THREADS -i $SORTED_BAM \
+sentieon driver -t $SLURM_CPUS_ON_NODE -i $SORTED_BAM \
     --algo LocusCollector --fun score_info ${SAMPLE}_score.gz
-sentieon driver -t $NUMBER_THREADS -i $SORTED_BAM \
+sentieon driver -t $SLURM_CPUS_ON_NODE -i $SORTED_BAM \
     --algo Dedup --score_info ${SAMPLE}_score.gz \
     --metrics ${SAMPLE}_duplication_metrics.tsv $DEDUPED_BAM
 echo "### Mark duplicates ### - END: $(date)"
 
 
 echo "### Indel realignment ### - START: $(date)"
-sentieon driver -t $NUMBER_THREADS -r $REF_FASTA \
+sentieon driver -t $SLURM_CPUS_ON_NODE -r $REF_FASTA \
     -i $DEDUPED_BAM --algo Realigner --interval_list $TARGETS_BED $REALIGNED_BAM
 echo "### Indel realignment ### - END: $(date)"
 
 
 echo "### Base quality score recalibration ### - START: $(date)"
-sentieon driver -t $NUMBER_THREADS -r $REF_FASTA \
+sentieon driver -t $SLURM_CPUS_ON_NODE -r $REF_FASTA \
     -i $REALIGNED_BAM --algo QualCal ${SAMPLE}_recal_data.table
-sentieon driver -t $NUMBER_THREADS -r $REF_FASTA -i $REALIGNED_BAM \
+sentieon driver -t $SLURM_CPUS_ON_NODE -r $REF_FASTA -i $REALIGNED_BAM \
     -q ${SAMPLE}_recal_data.table --algo QualCal \
     ${SAMPLE}_recal_data.table.after --algo ReadWriter $RECALIBRATED_BAM
-sentieon driver -t $NUMBER_THREADS --algo QualCal --plot \
+sentieon driver -t $SLURM_CPUS_ON_NODE --algo QualCal --plot \
     --before ${SAMPLE}_recal_data.table --after ${SAMPLE}_recal_data.table.after ${SAMPLE}_recal_result.csv
 sentieon plot QualCal -o ${SAMPLE}_bqsr.pdf ${SAMPLE}_recal_result.csv
 echo "### Base quality score recalibration ### - END: $(date)"

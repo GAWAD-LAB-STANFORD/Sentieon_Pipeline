@@ -7,7 +7,6 @@
 #SBATCH --time=2-00:00:00
 #SBATCH --partition=cgawad
 
-NUMBER_THREADS=16
 START_TIME=$(date +%s)
 SCRIPT_COMMAND="$@"
 while [ "$1" != "" ]; do
@@ -89,7 +88,7 @@ PANEL_OF_NORMAL="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/1000g_pon.hg38.vcf.g
 
 
 echo "### Somatic variant calling ### - START: $(date)"
-sentieon driver -t $NUMBER_THREADS -r $REF_FASTA --interval $TARGETS_BED \
+sentieon driver -t $SLURM_CPUS_ON_NODE -r $REF_FASTA --interval $TARGETS_BED \
     -i ${SCRATCH_DIR}/${SAMPLE}${BAM_SUFFIX} -q ${SCRATCH_DIR}/${TUMOR_RECAL_TABLE} \
     -i ${SCRATCH_DIR}/${NORMAL_SAMPLE_NAME}${BAM_SUFFIX} -q ${SCRATCH_DIR}/${NORMAL_RECAL_TABLE} \
     --algo TNscope --tumor_sample ${SAMPLE} --normal_sample ${NORMAL_SAMPLE_NAME} \
