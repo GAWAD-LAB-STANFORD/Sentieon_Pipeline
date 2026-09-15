@@ -56,7 +56,7 @@ cd $RESULTS_DIR
 echo -e "TSV: $TSV\nResults dir: $RESULTS_DIR\nRef fasta: $REF_FASTA"
 
 
-ml R/4.0.2 java perl biology gatk/4.1.4.1 bedtools samtools
+ml R/4.0.2 java perl biology gatk bedtools samtools
 export R_LIBS="/home/groups/cgawad/R_LIBS"
 
 ml python/3.6.1

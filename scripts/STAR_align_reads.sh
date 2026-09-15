@@ -20,7 +20,7 @@ echo -e "START: $(date)\nWGS WES Pipeline\nSlurm ID: $SLURM_ARRAY_TASK_ID\nSampl
 cd $RESULTS_DIR
 
 ml python/3.6.1 java 
-ml biology bwa samtools gatk/4.1.4.1 star/2.5.4b
+ml biology bwa samtools gatk star/2.5.4b
 
 echo "### Aligning RNA fastqs to human - First of two passes ### - START: $(date)"
 SAMPLE="scRNA-10x-5E-BM-AML-1355-GEX_S2"

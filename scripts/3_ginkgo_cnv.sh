@@ -75,17 +75,26 @@ if [ ! -z $MB_SIZE ]; then
     for SAMPLE in ${SAMPLE_ARRAY[@]}; do
         echo "Sample $SAMPLE_COUNT of $NUMBER_OF_SAMPLES - $SAMPLE"
 
-        TOTAL_READS=$(samtools view -c ${BAM_DIR}/${SAMPLE}${BAM_SUFFIX})
-        FULL_SIZE=${MB_SIZE}000000
+        TOTAL_READS=$(samtools view -c ${BAM_DIR}/${SAMPLE}${BAM_SUFFIX}) 
+        FULL_SIZE=20000000
         FRACTION=$(awk -v x="$FULL_SIZE" y="$TOTAL_READS" 'BEGIN {printf "%3f", x / y}')
-        ##if [ $TOTAL_READS -ge ${MB_SIZE}000000 ] && [ ! -z $FRACTION ] && [ $TARGETED -eq 0 ]; then
-
-	if [ $TOTAL_READS -ge ${MB_SIZE}000000 ] && [ ! -z $FRACTION ]; then
+        if [ $TOTAL_READS -ge 20000000 ] && [ ! -z $FRACTION ] && [ $TARGETED -eq 0 ]; then
             gatk --java-options "-XX:+UseParallelGC -XX:ParallelGCThreads=4 -Xmx31g -Xms31G" DownsampleSam \
-                -I ${BAM_DIR}/${SAMPLE}${BAM_SUFFIX} -O ${FULL_WORK_DIR}/${SAMPLE}.${MB_SIZE}M.bam \
+                -I ${BAM_DIR}/${SAMPLE}${BAM_SUFFIX} -O ${FULL_WORK_DIR}/${SAMPLE}.${MB_SIZE}M.pre.bam \
                 --PROBABILITY $FRACTION --VALIDATION_STRINGENCY SILENT \
                 --MAX_RECORDS_IN_RAM 5500000
             echo -e "\tDownsampled to $MB_SIZE million reads"
+
+	else
+	    mv ${BAM_DIR}/${SAMPLE}${BAM_SUFFIX} ${FULL_WORK_DIR}/${SAMPLE}.${MB_SIZE}M.pre.bam
+
+fi
+##############
+        MOSDEPTH_REF_DIR="/oak/stanford/groups/cgawad/Reference_Files/mosdepth_hg38"
+
+	bedtools intersect -a ${FULL_WORK_DIR}/${SAMPLE}.${MB_SIZE}M.pre.bam -b ${MOSDEPTH_REF_DIR}/xgen-exome-research-panel-targets_grch38_6col_s_expand.bed -sorted -v > ${FULL_WORK_DIR}/${SAMPLE}.${MB_SIZE}M.bam
+###########
+
             samtools index ${FULL_WORK_DIR}/${SAMPLE}.${MB_SIZE}M.bam
             bedtools bamtobed -i ${FULL_WORK_DIR}/${SAMPLE}.${MB_SIZE}M.bam > ${FULL_WORK_DIR}/${SAMPLE}.bed
             gzip ${FULL_WORK_DIR}/${SAMPLE}.bed
@@ -93,14 +102,9 @@ if [ ! -z $MB_SIZE ]; then
             echo -e "\tPrepared for ginkgo"
             rm ${FULL_WORK_DIR}/${SAMPLE}.${MB_SIZE}M.bam
             echo -e "\tRemoved downsampled bam"
-        else
-    bedtools bamtobed -i ${BAM_DIR}/${SAMPLE}${BAM_SUFFIX} > ${FULL_WORK_DIR}/${SAMPLE}.bed
-    gzip ${FULL_WORK_DIR}/${SAMPLE}.bed
-    echo "${SAMPLE}.bed.gz" >> ${FULL_WORK_DIR}/list
-    echo -e "\tPrepared for ginkgo using all available reads"
-fi
-
-
+ #       else
+ #           echo -e "\tBam is less than $MB_SIZE million reads, cannot downsample"
+ #       fi
         SAMPLE_COUNT=$((SAMPLE_COUNT+1))
     done
 else

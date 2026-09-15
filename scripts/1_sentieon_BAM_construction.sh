@@ -87,7 +87,7 @@ else
 fi
 
 ml gsl/2.3 java/1.8.0_131
-ml biology bwa samtools bedtools gatk/4.1.4.1 bcftools sentieon/202112.01
+ml biology bwa samtools bedtools gatk bcftools sentieon/202112.01
 export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/
 export SENTIEON_LICENSE=srcc-license-srcf.stanford.edu:8990
 
@@ -142,11 +142,11 @@ if [ $RNA -eq 1 ]; then
         --outSAMtype BAM SortedByCoordinate \
         --outSAMunmapped Within \
         --outSAMattributes Standard
-#    rm $UNZIPPED_R1_FASTQ $UNZIPPED_R2_FASTQ
+    rm $UNZIPPED_R1_FASTQ $UNZIPPED_R2_FASTQ
     mv ${SAMPLE}Aligned.sortedByCoord.out.bam $SORTED_BAM
     samtools index $SORTED_BAM
     echo "### Aligning RNA fastqs to $REF_NAME ### - END: $(date)"
-
+    
     ml java/1.8.0_131
 else
     echo "### Aligning DNA fastqs to $REF_NAME ### - START: $(date)"
@@ -216,8 +216,7 @@ if [ $SKIP_TRIMMOMATIC -eq 0 ] && [ -f $SORTED_BAM ]; then
     rm $R1_FASTQ $R2_FASTQ
     rm $UNPAIRED_R1_FASTQ $UNPAIRED_R2_FASTQ
 fi
-
-#rm $BAM ${BAM}.bai $REALIGNED_BAM ${REALIGNED_BAM}.bai
+rm $BAM ${BAM}.bai $REALIGNED_BAM ${REALIGNED_BAM}.bai
 mv ${SAMPLE}_score.gz* Extra_Sentieon_Files/
 mv ${SAMPLE}_bqsr.pdf Extra_Sentieon_Files/
 echo -e "END: $(date)\nRuntime: $(($(date +%s)-$START_TIME)) seconds"

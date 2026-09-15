@@ -536,9 +536,7 @@ elif [ $STEP -eq 3 ] && [ $TEMP_ARRAY_START -eq 0 ]; then
         echo "### Step 2 - QC metrics ### - END: $(date)" >> $PIPELINE_STATUS
     fi
     echo "### Asynchronous merge metrics ### - $(date)" >> $PIPELINE_STATUS
-
-#    if [ $TARGETED -eq 0 ]; then
-if { [ $TARGETED -eq 0 ] || [ $TARGETED -eq 1 ]; } && [ -n $GINKGO_MB_ARRAY ]; then
+    if [ $TARGETED -eq 0 ]; then
         echo -e "\nsbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
             ${SCRIPT_DIR}/3_ginkgo_cnv.sh \
             --bam_dir $SCRATCH_DIR --scratch_dir ${SCRATCH_DIR}/ginkgo_5M --bam_regex .5M.bam \
@@ -549,9 +547,7 @@ if { [ $TARGETED -eq 0 ] || [ $TARGETED -eq 1 ]; } && [ -n $GINKGO_MB_ARRAY ]; t
             --bam_suffix .5M.bam --project 5M
         echo "Asynchronous ginkgo for 5 million reads submitted"
     fi
-
-#    if [ $TARGETED -eq 0 ] && [ ! -z $GINKGO_MB_ARRAY ]; then
-if { [ $TARGETED -eq 0 ] || [ $TARGETED -eq 1 ]; } && [ -n $GINKGO_MB_ARRAY ]; then
+    if [ $TARGETED -eq 0 ] && [ ! -z $GINKGO_MB_ARRAY ]; then
         for MB_SIZE in ${GINKGO_MB_ARRAY[@]}; do
             echo -e "\nsbatch -e ${STD_ERR_OUT_DIR}/%A_%x.err -o ${STD_ERR_OUT_DIR}/%A_%x.out \
                 ${SCRIPT_DIR}/3_ginkgo_cnv.sh \
