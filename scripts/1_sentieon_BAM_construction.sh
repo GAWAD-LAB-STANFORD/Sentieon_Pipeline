@@ -89,7 +89,7 @@ fi
 ml gsl/2.3 java/1.8.0_131
 ml biology bwa samtools bedtools gatk/4.1.4.1 bcftools sentieon/202112.01
 export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/
-export SENTIEON_LICENSE=srcc-license-srcf.stanford.edu:8990
+export SENTIEON_LICENSE=${SENTIEON_LICENSE:-srcc-license-srcf.stanford.edu:8990}
 
 R1_FASTQ=${FASTQ_DIR}/${SAMPLE}${R1_SUFFIX}
 R2_FASTQ=${FASTQ_DIR}/${SAMPLE}${R2_SUFFIX}

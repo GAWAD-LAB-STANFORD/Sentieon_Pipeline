@@ -7,7 +7,6 @@
 #SBATCH --nodes=1
 #SBATCH --mem=60G
 #SBATCH --mail-type=ALL
-#SBATCH --mail-user=sschulz@stanford.edu
 #SBATCH --error=PTATO.err
 
 

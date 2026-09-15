@@ -858,7 +858,7 @@ if [ $STEP -eq 4 ]; then
 #		ml biology bwa samtools java
 #		module load biology sentieon/202112.01
 #		export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/ #your Sentieon package location
-#		export SENTIEON_LICENSE=srcc-license-srcf.stanford.edu:8990 #your license file location
+#		export SENTIEON_LICENSE=${SENTIEON_LICENSE:-srcc-license-srcf.stanford.edu:8990} #your license file location
 #		cd ${RESULTS_DIR}
 #		JOINT_VCF="${SAMPLE_PREFIX}_joint_germline_merged.vcf"
 #		sentieon driver -r $REF_FASTA --algo GVCFtyper ${JOINT_VCF} ${SAMPLE_PREFIX}*.g.vcf

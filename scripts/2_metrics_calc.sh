@@ -67,7 +67,7 @@ ml biology sentieon/202112.01
 ml R/4.0.2
 
 export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/
-export SENTIEON_LICENSE=srcc-license-srcf.stanford.edu:8990
+export SENTIEON_LICENSE=${SENTIEON_LICENSE:-srcc-license-srcf.stanford.edu:8990}
 
 
 echo "### 5M read downsample with Preseq ### - START: $(date)"

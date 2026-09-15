@@ -14,7 +14,7 @@ TOOLS_DIR="/oak/stanford/groups/cgawad/Sequencing_Analysis_Tools/"
 #BAM_REGEX=".*.bam"
 #BAM_SUFFIX=".bam"
 
-#note to self: add slurm commands to email #SBATCH --mail-type=ALL and #SBATCH --mail-user=sschulz@stanford.edu to better monitor the long scan2 runs
+#note to self: add slurm commands to email #SBATCH --mail-type=ALL and #SBATCH --mail-user=YOUR_EMAIL to better monitor the long scan2 runs
 
 ###IMPORTANT NOTE###
 
@@ -212,7 +212,7 @@ ml system poppler/0.47.0
 ml biology gatk/4.1.4.1 bedtools/2.27.1 samtools/1.8 bwa/0.7.17 sentieon/202112.01
 ml sentieon/202112.01
 export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/ #your Sentieon package location
-export SENTIEON_LICENSE=srcc-license-srcf.stanford.edu:8990 #your license file location
+export SENTIEON_LICENSE=${SENTIEON_LICENSE:-srcc-license-srcf.stanford.edu:8990} #your license file location
 
 export R_LIBS="/home/groups/cgawad/R_libs"
 
@@ -319,7 +319,7 @@ if [ $STEP -eq 0 ]; then
         ml biology bwa samtools java
         module load biology sentieon/202112.01
         export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/ #your Sentieon package location
-        export SENTIEON_LICENSE=srcc-license-srcf.stanford.edu:8990 #your license file location
+        export SENTIEON_LICENSE=${SENTIEON_LICENSE:-srcc-license-srcf.stanford.edu:8990} #your license file location
 
 
 
