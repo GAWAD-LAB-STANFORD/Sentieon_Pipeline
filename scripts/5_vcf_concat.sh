@@ -29,10 +29,10 @@ fi
 echo -e "START: $(date)\nSentieon Pipeline\nScript command: $SCRIPT_COMMAND"
 cd $SCRATCH_DIR
 
-ml biology bwa samtools bcftools java/1.8.0_131 
+ml biology bwa samtools bcftools java/1.8.0_131
 ml biology sentieon/202112.01
 export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/
-export SENTIEON_LICENSE=license4.stanford.edu:5443
+export SENTIEON_LICENSE=srcc-license-srcf.stanford.edu:8990
 
 
 echo "### Merging VCFs ### - START: $(date)"

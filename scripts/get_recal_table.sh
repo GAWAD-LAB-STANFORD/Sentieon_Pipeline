@@ -13,7 +13,7 @@
 ml biology gatk/4.1.4.1 bedtools/2.27.1 samtools/1.8 bwa/0.7.17 sentieon/202112.01
 ml sentieon/202112.01
 export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/ #your Sentieon package location
-export SENTIEON_LICENSE=license4.stanford.edu:5443 #your license file location
+export SENTIEON_LICENSE=srcc-license-srcf.stanford.edu:8990 #your license file location
 
 REFERENCE_DIR="/oak/stanford/groups/cgawad/Reference_Files"
 REF_FASTA="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38.fasta"

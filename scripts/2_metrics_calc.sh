@@ -3,7 +3,7 @@
 #SBATCH --job-name=2_metrics_calc
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=2
-#SBATCH --mem=31G
+#SBATCH --mem=63G
 #SBATCH --time=1-00:00:00
 #SBATCH --partition=cgawad
 
@@ -62,17 +62,19 @@ REF_GENOME="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/Homo_sapiens_assembly38_b
 EXOME_INTERVAL_LIST="${REFERENCE_DIR}/GATK_Resource_Bundle_hg38/xgen-exome-research-panel-targets_grch38_5col.interval_list"
 VARIANT_VCF="${SAMPLE}.g.vcf"
 
-ml gcc/12.1.0 gsl/2.3 java/1.8.0_131 biology htslib samtools bedtools gatk bcftools
+ml gcc/12.4.0 gsl/2.3 java/1.8.0_131 biology htslib samtools bedtools gatk/4.1.4.1 bcftools
 ml biology sentieon/202112.01
+ml R/4.0.2
+
 export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/
-export SENTIEON_LICENSE=license4.stanford.edu:5443
+export SENTIEON_LICENSE=srcc-license-srcf.stanford.edu:8990
 
 
 echo "### 5M read downsample with Preseq ### - START: $(date)"
 TOTAL_READS=$(samtools view -c ${SAMPLE}${BAM_SUFFIX})
 FRACTION=$(awk -v y="$TOTAL_READS" 'BEGIN {printf "%3f", 5000000 / y}')
 if [ $TOTAL_READS -ge 5000000 ] && [ ! -z $FRACTION ] && [ $TARGETED -eq 0 ]; then
-    gatk --java-options "-XX:+UseParallelGC -XX:ParallelGCThreads=4 -Xmx31g -Xms31G" DownsampleSam \
+    gatk --java-options "-XX:+UseParallelGC -XX:ParallelGCThreads=4 -Xmx60g" DownsampleSam \
         -I ${SAMPLE}${BAM_SUFFIX} -O ${SAMPLE}.5M.bam \
         --PROBABILITY $FRACTION --VALIDATION_STRINGENCY SILENT \
         --MAX_RECORDS_IN_RAM 5500000
@@ -137,19 +139,19 @@ echo "### Coverage ### - END: $(date)"
 
 
 echo "### GATK extra metrics ### - START: $(date)"
-gatk --java-options "-XX:+UseParallelGC -XX:ParallelGCThreads=4 -Xmx31G -Xmx31G" CollectHsMetrics \
+gatk --java-options "-XX:+UseParallelGC -XX:ParallelGCThreads=4 -Xmx60G" CollectHsMetrics \
     -I ${SAMPLE}${BAM_SUFFIX} -O ${SAMPLE}_hs_metrics.tsv -R $REF_FASTA \
     -BI $EXOME_INTERVAL_LIST -TI $EXOME_INTERVAL_LIST --VALIDATION_STRINGENCY SILENT \
     --MAX_RECORDS_IN_RAM 3500000
 echo "CollectHsMetrics done"
-    
-gatk --java-options "-XX:+UseParallelGC -XX:ParallelGCThreads=4 -Xmx31G -Xmx31G" CollectWgsMetrics \
+
+gatk --java-options "-XX:+UseParallelGC -XX:ParallelGCThreads=4 -Xmx60G" CollectWgsMetrics \
     -I ${SAMPLE}${BAM_SUFFIX} -O ${SAMPLE}_wgs_metrics.tsv \
     -R $REF_FASTA --VALIDATION_STRINGENCY SILENT --INTERVALS $INTERVAL_LIST \
     --MAX_RECORDS_IN_RAM 3500000
 echo "CollectWgsMetrics done"
-    
-gatk --java-options "-XX:+UseParallelGC -XX:ParallelGCThreads=4 -Xmx31G -Xmx31G" CollectMultipleMetrics \
+
+gatk --java-options "-XX:+UseParallelGC -XX:ParallelGCThreads=4 -Xmx60G" CollectMultipleMetrics \
     -I ${SAMPLE}${BAM_SUFFIX} -O ${SAMPLE}_extra_metrics --INTERVALS $INTERVAL_LIST \
     -R $REF_FASTA --VALIDATION_STRINGENCY SILENT --PROGRAM CollectAlignmentSummaryMetrics \
     --PROGRAM CollectBaseDistributionByCycle --PROGRAM CollectInsertSizeMetrics --PROGRAM MeanQualityByCycle \

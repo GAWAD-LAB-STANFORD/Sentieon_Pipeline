@@ -55,7 +55,7 @@ cd $SCRATCH_DIR
 ml biology bwa/0.7.17 samtools/1.8 java/1.8.0_131
 module load biology sentieon/202112.01
 export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/
-export SENTIEON_LICENSE=license4.stanford.edu:5443
+export SENTIEON_LICENSE=srcc-license-srcf.stanford.edu:8990
 
 
 echo "### Germline variant calling ### - START: $(date)"

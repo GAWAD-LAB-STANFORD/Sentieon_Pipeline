@@ -74,18 +74,19 @@ if [ ! -z $MB_SIZE ]; then
     NUMBER_OF_SAMPLES=${#SAMPLE_ARRAY[@]}
     for SAMPLE in ${SAMPLE_ARRAY[@]}; do
         echo "Sample $SAMPLE_COUNT of $NUMBER_OF_SAMPLES - $SAMPLE"
-        
+
         TOTAL_READS=$(samtools view -c ${BAM_DIR}/${SAMPLE}${BAM_SUFFIX})
         FULL_SIZE=${MB_SIZE}000000
         FRACTION=$(awk -v x="$FULL_SIZE" y="$TOTAL_READS" 'BEGIN {printf "%3f", x / y}')
-        if [ $TOTAL_READS -ge ${MB_SIZE}000000 ] && [ ! -z $FRACTION ] && [ $TARGETED -eq 0 ]; then
+        ##if [ $TOTAL_READS -ge ${MB_SIZE}000000 ] && [ ! -z $FRACTION ] && [ $TARGETED -eq 0 ]; then
+
+	if [ $TOTAL_READS -ge ${MB_SIZE}000000 ] && [ ! -z $FRACTION ]; then
             gatk --java-options "-XX:+UseParallelGC -XX:ParallelGCThreads=4 -Xmx31g -Xms31G" DownsampleSam \
                 -I ${BAM_DIR}/${SAMPLE}${BAM_SUFFIX} -O ${FULL_WORK_DIR}/${SAMPLE}.${MB_SIZE}M.bam \
                 --PROBABILITY $FRACTION --VALIDATION_STRINGENCY SILENT \
                 --MAX_RECORDS_IN_RAM 5500000
             echo -e "\tDownsampled to $MB_SIZE million reads"
             samtools index ${FULL_WORK_DIR}/${SAMPLE}.${MB_SIZE}M.bam
-            
             bedtools bamtobed -i ${FULL_WORK_DIR}/${SAMPLE}.${MB_SIZE}M.bam > ${FULL_WORK_DIR}/${SAMPLE}.bed
             gzip ${FULL_WORK_DIR}/${SAMPLE}.bed
             echo "${SAMPLE}.bed.gz" >> ${FULL_WORK_DIR}/list
@@ -93,8 +94,13 @@ if [ ! -z $MB_SIZE ]; then
             rm ${FULL_WORK_DIR}/${SAMPLE}.${MB_SIZE}M.bam
             echo -e "\tRemoved downsampled bam"
         else
-            echo -e "\tBam is less than $MB_SIZE million reads, cannot downsample"
-        fi
+    bedtools bamtobed -i ${BAM_DIR}/${SAMPLE}${BAM_SUFFIX} > ${FULL_WORK_DIR}/${SAMPLE}.bed
+    gzip ${FULL_WORK_DIR}/${SAMPLE}.bed
+    echo "${SAMPLE}.bed.gz" >> ${FULL_WORK_DIR}/list
+    echo -e "\tPrepared for ginkgo using all available reads"
+fi
+
+
         SAMPLE_COUNT=$((SAMPLE_COUNT+1))
     done
 else

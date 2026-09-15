@@ -212,7 +212,7 @@ ml system poppler/0.47.0
 ml biology gatk/4.1.4.1 bedtools/2.27.1 samtools/1.8 bwa/0.7.17 sentieon/202112.01
 ml sentieon/202112.01
 export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/ #your Sentieon package location
-export SENTIEON_LICENSE=license4.stanford.edu:5443 #your license file location
+export SENTIEON_LICENSE=srcc-license-srcf.stanford.edu:8990 #your license file location
 
 export R_LIBS="/home/groups/cgawad/R_libs"
 
@@ -319,7 +319,7 @@ if [ $STEP -eq 0 ]; then
         ml biology bwa samtools java
         module load biology sentieon/202112.01
         export SENTIEON_INSTALL_DIR=/share/software/user/restricted/sentieon/202112.01/ #your Sentieon package location
-        export SENTIEON_LICENSE=license4.stanford.edu:5443 #your license file location
+        export SENTIEON_LICENSE=srcc-license-srcf.stanford.edu:8990 #your license file location
 
 
 
